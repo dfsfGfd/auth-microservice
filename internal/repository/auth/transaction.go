@@ -27,25 +27,20 @@ type UnitOfWork interface {
 
 	// Users возвращает UserRepository в контексте транзакции
 	Users() UserRepository
-
-	// Tokens возвращает TokenRepository в контексте транзакции
-	Tokens() TokenRepository
 }
 
 // UnitOfWorkImpl реализация UnitOfWork с поддержкой транзакций.
 type UnitOfWorkImpl struct {
-	pool       *pgxpool.Pool
-	tx         pgx.Tx
-	userRepo   *UserRepository
-	tokenRepo  *TokenRepository
+	pool     *pgxpool.Pool
+	tx       pgx.Tx
+	userRepo *UserRepository
 }
 
 // NewUnitOfWork создаёт новый UnitOfWork
-func NewUnitOfWork(pool *pgxpool.Pool, userRepo *UserRepository, tokenRepo *TokenRepository) *UnitOfWorkImpl {
+func NewUnitOfWork(pool *pgxpool.Pool, userRepo *UserRepository) *UnitOfWorkImpl {
 	return &UnitOfWorkImpl{
-		pool:      pool,
-		userRepo:  userRepo,
-		tokenRepo: tokenRepo,
+		pool:     pool,
+		userRepo: userRepo,
 	}
 }
 
@@ -62,7 +57,7 @@ func (u *UnitOfWorkImpl) Begin(ctx context.Context) (context.Context, error) {
 
 	u.tx = tx
 
-	// Создаём репозитории с транзакцией
+	// Создаём репозиторий с транзакцией
 	u.userRepo = &UserRepository{pool: tx}
 
 	return ctx, nil
@@ -103,11 +98,6 @@ func (u *UnitOfWorkImpl) Rollback(ctx context.Context) error {
 // Users возвращает UserRepository в контексте транзакции.
 func (u *UnitOfWorkImpl) Users() UserRepository {
 	return u.userRepo
-}
-
-// Tokens возвращает TokenRepository в контексте транзакции.
-func (u *UnitOfWorkImpl) Tokens() TokenRepository {
-	return u.tokenRepo
 }
 
 // txPool обёртка для использования транзакции как пула.

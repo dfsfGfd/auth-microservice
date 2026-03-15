@@ -8,7 +8,6 @@
 
 - [Структура пакета](#структура-пакета)
 - [UserRepository методы](#userrepository-методы)
-- [TokenRepository методы](#tokenrepository-методы)
 - [UnitOfWork методы](#unitofwork-методы)
 - [Схема именования](#схема-именования)
 - [Доменные ошибки](#доменные-ошибки)
@@ -25,13 +24,12 @@ internal/repository/
 │   └── user.go             # DB модели (маппинг)
 ├── converter/
 │   └── user.go             # Конвертеры domain ↔ DB
-├── auth/                   # PostgreSQL/Redis реализация
+├── auth/                   # PostgreSQL реализация
 │   ├── user_repository.go  # UserRepository реализация
-│   ├── token_repository.go # TokenRepository реализация
 │   ├── transaction.go      # UnitOfWork реализация
 │   └── doc.go
 ├── user_repository.go      # UserRepository интерфейс
-└── token_repository.go     # TokenRepository интерфейс
+└── token_repository.go     # TokenRepository интерфейс (Redis, отдельно)
 ```
 
 ---
@@ -76,39 +74,6 @@ internal/repository/
 
 ---
 
-## TokenRepository методы
-
-### Write Operations
-
-| Метод | Сигнатура | Описание | Ошибки |
-|-------|-----------|----------|--------|
-| `Store` | `Store(ctx, token, userID, ttl) error` | Сохранение токена | — |
-| `Delete` | `Delete(ctx, token) error` | Удаление токена (отзыв) | — |
-| `DeleteByUserID` | `DeleteByUserID(ctx, userID) error` | Удаление всех токенов пользователя | — |
-| `Extend` | `Extend(ctx, token, ttl) error` | Продление токена | `ErrTokenNotFound` |
-
-### Read Operations
-
-| Метод | Сигнатура | Описание | Возврат | Ошибки |
-|-------|-----------|----------|---------|--------|
-| `GetUserID` | `GetUserID(ctx, token) (string, error)` | Получение user_id | `string` | `ErrTokenNotFound` |
-| `GetToken` | `GetToken(ctx, token) (*TokenInfo, error)` | Информация о токене | `*TokenInfo` | `ErrTokenNotFound` |
-
-### Check Operations
-
-| Метод | Сигнатура | Описание | Возврат |
-|-------|-----------|----------|---------|
-| `Exists` | `Exists(ctx, token) (bool, error)` | Проверка существования | `bool` |
-| `IsExpired` | `IsExpired(ctx, token) (bool, error)` | Проверка истечения | `bool` |
-
-### Count Operations
-
-| Метод | Сигнатура | Описание | Возврат |
-|-------|-----------|----------|---------|
-| `CountByUserID` | `CountByUserID(ctx, userID) (int64, error)` | Количество токенов | `int64` |
-
----
-
 ## UnitOfWork методы
 
 | Метод | Сигнатура | Описание |
@@ -117,7 +82,6 @@ internal/repository/
 | `Commit` | `Commit(ctx) error` | Фиксация транзакции |
 | `Rollback` | `Rollback(ctx) error` | Откат транзакции |
 | `Users` | `Users() UserRepository` | UserRepository в транзакции |
-| `Tokens` | `Tokens() TokenRepository` | TokenRepository в транзакции |
 
 ---
 
