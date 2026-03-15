@@ -60,6 +60,16 @@ tasks:
     cmds:
       - go mod tidy
 
+  wire:gen:
+    desc: "Генерация DI кода через Google Wire"
+    cmds:
+      - go run github.com/google/wire/cmd/wire@latest ./internal/di
+
+  wire:check:
+    desc: "Проверка DI кода на ошибки"
+    cmds:
+      - go run github.com/google/wire/cmd/wire@latest ./internal/di check
+
   install-buf:
     desc: "Устанавливает Buf в каталог bin"
     cmds:

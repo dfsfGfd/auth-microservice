@@ -24,6 +24,9 @@ go.work
 config.yaml
 !.config.example.yaml
 
+# Wire generated
+internal/di/wire_gen.go
+
 # IDE
 .idea/
 .vscode/
