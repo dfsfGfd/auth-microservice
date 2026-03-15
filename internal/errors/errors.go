@@ -31,7 +31,12 @@ var (
 	ErrEmailTooLong = errors.New("email too long")
 
 	// Ошибки username
-	ErrUsernameInvalid = errors.New("invalid username")
-	ErrUsernameTooShort = errors.New("username too short")
-	ErrUsernameTooLong = errors.New("username too long")
+	ErrUsernameInvalid   = errors.New("invalid username")
+	ErrUsernameTooShort  = errors.New("username too short")
+	ErrUsernameTooLong   = errors.New("username too long")
+
+	// Ошибки репозитория
+	ErrRepository        = errors.New("repository error")
+	ErrDBConnection      = errors.New("database connection error")
+	ErrDBQuery           = errors.New("database query error")
 )

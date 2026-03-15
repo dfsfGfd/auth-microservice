@@ -2,11 +2,12 @@ package auth
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
+	"auth-microservice/internal/errors"
 	"auth-microservice/internal/model"
 	"auth-microservice/internal/repository/converter"
 	dbmodel "auth-microservice/internal/repository/model"
@@ -29,8 +30,8 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.User
 		&dbUser.UpdatedAt,
 	)
 
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, errors.New("user not found")
+	if stderrors.Is(err, pgx.ErrNoRows) {
+		return nil, errors.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, err
