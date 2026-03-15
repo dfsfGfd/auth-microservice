@@ -49,3 +49,10 @@ func (p PasswordHash) Equal(other *PasswordHash) bool {
 	}
 	return p == *other
 }
+
+// NewPasswordHashFromString создаёт PasswordHash из строки без валидации.
+// Используется при загрузке из БД (валидация уже выполнена при сохранении).
+func NewPasswordHashFromString(hash string) *PasswordHash {
+	passwordHash := PasswordHash(hash)
+	return &passwordHash
+}
