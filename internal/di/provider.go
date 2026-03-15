@@ -11,10 +11,15 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/google/wire"
+	goredis "github.com/redis/go-redis/v9"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"auth-microservice/internal/config"
+	"auth-microservice/pkg/db/postgres"
+	dbredis "auth-microservice/pkg/db/redis"
 	"auth-microservice/pkg/cookies"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
@@ -22,10 +27,12 @@ import (
 
 // Application содержит все зависимости приложения
 type Application struct {
-	Config       *config.Config
-	Logger       *logger.Logger
-	JWTService   *jwt.Service
+	Config        *config.Config
+	Logger        *logger.Logger
+	JWTService    *jwt.Service
 	CookieService *cookies.Service
+	DB            *pgxpool.Pool
+	Redis         *goredis.Client
 	// TODO: добавить сервисы и репозитории
 	// AuthService  *service.AuthService
 	// UserRepo     repository.UserRepository
@@ -34,7 +41,13 @@ type Application struct {
 
 // CleanUp очищает ресурсы приложения
 func (a *Application) CleanUp(ctx context.Context) error {
-	// TODO: закрыть подключения к БД и Redis
+	// Закрываем подключения
+	if a.DB != nil {
+		a.DB.Close()
+	}
+	if a.Redis != nil {
+		a.Redis.Close()
+	}
 	return nil
 }
 
@@ -42,6 +55,12 @@ func (a *Application) CleanUp(ctx context.Context) error {
 var ProviderSet = wire.NewSet(
 	// Конфигурация
 	loadConfig,
+
+	// Подключения
+	ProvidePostgresConfig,
+	ProvideRedisConfig,
+	postgres.NewPool,
+	dbredis.NewClient,
 
 	// Логгер
 	NewLogger,
@@ -64,6 +83,27 @@ var ProviderSet = wire.NewSet(
 // loadConfig загружает конфигурацию из файла
 func loadConfig() (*config.Config, error) {
 	return config.Load("config.yaml")
+}
+
+// ProvidePostgresConfig предоставляет конфигурацию PostgreSQL
+func ProvidePostgresConfig(cfg *config.Config) postgres.Config {
+	return postgres.Config{
+		DSN:         cfg.Database.URL,
+		MaxConns:    int32(cfg.Database.MaxConnections),
+		ConnTimeout: time.Duration(cfg.Database.ConnectionTimeout) * time.Second,
+	}
+}
+
+// ProvideRedisConfig предоставляет конфигурацию Redis
+func ProvideRedisConfig(cfg *config.Config) dbredis.Config {
+	return dbredis.Config{
+		Addr:         cfg.Redis.URL,
+		DB:           cfg.Redis.DB,
+		PoolSize:     10,
+		ConnTimeout:  time.Duration(cfg.Redis.ConnectionTimeout) * time.Second,
+		ReadTimeout:  3 * time.Second,
+		WriteTimeout: 3 * time.Second,
+	}
 }
 
 // NewLogger создаёт логгер из конфигурации
@@ -127,11 +167,15 @@ func NewApplication(
 	log *logger.Logger,
 	jwtSvc *jwt.Service,
 	cookieSvc *cookies.Service,
+	db *pgxpool.Pool,
+	redisClient *goredis.Client,
 ) (*Application, error) {
 	return &Application{
-		Config:       cfg,
-		Logger:       log,
-		JWTService:   jwtSvc,
+		Config:        cfg,
+		Logger:        log,
+		JWTService:    jwtSvc,
 		CookieService: cookieSvc,
+		DB:            db,
+		Redis:         redisClient,
 	}, nil
 }
