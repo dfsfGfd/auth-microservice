@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package auth.v1;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dfsfGfd/auth-microservice/pkg/proto/auth/v1;authv1";
+
+// AuthService предоставляет методы для аутентификации
+service AuthService {
+  // Регистрация нового пользователя
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/register"
+      body: "*"
+    };
+  }
+
+  // Вход пользователя (получение токенов)
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/login"
+      body: "*"
+    };
+  }
+
+  // Выход пользователя (отзыв refresh токена)
+  rpc Logout(LogoutRequest) returns (LogoutResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/logout"
+      body: "*"
+    };
+  }
+
+  // Обновление access токена
+  rpc Refresh(RefreshRequest) returns (RefreshResponse) {
+    option (google.api.http) = {
+      post: "/api/auth/refresh"
+      body: "*"
+    };
+  }
+}
+
+// ==================== Common ====================
+
+// ResponseEnvelope — стандартная обёртка для всех ответов API
+message ResponseEnvelope {
+  int32 status_code = 1;
+  string message = 2;
+  google.protobuf.Value data = 3;
+}
+
+// ==================== Registration ====================
+
+message RegisterRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+}
+
+message RegisterData {
+  string user_id = 1;
+  string email = 2;
+  string username = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message RegisterResponse {
+  int32 status_code = 1;
+  string message = 2;
+  RegisterData data = 3;
+}
+
+// ==================== Login ====================
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message TokenData {
+  string access_token = 1;
+  string refresh_token = 2;
+  int32 expires_in = 3;
+  string token_type = 4;
+}
+
+message LoginResponse {
+  int32 status_code = 1;
+  string message = 2;
+  TokenData data = 3;
+}
+
+// ==================== Logout ====================
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message LogoutData {
+  bool success = 1;
+}
+
+message LogoutResponse {
+  int32 status_code = 1;
+  string message = 2;
+  LogoutData data = 3;
+}
+
+// ==================== Refresh ====================
+
+message RefreshRequest {
+  string refresh_token = 1;
+}
+
+message RefreshResponse {
+  int32 status_code = 1;
+  string message = 2;
+  TokenData data = 3;
+}
