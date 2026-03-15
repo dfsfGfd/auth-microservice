@@ -16,7 +16,7 @@ func UserToDB(user *model.User) *dbmodel.User {
 		ID:           user.ID(),
 		Email:        user.Email().String(),
 		Username:     user.Username().String(),
-		PasswordHash: user.PasswordHash().String(),
+		PasswordHash: user.PasswordHash().Value(),
 		CreatedAt:    user.CreatedAt(),
 		UpdatedAt:    user.UpdatedAt(),
 	}

@@ -1,6 +1,4 @@
-// Package model предоставляет модели данных для слоя хранения.
-//
-// Эти модели используются для маппинга между domain моделями и таблицами БД.
+// Package model предоставляет модели данных для слоя хранения PostgreSQL.
 package model
 
 import (
@@ -9,40 +7,39 @@ import (
 	"github.com/google/uuid"
 )
 
-// User модель пользователя для хранения в БД
+// User модель пользователя для хранения в БД.
+//
+// Соответствует таблице users:
+//
+//	CREATE TABLE users (
+//	    id              UUID PRIMARY KEY,
+//	    email           VARCHAR(254) NOT NULL UNIQUE,
+//	    username        VARCHAR(30) NOT NULL UNIQUE,
+//	    password_hash   VARCHAR(72) NOT NULL,
+//	    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+//	    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+//	);
 type User struct {
-	// ID идентификатор пользователя
+	// ID идентификатор пользователя (PRIMARY KEY)
 	ID uuid.UUID `db:"id"`
 
-	// Email адрес электронной почты
+	// Email адрес электронной почты (UNIQUE, NOT NULL)
 	Email string `db:"email"`
 
-	// Username имя пользователя
+	// Username имя пользователя (UNIQUE, NOT NULL)
 	Username string `db:"username"`
 
-	// PasswordHash хеш пароля
+	// PasswordHash хеш пароля bcrypt (NOT NULL, max 72 символа)
 	PasswordHash string `db:"password_hash"`
 
-	// CreatedAt время создания
+	// CreatedAt время создания (NOT NULL, DEFAULT NOW())
 	CreatedAt time.Time `db:"created_at"`
 
-	// UpdatedAt время последнего обновления
+	// UpdatedAt время последнего обновления (NOT NULL, DEFAULT NOW())
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
-// TableName возвращает имя таблицы для модели
+// TableName возвращает имя таблицы для модели.
 func (User) TableName() string {
 	return "users"
-}
-
-// UserEmailIndex индекс для поиска по email
-type UserEmailIndex struct {
-	UserID uuid.UUID `db:"user_id"`
-	Email  string    `db:"email"`
-}
-
-// UserUsernameIndex индекс для поиска по username
-type UserUsernameIndex struct {
-	UserID   uuid.UUID `db:"user_id"`
-	Username string    `db:"username"`
 }
