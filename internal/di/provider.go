@@ -18,6 +18,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"auth-microservice/internal/config"
+	"auth-microservice/internal/repository"
+	"auth-microservice/internal/repository/auth"
 	"auth-microservice/pkg/db/postgresql"
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/cookies"
@@ -33,10 +35,9 @@ type Application struct {
 	CookieService *cookies.Service
 	DB            *pgxpool.Pool
 	Redis         *goredis.Client
-	// TODO: добавить сервисы и репозитории
+	UserRepo      repository.UserRepository
+	// TODO: добавить сервисы
 	// AuthService  *service.AuthService
-	// UserRepo     repository.UserRepository
-	// TokenRepo    repository.TokenRepository
 }
 
 // CleanUp очищает ресурсы приложения
@@ -68,6 +69,9 @@ var ProviderSet = wire.NewSet(
 	ProvideRedisClient,
 	ProvideContext,
 
+	// Репозитории
+	auth.NewUserRepository,
+
 	// Логгер
 	NewLogger,
 
@@ -77,10 +81,8 @@ var ProviderSet = wire.NewSet(
 	// Cookie сервис
 	NewCookieService,
 
-	// TODO: добавить сервисы и репозитории
+	// TODO: добавить сервисы
 	// service.NewAuthService,
-	// repository.NewUserRepository,
-	// repository.NewTokenRepository,
 
 	// Application
 	NewApplication,
@@ -185,6 +187,7 @@ func NewApplication(
 	cookieSvc *cookies.Service,
 	db *pgxpool.Pool,
 	redisClient *goredis.Client,
+	userRepo repository.UserRepository,
 ) (*Application, error) {
 	return &Application{
 		Config:        cfg,
@@ -193,5 +196,6 @@ func NewApplication(
 		CookieService: cookieSvc,
 		DB:            db,
 		Redis:         redisClient,
+		UserRepo:      userRepo,
 	}, nil
 }
