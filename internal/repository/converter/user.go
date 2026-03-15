@@ -6,7 +6,7 @@ import (
 	dbmodel "auth-microservice/internal/repository/model"
 )
 
-// UserToDB конвертирует domain User в DB модель
+// UserToDB конвертирует domain User в DB модель.
 func UserToDB(user *model.User) *dbmodel.User {
 	if user == nil {
 		return nil
@@ -22,7 +22,7 @@ func UserToDB(user *model.User) *dbmodel.User {
 	}
 }
 
-// UserToDomain конвертирует DB модель в domain User
+// UserToDomain конвертирует DB модель в domain User.
 func UserToDomain(db *dbmodel.User) (*model.User, error) {
 	if db == nil {
 		return nil, nil
@@ -41,16 +41,11 @@ func UserToDomain(db *dbmodel.User) (*model.User, error) {
 
 	passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
 
-	// Создаём агрегат с восстановленными временными метками
-	user := &model.User{}
-	// Используем рефлексию или прямой доступ для восстановления
-	// Примечание: потребуется добавить методы для установки полей в model.User
-	// или использовать конструктор с параметрами
-
+	// Создаём агрегат
 	return model.NewUser(email, username, passwordHash)
 }
 
-// UserListToDB конвертирует список domain User в список DB моделей
+// UserListToDB конвертирует список domain User в список DB моделей.
 func UserListToDB(users []*model.User) []*dbmodel.User {
 	if users == nil {
 		return nil
@@ -63,7 +58,7 @@ func UserListToDB(users []*model.User) []*dbmodel.User {
 	return result
 }
 
-// UserListToDomain конвертирует список DB моделей в список domain User
+// UserListToDomain конвертирует список DB моделей в список domain User.
 func UserListToDomain(dbUsers []*dbmodel.User) ([]*model.User, error) {
 	if dbUsers == nil {
 		return nil, nil
