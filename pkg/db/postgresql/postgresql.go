@@ -1,12 +1,12 @@
-// Package postgres предоставляет подключение к PostgreSQL.
+// Package postgresql предоставляет подключение к PostgreSQL.
 //
 // Пример использования:
 //
-//	cfg := postgres.Config{
+//	cfg := postgresql.Config{
 //	    DSN: "postgres://user:pass@localhost:5432/db?sslmode=disable",
 //	}
-//	pool, err := postgres.NewPool(cfg)
-package postgres
+//	pool, err := postgresql.NewPool(ctx, cfg)
+package postgresql
 
 import (
 	"context"
@@ -52,7 +52,7 @@ func (c *Config) Validate() {
 }
 
 // NewPool создаёт пул подключений к PostgreSQL
-func NewPool(cfg Config) (*pgxpool.Pool, error) {
+func NewPool(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	cfg.Validate()
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DSN)
@@ -66,15 +66,12 @@ func NewPool(cfg Config) (*pgxpool.Pool, error) {
 	poolConfig.MaxConnIdleTime = cfg.MaxConnIdleTime
 	poolConfig.ConnConfig.ConnectTimeout = cfg.ConnTimeout
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
 
 	// Проверка подключения
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnTimeout)
-	defer cancel()
-
 	if err := pool.Ping(ctx); err != nil {
 		pool.Close()
 		return nil, fmt.Errorf("failed to ping database: %w", err)
@@ -84,7 +81,7 @@ func NewPool(cfg Config) (*pgxpool.Pool, error) {
 }
 
 // NewPoolNoPing создаёт пул подключений без проверки подключения
-func NewPoolNoPing(cfg Config) (*pgxpool.Pool, error) {
+func NewPoolNoPing(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	cfg.Validate()
 
 	poolConfig, err := pgxpool.ParseConfig(cfg.DSN)
@@ -98,5 +95,5 @@ func NewPoolNoPing(cfg Config) (*pgxpool.Pool, error) {
 	poolConfig.MaxConnIdleTime = cfg.MaxConnIdleTime
 	poolConfig.ConnConfig.ConnectTimeout = cfg.ConnTimeout
 
-	return pgxpool.NewWithConfig(context.Background(), poolConfig)
+	return pgxpool.NewWithConfig(ctx, poolConfig)
 }

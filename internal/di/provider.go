@@ -18,8 +18,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"auth-microservice/internal/config"
-	"auth-microservice/pkg/db/postgres"
-	dbredis "auth-microservice/pkg/db/redis"
+	"auth-microservice/pkg/db/postgresql"
+	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/cookies"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
@@ -51,6 +51,11 @@ func (a *Application) CleanUp(ctx context.Context) error {
 	return nil
 }
 
+// ProvideContext предоставляет контекст для приложения
+func ProvideContext() context.Context {
+	return context.Background()
+}
+
 // ProviderSet набор провайдеров для DI
 var ProviderSet = wire.NewSet(
 	// Конфигурация
@@ -59,8 +64,9 @@ var ProviderSet = wire.NewSet(
 	// Подключения
 	ProvidePostgresConfig,
 	ProvideRedisConfig,
-	postgres.NewPool,
-	dbredis.NewClient,
+	ProvidePostgresPool,
+	ProvideRedisClient,
+	ProvideContext,
 
 	// Логгер
 	NewLogger,
@@ -86,8 +92,8 @@ func loadConfig() (*config.Config, error) {
 }
 
 // ProvidePostgresConfig предоставляет конфигурацию PostgreSQL
-func ProvidePostgresConfig(cfg *config.Config) postgres.Config {
-	return postgres.Config{
+func ProvidePostgresConfig(cfg *config.Config) postgresql.Config {
+	return postgresql.Config{
 		DSN:         cfg.Database.URL,
 		MaxConns:    int32(cfg.Database.MaxConnections),
 		ConnTimeout: time.Duration(cfg.Database.ConnectionTimeout) * time.Second,
@@ -95,8 +101,8 @@ func ProvidePostgresConfig(cfg *config.Config) postgres.Config {
 }
 
 // ProvideRedisConfig предоставляет конфигурацию Redis
-func ProvideRedisConfig(cfg *config.Config) dbredis.Config {
-	return dbredis.Config{
+func ProvideRedisConfig(cfg *config.Config) redisdb.Config {
+	return redisdb.Config{
 		Addr:         cfg.Redis.URL,
 		DB:           cfg.Redis.DB,
 		PoolSize:     10,
@@ -104,6 +110,16 @@ func ProvideRedisConfig(cfg *config.Config) dbredis.Config {
 		ReadTimeout:  3 * time.Second,
 		WriteTimeout: 3 * time.Second,
 	}
+}
+
+// ProvidePostgresPool создаёт пул подключений к PostgreSQL
+func ProvidePostgresPool(ctx context.Context, cfg postgresql.Config) (*pgxpool.Pool, error) {
+	return postgresql.NewPool(ctx, cfg)
+}
+
+// ProvideRedisClient создаёт Redis клиент
+func ProvideRedisClient(ctx context.Context, cfg redisdb.Config) (*goredis.Client, error) {
+	return redisdb.NewClient(ctx, cfg)
 }
 
 // NewLogger создаёт логгер из конфигурации

@@ -1,12 +1,12 @@
-// Package redis предоставляет подключение к Redis.
+// Package redisdb предоставляет подключение к Redis.
 //
 // Пример использования:
 //
-//	cfg := redis.Config{
+//	cfg := redisdb.Config{
 //	    Addr: "localhost:6379",
 //	}
-//	client, err := redis.NewClient(cfg)
-package redis
+//	client, err := redisdb.NewClient(ctx, cfg)
+package redisdb
 
 import (
 	"context"
@@ -56,7 +56,7 @@ func (c *Config) Validate() {
 }
 
 // NewClient создаёт новый Redis клиент
-func NewClient(cfg Config) (*redis.Client, error) {
+func NewClient(ctx context.Context, cfg Config) (*redis.Client, error) {
 	cfg.Validate()
 
 	client := redis.NewClient(&redis.Options{
@@ -71,9 +71,6 @@ func NewClient(cfg Config) (*redis.Client, error) {
 	})
 
 	// Проверка подключения
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnTimeout)
-	defer cancel()
-
 	if err := client.Ping(ctx).Err(); err != nil {
 		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
@@ -82,10 +79,10 @@ func NewClient(cfg Config) (*redis.Client, error) {
 }
 
 // NewClientNoPing создаёт Redis клиент без проверки подключения
-func NewClientNoPing(cfg Config) *redis.Client {
+func NewClientNoPing(ctx context.Context, cfg Config) *redis.Client {
 	cfg.Validate()
 
-	return redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:         cfg.Addr,
 		Password:     cfg.Password,
 		DB:           cfg.DB,
@@ -95,4 +92,8 @@ func NewClientNoPing(cfg Config) *redis.Client {
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
 	})
+
+	_ = ctx // Можно использовать для логирования
+
+	return client
 }
