@@ -20,6 +20,10 @@ go.work
 .env
 !.env.example
 
+# Config
+config.yaml
+!.config.example.yaml
+
 # IDE
 .idea/
 .vscode/

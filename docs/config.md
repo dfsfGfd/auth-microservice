@@ -4,22 +4,27 @@
 
 ## 📋 Быстрый старт
 
-### 1. Создание .env файла
+### 1. Создание config.yaml файла
 
 ```bash
 # Для локальной разработки
-cp .env.example .env
+cp config.example.yaml config.yaml
 ```
 
 ### 2. Минимальная конфигурация
 
-Для запуска достаточно настроить 3 переменные:
+Для запуска достаточно настроить 3 секции:
 
-```bash
-# .env
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=your-secret-key-minimum-32-characters-long
+```yaml
+# config.yaml
+database:
+  url: postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
+
+redis:
+  url: redis://localhost:6379
+
+jwt:
+  secret: your-secret-key-minimum-32-characters-long
 ```
 
 ### 3. Запуск
@@ -28,67 +33,143 @@ JWT_SECRET=your-secret-key-minimum-32-characters-long
 go run cmd/server/main.go
 ```
 
-## 🔧 Переменные окружения
+## 🔧 Конфигурация
 
-### Обязательные
+### Server
 
-| Переменная | Описание | Пример |
-|------------|----------|--------|
-| `DATABASE_URL` | DSN PostgreSQL | `postgres://user:pass@localhost:5432/auth?sslmode=disable` |
-| `REDIS_URL` | DSN Redis | `redis://localhost:6379` |
-| `JWT_SECRET` | Секретный ключ JWT (мин. 32 символа) | `super-secret-key-change-in-production` |
+```yaml
+server:
+  port: 8080           # Порт HTTP сервера
+  grpc_port: 9090      # Порт gRPC сервера
+  env: development     # development, staging, production
+```
 
-### Рекомендуемые
+### Database (PostgreSQL)
 
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `SERVER_PORT` | `8080` | Порт HTTP сервера |
-| `ENV` | `development` | Режим: `development`, `staging`, `production` |
-| `LOG_LEVEL` | `info` | Уровень логов: `debug`, `info`, `warn`, `error` |
-| `LOG_FORMAT` | `json` | Формат: `json`, `console` |
+```yaml
+database:
+  url: postgres://user:pass@localhost:5432/auth?sslmode=disable
+  max_connections: 25          # Максимум подключений в пуле
+  connection_timeout: 10       # Таймаут подключения (сек)
+```
+
+### Redis
+
+```yaml
+redis:
+  url: redis://localhost:6379
+  db: 0                        # DB номер (0-15)
+  connection_timeout: 5        # Таймаут подключения (сек)
+```
 
 ### JWT
 
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `JWT_ACCESS_TTL` | `15m` | Время жизни access токена |
-| `JWT_REFRESH_TTL` | `336h` (14 дней) | Время жизни refresh токена |
-| `JWT_ISSUER` | `auth-service` | Название сервиса (iss claim) |
+```yaml
+jwt:
+  secret: super-secret-key-minimum-32-characters
+  access_ttl: 15m              # Время жизни access токена
+  refresh_ttl: 336h            # Время жизни refresh токена (14 дней)
+  issuer: auth-service         # Название сервиса (iss claim)
+```
 
 ### Cookie
 
-| Переменная | По умолчанию | Описание |
-|------------|--------------|----------|
-| `COOKIE_SECURE` | `true` | Передача только по HTTPS |
-| `COOKIE_HTTP_ONLY` | `true` | Защита от XSS |
-| `COOKIE_SAME_SITE` | `Strict` | CSRF защита: `Strict`, `Lax`, `None` |
-| `COOKIE_PATH` | `/` | Путь cookie |
-| `COOKIE_MAX_AGE` | `1209600` (14 дней) | Время жизни в секундах |
+```yaml
+cookie:
+  secure: false                # true для HTTPS
+  http_only: true              # Защита от XSS
+  same_site: Lax               # Strict, Lax, None
+  domain: ""                   # Домен (опционально)
+  path: /
+  max_age: 1209600             # 14 дней в секундах
+```
+
+### Logging
+
+```yaml
+logging:
+  level: debug                 # debug, info, warn, error, fatal
+  format: console              # json, console
+  service_name: auth-service
+```
+
+### CORS
+
+```yaml
+cors:
+  allowed_origins:
+    - http://localhost:3000
+    - http://localhost:8080
+  allowed_methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allowed_headers:
+    - Authorization
+    - Content-Type
+    - X-Request-ID
+  max_age: 86400
+```
+
+### Rate Limiting
+
+```yaml
+rate_limit:
+  register: 5    # Лимит запросов в минуту
+  login: 10
+  refresh: 30
+  logout: 60
+```
 
 ## 🖥 Конфигурация по окружениям
 
 ### Development (локально)
 
-```bash
-ENV=development
-LOG_LEVEL=debug
-LOG_FORMAT=console
-COOKIE_SECURE=false
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
-REDIS_URL=redis://localhost:6379
+```yaml
+server:
+  env: development
+  port: 8080
+
+logging:
+  level: debug
+  format: console
+
+cookie:
+  secure: false
+
+database:
+  url: postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
+
+redis:
+  url: redis://localhost:6379
 ```
 
 ### Production
 
-```bash
-ENV=production
-LOG_LEVEL=warn
-LOG_FORMAT=json
-COOKIE_SECURE=true
-COOKIE_SAME_SITE=Strict
-DATABASE_URL=postgres://user:pass@db.prod:5432/auth?sslmode=require
-REDIS_URL=redis://redis.prod:6379
-JWT_SECRET=<crypto-random-32-chars>
+```yaml
+server:
+  env: production
+  port: 8080
+
+logging:
+  level: warn
+  format: json
+
+cookie:
+  secure: true
+  same_site: Strict
+
+database:
+  url: postgres://user:pass@db.prod:5432/auth?sslmode=require
+  max_connections: 100
+
+redis:
+  url: redis://redis.prod:6379
+
+jwt:
+  secret: <crypto-random-32-chars>
 ```
 
 ## 🔒 Безопасность
@@ -105,35 +186,42 @@ go run -e 'package main; import "crypto/rand"; import "encoding/base64"; func ma
 
 ### Чеклист для продакшена
 
-- [ ] `JWT_SECRET` — криптографически случайный, минимум 32 символа
-- [ ] `COOKIE_SECURE=true` — только HTTPS
-- [ ] `COOKIE_HTTP_ONLY=true` — защита от XSS
-- [ ] `COOKIE_SAME_SITE=Strict` — защита от CSRF
-- [ ] `LOG_LEVEL=warn` или `error` — не логировать лишнего
-- [ ] `DATABASE_URL` — с `sslmode=require`
-- [ ] `.env` файл не закоммичен в git
+- [ ] `jwt.secret` — криптографически случайный, минимум 32 символа
+- [ ] `cookie.secure: true` — только HTTPS
+- [ ] `cookie.http_only: true` — защита от XSS
+- [ ] `cookie.same_site: Strict` — защита от CSRF
+- [ ] `logging.level: warn` или `error` — не логировать лишнего
+- [ ] `database.url` — с `sslmode=require`
+- [ ] `config.yaml` не закоммичен в git
 
 ## 📁 Файлы конфигурации
 
 | Файл | Описание |
 |------|----------|
-| `.env` | Локальная конфигурация (не коммитить) |
-| `.env.example` | Шаблон конфигурации (коммитить) |
+| `config.yaml` | Локальная конфигурация (не коммитить) |
+| `config.example.yaml` | Шаблон конфигурации (коммитить) |
 
 ## 🧪 Тестирование
 
 Для тестов используется отдельная конфигурация:
 
-```bash
-# .env.test
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth_test?sslmode=disable
-REDIS_URL=redis://localhost:6379
-JWT_SECRET=test-secret-key-for-testing-only
-LOG_LEVEL=error
+```yaml
+# config.test.yaml
+database:
+  url: postgres://postgres:postgres@localhost:5432/auth_test?sslmode=disable
+
+redis:
+  url: redis://localhost:6379
+
+jwt:
+  secret: test-secret-key-for-testing-only
+
+logging:
+  level: error
 ```
 
 ## 📚 Ссылки
 
-- [Шаблон конфигурации](../.env.example)
+- [Шаблон конфигурации](../config.example.yaml)
 - [README](../README.md)
 - [API Documentation](api.md)
