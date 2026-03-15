@@ -8,7 +8,6 @@
 
 - [Структура пакета](#структура-пакета)
 - [UserRepository методы](#userrepository-методы)
-- [UnitOfWork методы](#unitofwork-методы)
 - [Схема именования](#схема-именования)
 - [Доменные ошибки](#доменные-ошибки)
 
@@ -19,69 +18,34 @@
 ```
 internal/repository/
 ├── errors/
-│   └── errors.go           # Доменные ошибки репозитория
+│   └── errors.go           # Доменные ошибки
 ├── model/
-│   └── user.go             # DB модели (маппинг)
+│   └── user.go             # DB модели
 ├── converter/
 │   └── user.go             # Конвертеры domain ↔ DB
-├── auth/                   # PostgreSQL реализация
-│   ├── user_repository.go  # UserRepository реализация
-│   ├── transaction.go      # UnitOfWork реализация
-│   └── doc.go
-├── user_repository.go      # UserRepository интерфейс
-└── token_repository.go     # TokenRepository интерфейс (Redis, отдельно)
+├── auth/
+│   ├── repository.go       # Конструктор
+│   ├── save.go             # Save метод
+│   ├── delete_by_id.go     # DeleteByID метод
+│   ├── get_by_id.go        # GetByID метод
+│   ├── get_by_email.go     # GetByEmail метод
+│   ├── get_by_username.go  # GetByUsername метод
+│   └── get_all.go          # GetAll метод
+└── repository.go           # Интерфейс UserRepository
 ```
 
 ---
 
 ## UserRepository методы
 
-### Write Operations (Операции записи)
-
-| Метод | Сигнатура | Описание | Ошибки |
-|-------|-----------|----------|--------|
-| `Create` | `Create(ctx, user) error` | Создание нового пользователя | `ErrUserAlreadyExists`, `ErrEmailAlreadyExists`, `ErrUsernameAlreadyExists` |
-| `Update` | `Update(ctx, user) error` | Обновление существующего | `ErrUserNotFound`, `ErrEmailAlreadyExists`, `ErrUsernameAlreadyExists` |
-| `Delete` | `Delete(ctx, id) error` | Удаление по ID | `ErrUserNotFound` |
-| `DeleteByEmail` | `DeleteByEmail(ctx, email) error` | Удаление по email | `ErrUserNotFound` |
-| `DeleteByUsername` | `DeleteByUsername(ctx, username) error` | Удаление по username | `ErrUserNotFound` |
-
-### Read Operations (Операции чтения)
-
-| Метод | Сигнатура | Описание | Возврат | Ошибки |
-|-------|-----------|----------|---------|--------|
-| `GetByID` | `GetByID(ctx, id) (*User, error)` | Получение по ID | `*model.User` | `ErrUserNotFound` |
-| `GetByEmail` | `GetByEmail(ctx, email) (*User, error)` | Получение по email | `*model.User` | `ErrUserNotFound` |
-| `GetByUsername` | `GetByUsername(ctx, username) (*User, error)` | Получение по username | `*model.User` | `ErrUserNotFound` |
-| `Find` | `Find(ctx, spec) ([]*User, error)` | Поиск по спецификации | `[]*model.User` | — |
-| `List` | `List(ctx, limit, offset) ([]*User, error)` | Список с пагинацией | `[]*model.User` | — |
-
-### Check Operations (Проверки)
-
-| Метод | Сигнатура | Описание | Возврат |
-|-------|-----------|----------|---------|
-| `Exists` | `Exists(ctx, id) (bool, error)` | Проверка по ID | `bool` |
-| `ExistsByEmail` | `ExistsByEmail(ctx, email) (bool, error)` | Проверка по email | `bool` |
-| `ExistsByUsername` | `ExistsByUsername(ctx, username) (bool, error)` | Проверка по username | `bool` |
-
-### Count Operations (Подсчёт)
-
-| Метод | Сигнатура | Описание | Возврат |
-|-------|-----------|----------|---------|
-| `Count` | `Count(ctx) (int64, error)` | Общее количество | `int64` |
-| `CountByEmail` | `CountByEmail(ctx, email) (int64, error)` | Количество по email | `int64` |
-| `CountByUsername` | `CountByUsername(ctx, username) (int64, error)` | Количество по username | `int64` |
-
----
-
-## UnitOfWork методы
-
-| Метод | Сигнатура | Описание |
-|-------|-----------|----------|
-| `Begin` | `Begin(ctx) (context.Context, error)` | Начало транзакции |
-| `Commit` | `Commit(ctx) error` | Фиксация транзакции |
-| `Rollback` | `Rollback(ctx) error` | Откат транзакции |
-| `Users` | `Users() UserRepository` | UserRepository в транзакции |
+| Метод | Файл | Сигнатура | Описание |
+|-------|------|-----------|----------|
+| `Save` | `save.go` | `Save(ctx, user) error` | Сохранение (создание или обновление) |
+| `DeleteByID` | `delete_by_id.go` | `DeleteByID(ctx, id) error` | Удаление по ID |
+| `GetByID` | `get_by_id.go` | `GetByID(ctx, id) (*User, error)` | Получение по ID |
+| `GetByEmail` | `get_by_email.go` | `GetByEmail(ctx, email) (*User, error)` | Получение по email |
+| `GetByUsername` | `get_by_username.go` | `GetByUsername(ctx, username) (*User, error)` | Получение по username |
+| `GetAll` | `get_all.go` | `GetAll(ctx) ([]*User, error)` | Получить всех |
 
 ---
 
@@ -95,65 +59,72 @@ internal/repository/
 
 **Операции:**
 - `Get` — получение одного объекта
-- `Find` — поиск нескольких объектов
-- `Create` — создание
-- `Update` — обновление
+- `Save` — сохранение (создание или обновление)
 - `Delete` — удаление
-- `Exists` — проверка существования
-- `Count` — подсчёт количества
 
 **Критерии:**
 - `ByID` — по идентификатору
 - `ByEmail` — по email
 - `ByUsername` — по username
-- `ByUserID` — по ID пользователя
 
 ### Примеры
 
 ```go
 // Правильно
+repo.Save(ctx, user)
 repo.GetByID(ctx, id)
 repo.GetByEmail(ctx, email)
-repo.Find(ctx, spec)
-repo.Exists(ctx, id)
-repo.Count(ctx)
+repo.GetByUsername(ctx, username)
+repo.GetAll(ctx)
+repo.DeleteByID(ctx, id)
 
 // Неправильно
 repo.GetUserById(ctx, id)      // избыточно "User"
 repo.FindUsers(ctx, spec)      // избыточно "Users"
-repo.CheckExists(ctx, id)      // избыточно "Check"
+repo.Delete(ctx, id)           // неоднозначно
 ```
 
 ---
 
 ## Доменные ошибки
 
-### Базовые ошибки (`repository/errors/errors.go`)
+### Базовые ошибки (`internal/errors/errors.go`)
 
 ```go
-// Общие ошибки репозитория
-ErrNotFound              // Агрегат не найден
-ErrAlreadyExists         // Агрегат уже существует
-ErrUniqueViolation       // Нарушение уникальности
-ErrForeignKeyViolation   // Нарушение внешнего ключа
-ErrTransactionActive     // Активная транзакция
-ErrNoTransaction         // Нет активной транзакции
-```
+// Общие ошибки
+ErrInternal        // внутренняя ошибка
+ErrNotFound        // не найдено
+ErrAlreadyExists   // уже существует
+ErrInvalidArgument // невалидный аргумент
 
-### Ошибки пользователя
+// Ошибки аутентификации
+ErrUnauthorized      // не авторизован
+ErrForbidden         // доступ запрещён
+ErrTokenInvalid      // невалидный токен
+ErrTokenExpired      // токен истёк
 
-```go
-ErrUserNotFound          // Пользователь не найден
-ErrUserAlreadyExists     // Пользователь уже существует
-ErrEmailAlreadyExists    // Email уже зарегистрирован
-ErrUsernameAlreadyExists // Username уже занят
-```
+// Ошибки пользователя
+ErrUserNotFound      // пользователь не найден
+ErrUserExists        // пользователь уже существует
+ErrInvalidCredentials // невалидные учётные данные
 
-### Ошибки токена
+// Ошибки пароля
+ErrPasswordInvalid   // невалидный пароль
+ErrPasswordTooShort  // пароль слишком короткий
 
-```go
-ErrTokenNotFound         // Токен не найден
-ErrTokenExpired          // Токен истёк
+// Ошибки email
+ErrEmailInvalid      // невалидный email
+ErrEmailTooLong      // email слишком длинный
+
+// Ошибки username
+ErrUsernameInvalid   // невалидный username
+ErrUsernameTooShort  // username слишком короткий
+ErrUsernameTooLong   // username слишком длинный
+
+// Ошибки репозитория
+ErrRepository        // ошибка репозитория
+ErrDBConnection      // ошибка подключения к БД
+ErrDBQuery           // ошибка запроса к БД
 ```
 
 ### Использование ошибок
@@ -161,18 +132,14 @@ ErrTokenExpired          // Токен истёк
 ```go
 user, err := repo.GetByID(ctx, id)
 if err != nil {
-    if errors.Is(err, repoerrors.ErrUserNotFound) {
+    if errors.Is(err, errors.ErrUserNotFound) {
         // Обработка "не найден"
     }
     return err
 }
 
-exists, err := repo.ExistsByEmail(ctx, email)
-if err != nil {
+if err := repo.Save(ctx, user); err != nil {
     return err
-}
-if exists {
-    return repoerrors.ErrEmailAlreadyExists
 }
 ```
 
@@ -189,7 +156,7 @@ if err != nil {
     return err
 }
 
-if err := userRepo.Create(ctx, user); err != nil {
+if err := userRepo.Save(ctx, user); err != nil {
     return err
 }
 
@@ -201,52 +168,27 @@ if err != nil {
 
 // Обновление
 user.UpdateEmail(newEmail)
-if err := userRepo.Update(ctx, user); err != nil {
+if err := userRepo.Save(ctx, user); err != nil {
+    return err
+}
+
+// Удаление
+if err := userRepo.DeleteByID(ctx, userID); err != nil {
     return err
 }
 ```
 
-### Транзакции
+### Получение всех пользователей
 
 ```go
-// Начало транзакции
-txCtx, err := uow.Begin(ctx)
+users, err := userRepo.GetAll(ctx)
 if err != nil {
     return err
 }
-defer func() {
-    if r := recover(); r != nil {
-        uow.Rollback(txCtx)
-    }
-}()
 
-// Операции в транзакции
-user, _ := uow.Users().GetByID(txCtx, userID)
-user.UpdateEmail(newEmail)
-if err := uow.Users().Update(txCtx, user); err != nil {
-    uow.Rollback(txCtx)
-    return err
+for _, user := range users {
+    // Обработка пользователя
 }
-
-// Фиксация
-if err := uow.Commit(txCtx); err != nil {
-    return err
-}
-```
-
-### Спецификация поиска
-
-```go
-spec := repository.UserSpec{
-    Email:        ptr.String("user@example.com"),
-    CreatedAfter: ptr.Time(time.Now().Add(-24 * time.Hour)),
-    Limit:        10,
-    Offset:       0,
-    OrderBy:      "created_at",
-    OrderDir:     "DESC",
-}
-
-users, err := userRepo.Find(ctx, spec)
 ```
 
 ---
@@ -254,5 +196,4 @@ users, err := userRepo.Find(ctx, spec)
 ## Ссылки
 
 - [Repository Pattern](https://martinfowler.com/eaaCatalog/repository.html)
-- [Unit of Work](https://martinfowler.com/eaaCatalog/unitOfWork.html)
 - [DDD Repository](https://domainlanguage.com/ddd/repositories/)

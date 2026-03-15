@@ -66,26 +66,42 @@
 │   │   ├── password.go         # PlainPassword VO
 │   │   └── password_hash.go    # PasswordHash VO
 │   │
+│   ├── repository/             # Репозитории (PostgreSQL)
+│   │   ├── repository.go       # Интерфейсы репозиториев
+│   │   ├── model/              # DB модели
+│   │   ├── converter/          # Конвертеры domain ↔ DB
+│   │   └── auth/               # PostgreSQL реализация
+│   │
+│   ├── config/                 # Загрузка конфигурации
+│   ├── di/                     # Dependency Injection (Google Wire)
+│   ├── errors/                 # Доменные ошибки
 │   ├── service/                # Бизнес-логика (сервисный слой)
-│   ├── handler/                # gRPC хендлеры
-│   ├── repository/             # Репозитории (PG, Redis)
-│   └── errors/                 # Доменные ошибки
+│   └── handler/                # gRPC хендлеры
 │
 ├── pkg/
-│   ├── proto/                  # Сгенерированный Proto код
+│   ├── proto/                  # Сгенерированный Proto код (gRPC + REST)
 │   ├── bcrypt/                 # Хеширование паролей
 │   ├── jwt/                    # JWT утилиты
-│   └── cookies/                # Cookie утилиты
+│   ├── cookies/                # Cookie утилиты
+│   ├── logger/                 # Логирование (zerolog)
+│   └── db/                     # Подключения к БД
+│       ├── postgresql/         # PostgreSQL подключение
+│       └── redisdb/            # Redis подключение
 │
-├── api/                        # Swagger/OpenAPI спецификации
+├── api/
+│   └── auth/v1/                # Swagger/OpenAPI спецификации
 ├── proto/
 │   └── auth/v1/
 │       └── auth.proto          # Proto контракты
 │
 ├── docs/
+│   ├── README.md               # Основная документация
 │   ├── api.md                  # API документация
-│   └── README.md               # Этот файл
+│   ├── config.md               # Руководство по конфигурации
+│   └── repository_methods.md   # Repository layer документация
 │
+├── config.yaml                 # Локальная конфигурация
+├── config.example.yaml         # Шаблон конфигурации
 ├── Taskfile.yml                # Taskfile команды
 └── go.mod
 ```
@@ -258,9 +274,15 @@ github.com/dfsfGfd/postgresql-connect   // PostgreSQL клиент (pgx)
 
 // Стандартные библиотеки
 github.com/google/uuid                  // UUID генерация
+github.com/google/wire                  // Dependency Injection
+github.com/golang-jwt/jwt/v5            // JWT токены
+github.com/rs/zerolog                   // Логирование
+github.com/redis/go-redis/v9            // Redis клиент
+github.com/jackc/pgx/v5                 // PostgreSQL драйвер
 golang.org/x/crypto                     // bcrypt
 google.golang.org/grpc                  // gRPC
 google.golang.org/protobuf              // Protocol Buffers
+github.com/grpc-ecosystem/grpc-gateway/v2 // gRPC → REST
 ```
 
 ### Proto зависимости
@@ -278,6 +300,8 @@ deps:
 | Документ | Описание |
 |----------|----------|
 | [API Documentation](api.md) | Полное описание API endpoints |
+| [Configuration Guide](config.md) | Руководство по настройке |
+| [Repository Methods](repository_methods.md) | Repository layer с DDD паттернами |
 | [Swagger UI](http://localhost:8080/swagger/) | Интерактивная документация (после запуска) |
 
 ---
