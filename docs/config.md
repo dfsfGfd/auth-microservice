@@ -37,12 +37,44 @@ go run cmd/server/main.go
 
 ### Server
 
+Микросервис поддерживает **параллельную работу REST и gRPC**:
+
 ```yaml
 server:
-  port: 8080           # Порт HTTP сервера
-  grpc_port: 9090      # Порт gRPC сервера
-  env: development     # development, staging, production
+  http_port: 8080          # Порт HTTP (REST + grpc-gateway)
+  grpc_port: 9090          # Порт gRPC (прямой доступ)
+  env: development         # development, staging, production
+  read_timeout: 10         # Таймаут чтения (сек)
+  write_timeout: 10        # Таймаут записи (сек)
+  idle_timeout: 60         # Таймаут простоя соединения (сек)
 ```
+
+**Архитектура:**
+
+```
+┌─────────────────────────────────────────────────┐
+│                  Auth Microservice              │
+│                                                 │
+│  ┌─────────────┐    ┌─────────────────────┐    │
+│  │ HTTP:8080   │───▶│  grpc-gateway       │    │
+│  │ (REST API)  │    │  (REST → gRPC)      │    │
+│  └─────────────┘    └──────────┬──────────┘    │
+│                                │                │
+│  ┌─────────────┐               │                │
+│  │ gRPC:9090   │───────────────┼────────────────┤
+│  │ (direct)    │               │                │
+│  └─────────────┘               ▼                │
+│                         ┌─────────────┐         │
+│                         │  gRPC       │         │
+│                         │  Service    │         │
+│                         └─────────────┘         │
+└─────────────────────────────────────────────────┘
+```
+
+| Порт | Протокол | Описание |
+|------|----------|----------|
+| `8080` | HTTP/REST | REST API через grpc-gateway |
+| `9090` | gRPC | Прямой gRPC доступ для микросервисов |
 
 ### Database (PostgreSQL)
 

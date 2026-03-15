@@ -2,9 +2,16 @@
 # Скопируйте в config.yaml и настройте под ваше окружение
 
 server:
-  port: 8080
+  # HTTP порт для REST API + grpc-gateway
+  http_port: 8080
+  # gRPC порт для прямого gRPC доступа (опционально)
   grpc_port: 9090
-  env: development  # development, staging, production
+  # Режим окружения: development, staging, production
+  env: development
+  # Таймауты (сек)
+  read_timeout: 10
+  write_timeout: 10
+  idle_timeout: 60
 
 database:
   # PostgreSQL DSN
