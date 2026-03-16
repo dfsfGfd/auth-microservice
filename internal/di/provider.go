@@ -20,7 +20,9 @@ import (
 	"auth-microservice/internal/config"
 	"auth-microservice/internal/cache/token"
 	"auth-microservice/internal/repository"
-	"auth-microservice/internal/repository/auth"
+	repositoryAuth "auth-microservice/internal/repository/auth"
+	serviceAuth "auth-microservice/internal/service/auth"
+	"auth-microservice/pkg/bcrypt"
 	"auth-microservice/pkg/db/postgresql"
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/cookies"
@@ -38,8 +40,7 @@ type Application struct {
 	Redis         *goredis.Client
 	AccountRepo   repository.AccountRepository
 	TokenCache    *token.RedisCache
-	// TODO: добавить сервисы
-	// AuthService  *service.AuthService
+	AuthService   *serviceAuth.AuthService
 }
 
 // CleanUp очищает ресурсы приложения
@@ -72,7 +73,7 @@ var ProviderSet = wire.NewSet(
 	ProvideContext,
 
 	// Репозитории
-	auth.NewAccountRepository,
+	repositoryAuth.NewAccountRepository,
 
 	// Кэш токенов
 	ProvideTokenCachePrefix,
@@ -87,8 +88,11 @@ var ProviderSet = wire.NewSet(
 	// Cookie сервис
 	NewCookieService,
 
-	// TODO: добавить сервисы
-	// service.NewAuthService,
+	// Bcrypt hasher
+	bcrypt.NewService,
+
+	// AuthService
+	serviceAuth.NewAuthService,
 
 	// Application
 	NewApplication,
@@ -200,6 +204,7 @@ func NewApplication(
 	redisClient *goredis.Client,
 	accountRepo repository.AccountRepository,
 	tokenCache *token.RedisCache,
+	authService *serviceAuth.AuthService,
 ) (*Application, error) {
 	return &Application{
 		Config:        cfg,
@@ -210,5 +215,6 @@ func NewApplication(
 		Redis:         redisClient,
 		AccountRepo:   accountRepo,
 		TokenCache:    tokenCache,
+		AuthService:   authService,
 	}, nil
 }

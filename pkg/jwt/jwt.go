@@ -208,3 +208,8 @@ func (s *Service) ValidateRefreshToken(tokenString string) (*Claims, error) {
 func (s *Service) GetConfig() Config {
 	return s.config
 }
+
+// RefreshTTLDuration возвращает время жизни refresh токена
+func (s *Service) RefreshTTLDuration() (time.Duration, error) {
+	return s.config.RefreshTokenTTL, nil
+}
