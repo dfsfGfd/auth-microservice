@@ -19,6 +19,7 @@ import (
 
 	"auth-microservice/internal/config"
 	"auth-microservice/internal/cache/token"
+	"auth-microservice/internal/handler/auth"
 	"auth-microservice/internal/repository"
 	repositoryAuth "auth-microservice/internal/repository/auth"
 	serviceAuth "auth-microservice/internal/service/auth"
@@ -41,6 +42,7 @@ type Application struct {
 	AccountRepo   repository.AccountRepository
 	TokenCache    *token.RedisCache
 	AuthService   *serviceAuth.AuthService
+	AuthHandler   *auth.Handler
 }
 
 // CleanUp очищает ресурсы приложения
@@ -93,6 +95,9 @@ var ProviderSet = wire.NewSet(
 
 	// AuthService
 	serviceAuth.NewAuthService,
+
+	// AuthHandler
+	auth.NewHandler,
 
 	// Application
 	NewApplication,
@@ -205,6 +210,7 @@ func NewApplication(
 	accountRepo repository.AccountRepository,
 	tokenCache *token.RedisCache,
 	authService *serviceAuth.AuthService,
+	authHandler *auth.Handler,
 ) (*Application, error) {
 	return &Application{
 		Config:        cfg,
@@ -216,5 +222,6 @@ func NewApplication(
 		AccountRepo:   accountRepo,
 		TokenCache:    tokenCache,
 		AuthService:   authService,
+		AuthHandler:   authHandler,
 	}, nil
 }
