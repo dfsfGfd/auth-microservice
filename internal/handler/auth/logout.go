@@ -3,9 +3,12 @@ package auth
 import (
 	"context"
 
+	stderrors "errors"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/proto/auth/v1"
 )
 
@@ -29,9 +32,9 @@ func (h *Handler) Logout(ctx context.Context, req *authv1.LogoutRequest) (*authv
 
 func (h *Handler) logoutError(err error) (*authv1.LogoutResponse, error) {
 	switch {
-	case err.Error() == "token expired":
+	case stderrors.Is(err, jwt.ErrExpiredToken):
 		return nil, status.Error(codes.Unauthenticated, "token expired")
-	case err.Error() == "invalid token":
+	case stderrors.Is(err, jwt.ErrInvalidToken):
 		return nil, status.Error(codes.Unauthenticated, "invalid token")
 	default:
 		h.log.Error("logout failed", "error", err)
