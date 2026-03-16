@@ -2,16 +2,13 @@ package token
 
 import (
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"time"
 
 	"github.com/redis/go-redis/v9"
-)
 
-// Ошибки кэша
-var (
-	ErrTokenNotFound = errors.New("token not found")
+	"auth-microservice/internal/errors"
 )
 
 // RedisCache реализация TokenCache на Redis.
@@ -47,8 +44,8 @@ func (c *RedisCache) Get(ctx context.Context, token string) (string, error) {
 	key := c.key(token)
 	val, err := c.client.Get(ctx, key).Result()
 	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			return "", ErrTokenNotFound
+		if stderrors.Is(err, redis.Nil) {
+			return "", errors.ErrRefreshTokenNotFound
 		}
 		return "", fmt.Errorf("redis get: %w", err)
 	}

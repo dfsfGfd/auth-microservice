@@ -16,6 +16,7 @@ var (
 	ErrTokenExpired      = errors.New("token expired")
 	ErrSessionNotFound   = errors.New("session not found")
 	ErrSessionRevoked    = errors.New("session revoked")
+	ErrRefreshTokenNotFound = errors.New("refresh token not found")
 
 	// Ошибки аккаунта
 	ErrAccountNotFound = errors.New("account not found")
