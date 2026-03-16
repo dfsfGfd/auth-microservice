@@ -12,29 +12,28 @@ import (
 	dbmodel "auth-microservice/internal/repository/model"
 )
 
-// GetByEmail получает пользователя по email.
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
-	var dbUser dbmodel.User
+// GetByEmail получает аккаунт по email.
+func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (*model.Account, error) {
+	var dbAccount dbmodel.Account
 
 	err := r.pool.QueryRow(ctx, `
-		SELECT id, email, username, password_hash, created_at, updated_at
-		FROM users
+		SELECT id, email, password, created_at, updated_at
+		FROM accounts
 		WHERE email = $1
 	`, email).Scan(
-		&dbUser.ID,
-		&dbUser.Email,
-		&dbUser.Username,
-		&dbUser.PasswordHash,
-		&dbUser.CreatedAt,
-		&dbUser.UpdatedAt,
+		&dbAccount.ID,
+		&dbAccount.Email,
+		&dbAccount.PasswordHash,
+		&dbAccount.CreatedAt,
+		&dbAccount.UpdatedAt,
 	)
 
 	if stderrors.Is(err, pgx.ErrNoRows) {
-		return nil, errors.ErrUserNotFound
+		return nil, errors.ErrAccountNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return converter.UserToDomain(&dbUser)
+	return converter.AccountToDomain(&dbAccount)
 }

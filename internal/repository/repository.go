@@ -9,23 +9,20 @@ import (
 	"auth-microservice/internal/model"
 )
 
-// UserRepository интерфейс для работы с пользователями в PostgreSQL.
-type UserRepository interface {
-	// Save сохраняет пользователя (создаёт или обновляет).
-	Save(ctx context.Context, user *model.User) error
+// AccountRepository интерфейс для работы с аккаунтами в PostgreSQL.
+type AccountRepository interface {
+	// Save сохраняет аккаунт (создаёт или обновляет).
+	Save(ctx context.Context, account *model.Account) error
 
-	// DeleteByID удаляет пользователя по ID.
+	// DeleteByID удаляет аккаунт по ID.
 	DeleteByID(ctx context.Context, id uuid.UUID) error
 
-	// GetByID получает пользователя по ID.
-	GetByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	// GetByID получает аккаунт по ID.
+	GetByID(ctx context.Context, id uuid.UUID) (*model.Account, error)
 
-	// GetByEmail получает пользователя по email.
-	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	// GetByEmail получает аккаунт по email.
+	GetByEmail(ctx context.Context, email string) (*model.Account, error)
 
-	// GetByUsername получает пользователя по username.
-	GetByUsername(ctx context.Context, username string) (*model.User, error)
-
-	// GetAll возвращает всех пользователей.
-	GetAll(ctx context.Context) ([]*model.User, error)
+	// GetAll возвращает все аккаунты.
+	GetAll(ctx context.Context) ([]*model.Account, error)
 }

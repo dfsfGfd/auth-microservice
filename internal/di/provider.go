@@ -35,7 +35,7 @@ type Application struct {
 	CookieService *cookies.Service
 	DB            *pgxpool.Pool
 	Redis         *goredis.Client
-	UserRepo      repository.UserRepository
+	AccountRepo   repository.AccountRepository
 	// TODO: добавить сервисы
 	// AuthService  *service.AuthService
 }
@@ -70,7 +70,7 @@ var ProviderSet = wire.NewSet(
 	ProvideContext,
 
 	// Репозитории
-	auth.NewUserRepository,
+	auth.NewAccountRepository,
 
 	// Логгер
 	NewLogger,
@@ -187,7 +187,7 @@ func NewApplication(
 	cookieSvc *cookies.Service,
 	db *pgxpool.Pool,
 	redisClient *goredis.Client,
-	userRepo repository.UserRepository,
+	accountRepo repository.AccountRepository,
 ) (*Application, error) {
 	return &Application{
 		Config:        cfg,
@@ -196,6 +196,6 @@ func NewApplication(
 		CookieService: cookieSvc,
 		DB:            db,
 		Redis:         redisClient,
-		UserRepo:      userRepo,
+		AccountRepo:   accountRepo,
 	}, nil
 }

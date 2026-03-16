@@ -11,7 +11,7 @@
 //	})
 //
 //	// Генерация токенов
-//	tokens, err := service.GenerateTokens(userID, email, username)
+//	tokens, err := service.GenerateTokens(accountID, email)
 
 // // Валидация токена
 // claims, err := service.ValidateToken(tokenString)
@@ -43,10 +43,9 @@ const (
 
 // Claims представляет claims JWT токена
 type Claims struct {
-	UserID   string    `json:"sub"`
-	Email    string    `json:"email,omitempty"`
-	Username string    `json:"username,omitempty"`
-	Type     TokenType `json:"type"`
+	AccountID string    `json:"sub"`
+	Email     string    `json:"email,omitempty"`
+	Type      TokenType `json:"type"`
 	jwt.RegisteredClaims
 }
 
@@ -104,13 +103,13 @@ func NewService(config Config) (*Service, error) {
 }
 
 // GenerateTokens генерирует пару access и refresh токенов
-func (s *Service) GenerateTokens(userID, email, username string) (*TokenPair, error) {
-	accessToken, err := s.generateToken(userID, email, username, AccessToken, s.config.AccessTokenTTL)
+func (s *Service) GenerateTokens(accountID, email string) (*TokenPair, error) {
+	accessToken, err := s.generateToken(accountID, email, AccessToken, s.config.AccessTokenTTL)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := s.generateToken(userID, email, username, RefreshToken, s.config.RefreshTokenTTL)
+	refreshToken, err := s.generateToken(accountID, email, RefreshToken, s.config.RefreshTokenTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -124,17 +123,16 @@ func (s *Service) GenerateTokens(userID, email, username string) (*TokenPair, er
 }
 
 // generateToken создаёт JWT токен
-func (s *Service) generateToken(userID, email, username string, tokenType TokenType, ttl time.Duration) (string, error) {
+func (s *Service) generateToken(accountID, email string, tokenType TokenType, ttl time.Duration) (string, error) {
 	now := time.Now()
 
 	claims := Claims{
-		UserID:   userID,
-		Email:    email,
-		Username: username,
-		Type:     tokenType,
+		AccountID: accountID,
+		Email:     email,
+		Type:      tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.Issuer,
-			Subject:   userID,
+			Subject:   accountID,
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(ttl)),
 			NotBefore: jwt.NewNumericDate(now),

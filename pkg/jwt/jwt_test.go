@@ -86,11 +86,10 @@ func TestService_GenerateTokens(t *testing.T) {
 	service := createTestService(t)
 
 	t.Run("успешная генерация токенов", func(t *testing.T) {
-		userID := "550e8400-e29b-41d4-a716-446655440000"
+		accountID := "550e8400-e29b-41d4-a716-446655440000"
 		email := "user@example.com"
-		username := "testuser"
 
-		tokens, err := service.GenerateTokens(userID, email, username)
+		tokens, err := service.GenerateTokens(accountID, email)
 
 		require.NoError(t, err)
 		require.NotNil(t, tokens)
@@ -101,11 +100,10 @@ func TestService_GenerateTokens(t *testing.T) {
 	})
 
 	t.Run("токены имеют разные значения", func(t *testing.T) {
-		userID := "550e8400-e29b-41d4-a716-446655440000"
+		accountID := "550e8400-e29b-41d4-a716-446655440000"
 		email := "user@example.com"
-		username := "testuser"
 
-		tokens, err := service.GenerateTokens(userID, email, username)
+		tokens, err := service.GenerateTokens(accountID, email)
 
 		require.NoError(t, err)
 		assert.NotEqual(t, tokens.AccessToken, tokens.RefreshToken)
@@ -116,30 +114,27 @@ func TestService_ValidateToken(t *testing.T) {
 	service := createTestService(t)
 
 	t.Run("успешная валидация access токена", func(t *testing.T) {
-		userID := "550e8400-e29b-41d4-a716-446655440000"
+		accountID := "550e8400-e29b-41d4-a716-446655440000"
 		email := "user@example.com"
-		username := "testuser"
 
-		tokens, err := service.GenerateTokens(userID, email, username)
+		tokens, err := service.GenerateTokens(accountID, email)
 		require.NoError(t, err)
 
 		claims, err := service.ValidateToken(tokens.AccessToken)
 
 		require.NoError(t, err)
 		require.NotNil(t, claims)
-		assert.Equal(t, userID, claims.UserID)
+		assert.Equal(t, accountID, claims.AccountID)
 		assert.Equal(t, email, claims.Email)
-		assert.Equal(t, username, claims.Username)
 		assert.Equal(t, jwt.AccessToken, claims.Type)
 		assert.Equal(t, "auth-service", claims.Issuer)
 	})
 
 	t.Run("успешная валидация refresh токена", func(t *testing.T) {
-		userID := "550e8400-e29b-41d4-a716-446655440000"
+		accountID := "550e8400-e29b-41d4-a716-446655440000"
 		email := "user@example.com"
-		username := "testuser"
 
-		tokens, err := service.GenerateTokens(userID, email, username)
+		tokens, err := service.GenerateTokens(accountID, email)
 		require.NoError(t, err)
 
 		claims, err := service.ValidateToken(tokens.RefreshToken)
@@ -166,8 +161,8 @@ func TestService_ValidateToken(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		userID := "550e8400-e29b-41d4-a716-446655440000"
-		tokens, err := service.GenerateTokens(userID, "user@example.com", "testuser")
+		accountID := "550e8400-e29b-41d4-a716-446655440000"
+		tokens, err := service.GenerateTokens(accountID, "user@example.com")
 		require.NoError(t, err)
 
 		claims, err := wrongService.ValidateToken(tokens.AccessToken)
@@ -181,7 +176,7 @@ func TestService_ValidateAccessToken(t *testing.T) {
 	service := createTestService(t)
 
 	t.Run("успешная валидация access токена", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("user-id", "user@example.com", "testuser")
+		tokens, err := service.GenerateTokens("account-id", "user@example.com")
 		require.NoError(t, err)
 
 		claims, err := service.ValidateAccessToken(tokens.AccessToken)
@@ -191,7 +186,7 @@ func TestService_ValidateAccessToken(t *testing.T) {
 	})
 
 	t.Run("ошибка при refresh токене", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("user-id", "user@example.com", "testuser")
+		tokens, err := service.GenerateTokens("account-id", "user@example.com")
 		require.NoError(t, err)
 
 		claims, err := service.ValidateAccessToken(tokens.RefreshToken)
@@ -205,7 +200,7 @@ func TestService_ValidateRefreshToken(t *testing.T) {
 	service := createTestService(t)
 
 	t.Run("успешная валидация refresh токена", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("user-id", "user@example.com", "testuser")
+		tokens, err := service.GenerateTokens("account-id", "user@example.com")
 		require.NoError(t, err)
 
 		claims, err := service.ValidateRefreshToken(tokens.RefreshToken)
@@ -215,7 +210,7 @@ func TestService_ValidateRefreshToken(t *testing.T) {
 	})
 
 	t.Run("ошибка при access токене", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("user-id", "user@example.com", "testuser")
+		tokens, err := service.GenerateTokens("account-id", "user@example.com")
 		require.NoError(t, err)
 
 		claims, err := service.ValidateRefreshToken(tokens.AccessToken)

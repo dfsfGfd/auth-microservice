@@ -17,9 +17,9 @@ var (
 	ErrSessionNotFound   = errors.New("session not found")
 	ErrSessionRevoked    = errors.New("session revoked")
 
-	// Ошибки пользователя
-	ErrUserNotFound    = errors.New("user not found")
-	ErrUserExists      = errors.New("user already exists")
+	// Ошибки аккаунта
+	ErrAccountNotFound = errors.New("account not found")
+	ErrAccountExists   = errors.New("account already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 
 	// Ошибки пароля
@@ -29,11 +29,6 @@ var (
 	// Ошибки email
 	ErrEmailInvalid = errors.New("invalid email")
 	ErrEmailTooLong = errors.New("email too long")
-
-	// Ошибки username
-	ErrUsernameInvalid   = errors.New("invalid username")
-	ErrUsernameTooShort  = errors.New("username too short")
-	ErrUsernameTooLong   = errors.New("username too long")
 
 	// Ошибки репозитория
 	ErrRepository        = errors.New("repository error")

@@ -21,7 +21,7 @@
 
 | Функция | Описание |
 |---------|----------|
-| ✅ **Регистрация** | Создание нового пользователя |
+| ✅ **Регистрация** | Создание нового аккаунта |
 | ✅ **Вход/Выход** | Аутентификация и завершение сессии |
 | ✅ **Обновление токенов** | Ротация JWT access/refresh токенов |
 | ✅ **gRPC + REST** | Единый сервис для обоих протоколов (grpc-gateway) |
@@ -47,7 +47,7 @@
 | Токен | TTL | Хранение |
 |-------|-----|----------|
 | **Access Token** | 15 минут | Клиент (Authorization header) |
-| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `user_id`) |
+| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `account_id`) |
 
 ---
 
@@ -60,9 +60,8 @@
 │
 ├── internal/
 │   ├── model/                  # Доменные модели (агрегаты, VO)
-│   │   ├── user.go             # User агрегат
+│   │   ├── account.go          # Account агрегат
 │   │   ├── email.go            # Email VO
-│   │   ├── username.go         # Username VO
 │   │   ├── password.go         # PlainPassword VO
 │   │   └── password_hash.go    # PasswordHash VO
 │   │
@@ -93,6 +92,9 @@
 ├── proto/
 │   └── auth/v1/
 │       └── auth.proto          # Proto контракты
+│
+├── migrations/
+│   └── 001_create_accounts_table.sql  # Миграция БД
 │
 ├── docs/
 │   ├── README.md               # Основная документация
@@ -133,6 +135,13 @@ task install-golangci-lint
 
 ```bash
 task proto:gen
+```
+
+### Применение миграций
+
+```bash
+# Пример с goose (если используется)
+goose -dir migrations postgres "DATABASE_URL" up
 ```
 
 ### Запуск
@@ -216,6 +225,7 @@ go test ./... -v
 | `task format` | Форматирование Go кода |
 | `task lint` | Линтинг Go кода |
 | `task tidy` | Очистка зависимостей |
+| `task wire:gen` | Генерация DI кода |
 
 ---
 
@@ -228,9 +238,8 @@ go test ./... -v
 ```json
 {
   "iss": "auth-service",
-  "sub": "{user_id}",
+  "sub": "{account_id}",
   "email": "{email}",
-  "username": "{username}",
   "iat": 1705312200,
   "exp": 1705313100,
   "type": "access"
@@ -245,14 +254,6 @@ go test ./... -v
 | Заглавные буквы | Минимум 1 (A-Z) |
 | Строчные буквы | Минимум 1 (a-z) |
 | Цифры | Минимум 1 (0-9) |
-
-### Требования к username
-
-| Требование | Значение |
-|------------|----------|
-| Длина | 3-30 символов |
-| Допустимые символы | Буквы, цифры, `_` |
-| Ограничения | Не может начинаться/заканчиваться на `_` |
 
 ### Требования к email
 

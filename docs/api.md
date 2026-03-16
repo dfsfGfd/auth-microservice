@@ -23,7 +23,7 @@
 
 | Функция | Описание |
 |---------|----------|
-| 🔐 **Регистрация** | Создание нового пользователя |
+| 🔐 **Регистрация** | Создание нового аккаунта |
 | 🔑 **Вход/Выход** | Аутентификация и завершение сессии |
 | 🔄 **Обновление токенов** | Ротация JWT access/refresh токенов |
 | 🌐 **gRPC + REST** | Единый сервис для обоих протоколов |
@@ -48,7 +48,7 @@
 | Токен | TTL | Хранение |
 |-------|-----|----------|
 | **Access Token** | 15 минут | Клиент (Authorization header) |
-| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `user_id`) |
+| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `account_id`) |
 
 ---
 
@@ -75,11 +75,10 @@
 ```json
 {
   "status_code": 200,
-  "message": "User registered successfully",
+  "message": "Account registered successfully",
   "data": {
-    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "user@example.com",
-    "username": "username",
     "created_at": "2024-01-15T10:30:00Z"
   }
 }
@@ -103,7 +102,7 @@
 
 | Метод | HTTP | Описание |
 |-------|------|----------|
-| `Register` | `POST /api/auth/register` | Регистрация пользователя |
+| `Register` | `POST /api/auth/register` | Регистрация аккаунта |
 | `Login` | `POST /api/auth/login` | Вход (получение токенов) |
 | `Logout` | `POST /api/auth/logout` | Выход (отзыв refresh токена) |
 | `Refresh` | `POST /api/auth/refresh` | Обновление access токена |
@@ -112,7 +111,7 @@
 
 ## Детали эндпоинтов
 
-### 1. Регистрация пользователя
+### 1. Регистрация аккаунта
 
 ```http
 POST /api/auth/register
@@ -125,7 +124,6 @@ POST /api/auth/register
 ```json
 {
   "email": "user@example.com",
-  "username": "username",
   "password": "Password123"
 }
 ```
@@ -135,11 +133,10 @@ POST /api/auth/register
 ```json
 {
   "status_code": 200,
-  "message": "User registered successfully",
+  "message": "Account registered successfully",
   "data": {
-    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "account_id": "550e8400-e29b-41d4-a716-446655440000",
     "email": "user@example.com",
-    "username": "username",
     "created_at": "2024-01-15T10:30:00Z"
   }
 }
@@ -151,8 +148,6 @@ POST /api/auth/register
 |-----|------|----------|
 | `INVALID_EMAIL` | 400 | Неверный формат email |
 | `EMAIL_EXISTS` | 409 | Email уже зарегистрирован |
-| `INVALID_USERNAME` | 400 | Неверный формат username |
-| `USERNAME_EXISTS` | 409 | Username занят |
 | `INVALID_PASSWORD` | 400 | Пароль не соответствует требованиям |
 
 #### Пример ошибки (400 Bad Request)
@@ -204,7 +199,7 @@ POST /api/auth/login
 | Код | HTTP | Описание |
 |-----|------|----------|
 | `INVALID_CREDENTIALS` | 401 | Неверный email или пароль |
-| `USER_NOT_FOUND` | 404 | Пользователь не найден |
+| `ACCOUNT_NOT_FOUND` | 404 | Аккаунт не найден |
 
 #### Пример ошибки (401 Unauthorized)
 
@@ -293,7 +288,7 @@ POST /api/auth/refresh
 |-----|------|----------|
 | `INVALID_REFRESH_TOKEN` | 401 | Refresh токен недействителен |
 | `REFRESH_TOKEN_EXPIRED` | 401 | Refresh токен истёк |
-| `USER_NOT_FOUND` | 404 | Пользователь не найден |
+| `ACCOUNT_NOT_FOUND` | 404 | Аккаунт не найден |
 
 ---
 
@@ -307,15 +302,6 @@ POST /api/auth/refresh
 | Заглавные буквы | Минимум 1 (A-Z) |
 | Строчные буквы | Минимум 1 (a-z) |
 | Цифры | Минимум 1 (0-9) |
-
-### Username
-
-| Требование | Значение |
-|------------|----------|
-| Минимальная длина | 3 символа |
-| Максимальная длина | 30 символов |
-| Допустимые символы | Буквы, цифры, `_` |
-| Ограничения | Не может начинаться/заканчиваться на `_` |
 
 ### Email
 
@@ -334,26 +320,24 @@ POST /api/auth/refresh
 
 ```
 Ключ:   refresh:{refresh_token}
-Значение: {user_id}
+Значение: {account_id}
 TTL:    14 дней
 ```
 
 ### PostgreSQL
 
-#### Таблица `users`
+#### Таблица `accounts`
 
 ```sql
-CREATE TABLE users (
+CREATE TABLE accounts (
     id              UUID PRIMARY KEY,
     email           VARCHAR(254) NOT NULL UNIQUE,
-    username        VARCHAR(30) NOT NULL UNIQUE,
-    password_hash   VARCHAR(72) NOT NULL,
+    password        VARCHAR(72) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_accounts_email ON accounts(email);
 ```
 
 > **Примечание:** UUID генерируется на бэкенде (Go) перед вставкой.
@@ -369,9 +353,8 @@ CREATE INDEX idx_users_username ON users(username);
 ```json
 {
   "iss": "auth-service",
-  "sub": "{user_id}",
+  "sub": "{account_id}",
   "email": "{email}",
-  "username": "{username}",
   "iat": 1705312200,
   "exp": 1705313100,
   "type": "access"
@@ -383,7 +366,7 @@ CREATE INDEX idx_users_username ON users(username);
 ```json
 {
   "iss": "auth-service",
-  "sub": "{user_id}",
+  "sub": "{account_id}",
   "iat": 1705312200,
   "exp": 1706521800,
   "type": "refresh"
@@ -395,9 +378,8 @@ CREATE INDEX idx_users_username ON users(username);
 | Claim | Описание |
 |-------|----------|
 | `iss` | Название сервиса (`auth-service`) |
-| `sub` | ID пользователя (UUID) |
-| `email` | Email пользователя |
-| `username` | Username пользователя |
+| `sub` | ID аккаунта (UUID) |
+| `email` | Email аккаунта |
 | `iat` | Время выпуска токена (Unix timestamp) |
 | `exp` | Время истечения токена (Unix timestamp) |
 | `type` | Тип токена (`access` или `refresh`) |
@@ -451,6 +433,9 @@ task lint
 
 # Очистка зависимостей
 task tidy
+
+# Генерация DI кода
+task wire:gen
 ```
 
 ### JWT Сервис
@@ -471,7 +456,7 @@ service, _ := jwt.NewService(jwt.Config{
 })
 
 // Генерация токенов
-tokens, _ := service.GenerateTokens(userID, email, username)
+tokens, _ := service.GenerateTokens(accountID, email)
 
 // Валидация токена
 claims, _ := service.ValidateAccessToken(tokens.AccessToken)

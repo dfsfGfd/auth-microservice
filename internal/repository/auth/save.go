@@ -7,24 +7,22 @@ import (
 	"auth-microservice/internal/repository/converter"
 )
 
-// Save сохраняет пользователя (создаёт или обновляет).
-func (r *UserRepository) Save(ctx context.Context, user *model.User) error {
-	dbUser := converter.UserToDB(user)
+// Save сохраняет аккаунт (создаёт или обновляет).
+func (r *AccountRepository) Save(ctx context.Context, account *model.Account) error {
+	dbAccount := converter.AccountToDB(account)
 
 	_, err := r.pool.Exec(ctx, `
-		INSERT INTO users (id, email, username, password_hash, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO accounts (id, email, password, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (email) DO UPDATE SET
-			username = EXCLUDED.username,
-			password_hash = EXCLUDED.password_hash,
+			password = EXCLUDED.password,
 			updated_at = EXCLUDED.updated_at
 	`,
-		dbUser.ID,
-		dbUser.Email,
-		dbUser.Username,
-		dbUser.PasswordHash,
-		dbUser.CreatedAt,
-		dbUser.UpdatedAt,
+		dbAccount.ID,
+		dbAccount.Email,
+		dbAccount.PasswordHash,
+		dbAccount.CreatedAt,
+		dbAccount.UpdatedAt,
 	)
 
 	return err

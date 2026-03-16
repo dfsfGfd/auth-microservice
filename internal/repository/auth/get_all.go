@@ -8,11 +8,11 @@ import (
 	dbmodel "auth-microservice/internal/repository/model"
 )
 
-// GetAll возвращает всех пользователей.
-func (r *UserRepository) GetAll(ctx context.Context) ([]*model.User, error) {
+// GetAll возвращает все аккаунты.
+func (r *AccountRepository) GetAll(ctx context.Context) ([]*model.Account, error) {
 	rows, err := r.pool.Query(ctx, `
-		SELECT id, email, username, password_hash, created_at, updated_at
-		FROM users
+		SELECT id, email, password, created_at, updated_at
+		FROM accounts
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -20,26 +20,25 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*model.User, error) {
 	}
 	defer rows.Close()
 
-	var dbUsers []*dbmodel.User
+	var dbAccounts []*dbmodel.Account
 	for rows.Next() {
-		var dbUser dbmodel.User
+		var dbAccount dbmodel.Account
 		err := rows.Scan(
-			&dbUser.ID,
-			&dbUser.Email,
-			&dbUser.Username,
-			&dbUser.PasswordHash,
-			&dbUser.CreatedAt,
-			&dbUser.UpdatedAt,
+			&dbAccount.ID,
+			&dbAccount.Email,
+			&dbAccount.PasswordHash,
+			&dbAccount.CreatedAt,
+			&dbAccount.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
-		dbUsers = append(dbUsers, &dbUser)
+		dbAccounts = append(dbAccounts, &dbAccount)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return converter.UserListToDomain(dbUsers)
+	return converter.AccountListToDomain(dbAccounts)
 }

@@ -7,30 +7,26 @@ import (
 	"github.com/google/uuid"
 )
 
-// User модель пользователя для хранения в БД.
+// Account модель аккаунта для хранения в БД.
 //
-// Соответствует таблице users:
+// Соответствует таблице accounts:
 //
-//	CREATE TABLE users (
+//	CREATE TABLE accounts (
 //	    id              UUID PRIMARY KEY,
 //	    email           VARCHAR(254) NOT NULL UNIQUE,
-//	    username        VARCHAR(30) NOT NULL UNIQUE,
-//	    password_hash   VARCHAR(72) NOT NULL,
+//	    password        VARCHAR(72) NOT NULL,
 //	    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 //	    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //	);
-type User struct {
-	// ID идентификатор пользователя (PRIMARY KEY)
+type Account struct {
+	// ID идентификатор аккаунта (PRIMARY KEY)
 	ID uuid.UUID `db:"id"`
 
 	// Email адрес электронной почты (UNIQUE, NOT NULL)
 	Email string `db:"email"`
 
-	// Username имя пользователя (UNIQUE, NOT NULL)
-	Username string `db:"username"`
-
 	// PasswordHash хеш пароля bcrypt (NOT NULL, max 72 символа)
-	PasswordHash string `db:"password_hash"`
+	PasswordHash string `db:"password"`
 
 	// CreatedAt время создания (NOT NULL, DEFAULT NOW())
 	CreatedAt time.Time `db:"created_at"`
@@ -40,6 +36,6 @@ type User struct {
 }
 
 // TableName возвращает имя таблицы для модели.
-func (User) TableName() string {
-	return "users"
+func (Account) TableName() string {
+	return "accounts"
 }

@@ -7,14 +7,14 @@ import (
 	"auth-microservice/internal/repository"
 )
 
-// UserRepository реализация repository.UserRepository.
-type UserRepository struct {
+// AccountRepository реализация repository.AccountRepository.
+type AccountRepository struct {
 	pool *pgxpool.Pool
 }
 
-// NewUserRepository создаёт новый UserRepository.
-func NewUserRepository(pool *pgxpool.Pool) repository.UserRepository {
-	return &UserRepository{
+// NewAccountRepository создаёт новый AccountRepository.
+func NewAccountRepository(pool *pgxpool.Pool) repository.AccountRepository {
+	return &AccountRepository{
 		pool: pool,
 	}
 }

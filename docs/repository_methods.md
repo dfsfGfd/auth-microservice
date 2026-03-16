@@ -7,7 +7,7 @@
 ## 📋 Оглавление
 
 - [Структура пакета](#структура-пакета)
-- [UserRepository методы](#userrepository-методы)
+- [AccountRepository методы](#accountrepository-методы)
 - [Схема именования](#схема-именования)
 - [Доменные ошибки](#доменные-ошибки)
 
@@ -20,32 +20,30 @@ internal/repository/
 ├── errors/
 │   └── errors.go           # Доменные ошибки
 ├── model/
-│   └── user.go             # DB модели
+│   └── account.go          # DB модели
 ├── converter/
-│   └── user.go             # Конвертеры domain ↔ DB
+│   └── account.go          # Конвертеры domain ↔ DB
 ├── auth/
 │   ├── repository.go       # Конструктор
 │   ├── save.go             # Save метод
 │   ├── delete_by_id.go     # DeleteByID метод
 │   ├── get_by_id.go        # GetByID метод
 │   ├── get_by_email.go     # GetByEmail метод
-│   ├── get_by_username.go  # GetByUsername метод
 │   └── get_all.go          # GetAll метод
-└── repository.go           # Интерфейс UserRepository
+└── repository.go           # Интерфейс AccountRepository
 ```
 
 ---
 
-## UserRepository методы
+## AccountRepository методы
 
 | Метод | Файл | Сигнатура | Описание |
 |-------|------|-----------|----------|
-| `Save` | `save.go` | `Save(ctx, user) error` | Сохранение (создание или обновление) |
+| `Save` | `save.go` | `Save(ctx, account) error` | Сохранение (создание или обновление) |
 | `DeleteByID` | `delete_by_id.go` | `DeleteByID(ctx, id) error` | Удаление по ID |
-| `GetByID` | `get_by_id.go` | `GetByID(ctx, id) (*User, error)` | Получение по ID |
-| `GetByEmail` | `get_by_email.go` | `GetByEmail(ctx, email) (*User, error)` | Получение по email |
-| `GetByUsername` | `get_by_username.go` | `GetByUsername(ctx, username) (*User, error)` | Получение по username |
-| `GetAll` | `get_all.go` | `GetAll(ctx) ([]*User, error)` | Получить всех |
+| `GetByID` | `get_by_id.go` | `GetByID(ctx, id) (*Account, error)` | Получение по ID |
+| `GetByEmail` | `get_by_email.go` | `GetByEmail(ctx, email) (*Account, error)` | Получение по email |
+| `GetAll` | `get_all.go` | `GetAll(ctx) ([]*Account, error)` | Получить все |
 
 ---
 
@@ -65,23 +63,21 @@ internal/repository/
 **Критерии:**
 - `ByID` — по идентификатору
 - `ByEmail` — по email
-- `ByUsername` — по username
 
 ### Примеры
 
 ```go
 // Правильно
-repo.Save(ctx, user)
+repo.Save(ctx, account)
 repo.GetByID(ctx, id)
 repo.GetByEmail(ctx, email)
-repo.GetByUsername(ctx, username)
 repo.GetAll(ctx)
 repo.DeleteByID(ctx, id)
 
 // Неправильно
-repo.GetUserById(ctx, id)      // избыточно "User"
-repo.FindUsers(ctx, spec)      // избыточно "Users"
-repo.Delete(ctx, id)           // неоднозначно
+repo.GetAccountById(ctx, id)  // избыточно "Account"
+repo.FindAccounts(ctx, spec)  // избыточно "Accounts"
+repo.Delete(ctx, id)          // неоднозначно
 ```
 
 ---
@@ -103,9 +99,9 @@ ErrForbidden         // доступ запрещён
 ErrTokenInvalid      // невалидный токен
 ErrTokenExpired      // токен истёк
 
-// Ошибки пользователя
-ErrUserNotFound      // пользователь не найден
-ErrUserExists        // пользователь уже существует
+// Ошибки аккаунта
+ErrAccountNotFound   // аккаунт не найден
+ErrAccountExists     // аккаунт уже существует
 ErrInvalidCredentials // невалидные учётные данные
 
 // Ошибки пароля
@@ -116,11 +112,6 @@ ErrPasswordTooShort  // пароль слишком короткий
 ErrEmailInvalid      // невалидный email
 ErrEmailTooLong      // email слишком длинный
 
-// Ошибки username
-ErrUsernameInvalid   // невалидный username
-ErrUsernameTooShort  // username слишком короткий
-ErrUsernameTooLong   // username слишком длинный
-
 // Ошибки репозитория
 ErrRepository        // ошибка репозитория
 ErrDBConnection      // ошибка подключения к БД
@@ -130,15 +121,15 @@ ErrDBQuery           // ошибка запроса к БД
 ### Использование ошибок
 
 ```go
-user, err := repo.GetByID(ctx, id)
+account, err := repo.GetByID(ctx, id)
 if err != nil {
-    if errors.Is(err, errors.ErrUserNotFound) {
+    if errors.Is(err, errors.ErrAccountNotFound) {
         // Обработка "не найден"
     }
     return err
 }
 
-if err := repo.Save(ctx, user); err != nil {
+if err := repo.Save(ctx, account); err != nil {
     return err
 }
 ```
@@ -150,44 +141,44 @@ if err := repo.Save(ctx, user); err != nil {
 ### Базовое использование
 
 ```go
-// Создание пользователя
-user, err := model.NewUser(email, username, password)
+// Создание аккаунта
+account, err := model.NewAccount(email, password)
 if err != nil {
     return err
 }
 
-if err := userRepo.Save(ctx, user); err != nil {
+if err := accountRepo.Save(ctx, account); err != nil {
     return err
 }
 
-// Получение пользователя
-user, err := userRepo.GetByID(ctx, userID)
+// Получение аккаунта
+account, err := accountRepo.GetByID(ctx, accountID)
 if err != nil {
     return err
 }
 
 // Обновление
-user.UpdateEmail(newEmail)
-if err := userRepo.Save(ctx, user); err != nil {
+account.UpdateEmail(newEmail)
+if err := accountRepo.Save(ctx, account); err != nil {
     return err
 }
 
 // Удаление
-if err := userRepo.DeleteByID(ctx, userID); err != nil {
+if err := accountRepo.DeleteByID(ctx, accountID); err != nil {
     return err
 }
 ```
 
-### Получение всех пользователей
+### Получение всех аккаунтов
 
 ```go
-users, err := userRepo.GetAll(ctx)
+accounts, err := accountRepo.GetAll(ctx)
 if err != nil {
     return err
 }
 
-for _, user := range users {
-    // Обработка пользователя
+for _, account := range accounts {
+    // Обработка аккаунта
 }
 ```
 
