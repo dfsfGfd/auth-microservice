@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"auth-microservice/internal/config"
+	"auth-microservice/internal/cache/token"
 	"auth-microservice/internal/repository"
 	"auth-microservice/internal/repository/auth"
 	"auth-microservice/pkg/db/postgresql"
@@ -36,6 +37,7 @@ type Application struct {
 	DB            *pgxpool.Pool
 	Redis         *goredis.Client
 	AccountRepo   repository.AccountRepository
+	TokenCache    *token.RedisCache
 	// TODO: добавить сервисы
 	// AuthService  *service.AuthService
 }
@@ -71,6 +73,10 @@ var ProviderSet = wire.NewSet(
 
 	// Репозитории
 	auth.NewAccountRepository,
+
+	// Кэш токенов
+	ProvideTokenCachePrefix,
+	token.NewRedisCache,
 
 	// Логгер
 	NewLogger,
@@ -122,6 +128,11 @@ func ProvidePostgresPool(ctx context.Context, cfg postgresql.Config) (*pgxpool.P
 // ProvideRedisClient создаёт Redis клиент
 func ProvideRedisClient(ctx context.Context, cfg redisdb.Config) (*goredis.Client, error) {
 	return redisdb.NewClient(ctx, cfg)
+}
+
+// ProvideTokenCachePrefix предоставляет префикс для ключей токенов
+func ProvideTokenCachePrefix() string {
+	return "refresh:"
 }
 
 // NewLogger создаёт логгер из конфигурации
@@ -188,6 +199,7 @@ func NewApplication(
 	db *pgxpool.Pool,
 	redisClient *goredis.Client,
 	accountRepo repository.AccountRepository,
+	tokenCache *token.RedisCache,
 ) (*Application, error) {
 	return &Application{
 		Config:        cfg,
@@ -197,5 +209,6 @@ func NewApplication(
 		DB:            db,
 		Redis:         redisClient,
 		AccountRepo:   accountRepo,
+		TokenCache:    tokenCache,
 	}, nil
 }
