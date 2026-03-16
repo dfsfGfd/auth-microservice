@@ -22,7 +22,4 @@ type AccountRepository interface {
 
 	// GetByEmail получает аккаунт по email.
 	GetByEmail(ctx context.Context, email string) (*model.Account, error)
-
-	// GetAll возвращает все аккаунты.
-	GetAll(ctx context.Context) ([]*model.Account, error)
 }

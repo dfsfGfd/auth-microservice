@@ -28,8 +28,7 @@ internal/repository/
 │   ├── save.go             # Save метод
 │   ├── delete_by_id.go     # DeleteByID метод
 │   ├── get_by_id.go        # GetByID метод
-│   ├── get_by_email.go     # GetByEmail метод
-│   └── get_all.go          # GetAll метод
+│   └── get_by_email.go     # GetByEmail метод
 └── repository.go           # Интерфейс AccountRepository
 ```
 
@@ -43,7 +42,6 @@ internal/repository/
 | `DeleteByID` | `delete_by_id.go` | `DeleteByID(ctx, id) error` | Удаление по ID |
 | `GetByID` | `get_by_id.go` | `GetByID(ctx, id) (*Account, error)` | Получение по ID |
 | `GetByEmail` | `get_by_email.go` | `GetByEmail(ctx, email) (*Account, error)` | Получение по email |
-| `GetAll` | `get_all.go` | `GetAll(ctx) ([]*Account, error)` | Получить все |
 
 ---
 
@@ -166,19 +164,6 @@ if err := accountRepo.Save(ctx, account); err != nil {
 // Удаление
 if err := accountRepo.DeleteByID(ctx, accountID); err != nil {
     return err
-}
-```
-
-### Получение всех аккаунтов
-
-```go
-accounts, err := accountRepo.GetAll(ctx)
-if err != nil {
-    return err
-}
-
-for _, account := range accounts {
-    // Обработка аккаунта
 }
 ```
 
