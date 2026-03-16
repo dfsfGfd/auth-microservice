@@ -147,14 +147,14 @@ func createGateway(ctx context.Context, grpcPort int) (*runtime.ServeMux, error)
 	gwMux := runtime.NewServeMux()
 
 	// Создаём gRPC connection для gateway
-	conn, err := grpc.DialContext(
-		ctx,
+	conn, err := grpc.NewClient(
 		fmt.Sprintf("localhost:%d", grpcPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("dial grpc: %w", err)
 	}
+	defer conn.Close()
 
 	// Регистрируем gateway
 	if err := authv1.RegisterAuthServiceHandler(ctx, gwMux, conn); err != nil {

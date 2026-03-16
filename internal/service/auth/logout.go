@@ -2,6 +2,11 @@ package auth
 
 import (
 	"context"
+
+	stderrors "errors"
+
+	"auth-microservice/internal/errors"
+	"auth-microservice/pkg/jwt"
 )
 
 // Logout выполняет выход (отзыв refresh токена).
@@ -10,6 +15,13 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	_, err := s.jwtService.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		s.log.Warn("invalid refresh token", "error", err)
+		// Конвертируем ошибки jwt в доменные
+		if stderrors.Is(err, jwt.ErrExpiredToken) {
+			return errors.ErrTokenExpired
+		}
+		if stderrors.Is(err, jwt.ErrInvalidToken) {
+			return errors.ErrTokenInvalid
+		}
 		return err
 	}
 

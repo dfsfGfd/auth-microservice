@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 
+	stderrors "errors"
+
 	"github.com/google/uuid"
 
 	"auth-microservice/internal/errors"
@@ -15,6 +17,13 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	claims, err := s.jwtService.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		s.log.Warn("invalid refresh token", "error", err)
+		// Конвертируем ошибки jwt в доменные
+		if stderrors.Is(err, jwt.ErrExpiredToken) {
+			return nil, errors.ErrTokenExpired
+		}
+		if stderrors.Is(err, jwt.ErrInvalidToken) {
+			return nil, errors.ErrTokenInvalid
+		}
 		return nil, err
 	}
 
