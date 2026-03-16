@@ -22,4 +22,10 @@ type AccountRepository interface {
 
 	// GetByEmail получает аккаунт по email.
 	GetByEmail(ctx context.Context, email string) (*model.Account, error)
+
+	// ExistsByID проверяет существование аккаунта по ID.
+	ExistsByID(ctx context.Context, id uuid.UUID) (bool, error)
+
+	// ExistsByEmail проверяет существование аккаунта по email.
+	ExistsByEmail(ctx context.Context, email string) (bool, error)
 }

@@ -28,7 +28,9 @@ internal/repository/
 │   ├── save.go             # Save метод
 │   ├── delete_by_id.go     # DeleteByID метод
 │   ├── get_by_id.go        # GetByID метод
-│   └── get_by_email.go     # GetByEmail метод
+│   ├── get_by_email.go     # GetByEmail метод
+│   ├── exists_by_id.go     # ExistsByID метод
+│   └── exists_by_email.go  # ExistsByEmail метод
 └── repository.go           # Интерфейс AccountRepository
 ```
 
@@ -42,6 +44,8 @@ internal/repository/
 | `DeleteByID` | `delete_by_id.go` | `DeleteByID(ctx, id) error` | Удаление по ID |
 | `GetByID` | `get_by_id.go` | `GetByID(ctx, id) (*Account, error)` | Получение по ID |
 | `GetByEmail` | `get_by_email.go` | `GetByEmail(ctx, email) (*Account, error)` | Получение по email |
+| `ExistsByID` | `exists_by_id.go` | `ExistsByID(ctx, id) (bool, error)` | Проверка существования по ID |
+| `ExistsByEmail` | `exists_by_email.go` | `ExistsByEmail(ctx, email) (bool, error)` | Проверка существования по email |
 
 ---
 
@@ -55,6 +59,7 @@ internal/repository/
 
 **Операции:**
 - `Get` — получение одного объекта
+- `Exists` — проверка существования
 - `Save` — сохранение (создание или обновление)
 - `Delete` — удаление
 
@@ -69,7 +74,8 @@ internal/repository/
 repo.Save(ctx, account)
 repo.GetByID(ctx, id)
 repo.GetByEmail(ctx, email)
-repo.GetAll(ctx)
+repo.ExistsByID(ctx, id)
+repo.ExistsByEmail(ctx, email)
 repo.DeleteByID(ctx, id)
 
 // Неправильно
