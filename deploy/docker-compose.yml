@@ -25,6 +25,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - auth-network
@@ -36,6 +38,22 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+  # Migrations
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth-migrate
+    environment:
+      - DATABASE_URL=postgres://auth_user:auth_password@postgres:5432/auth?sslmode=disable
+    command: ["/app/migrate", "-dsn", "postgres://auth_user:auth_password@postgres:5432/auth?sslmode=disable", "up"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - auth-network
+    restart: "no"
 
   # PostgreSQL
   postgres:

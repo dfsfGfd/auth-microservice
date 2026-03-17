@@ -20,13 +20,17 @@ RUN go mod download && go mod verify
 # Копируем исходный код
 COPY . .
 
-# Собираем бинарный файл с оптимизациями
-# -ldflags "-s -w" удаляет символы отладки и таблицу символов
-# CGO_ENABLED=0 создаёт статический бинарник
+# Собираем бинарный файл сервера с оптимизациями
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-s -w -X 'main.Version=${VERSION:-dev}'" \
     -o /app/bin/server \
     ./cmd/server/main.go
+
+# Собираем утилиту для миграций
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w" \
+    -o /app/migrate \
+    ./cmd/migrate/main.go
 
 # ==================== RUNTIME STAGE ====================
 FROM alpine:3.23 AS runtime

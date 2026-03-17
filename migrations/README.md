@@ -1,43 +1,13 @@
 # Migrations Guide
 
-Руководство по управлению миграциями базы данных для auth-microservice.
+Руководство по управлению миграциями базы данных с использованием golang-migrate.
 
-## 📁 Структура миграций
+## 📁 Структура
 
 ```
 migrations/
-├── 001_create_accounts_table.up.sql       # Создание таблицы accounts
-├── 001_create_accounts_table.down.sql     # Откат миграции 001
-├── 002_add_performance_indexes.up.sql     # Индексы для высокой нагрузки
-├── 002_add_performance_indexes.down.sql   # Откат миграции 002
-├── 003_add_audit_columns.up.sql           # Audit поля для безопасности
-└── 003_add_audit_columns.down.sql         # Откат миграции 003
-```
-
-## 📝 Формат файлов
-
-### Именование
-
-```
-{version}_{description}.{direction}.sql
-```
-
-- **version**: 3-значный номер (001, 002, 003...)
-- **description**: краткое описание на английском (snake_case)
-- **direction**: `up` (применение) или `down` (откат)
-
-### Пример
-
-```sql
--- Migration: 001_create_accounts_table
--- Description: Создание таблицы accounts
--- Version: 1.0.0
-
--- +goose Up
-CREATE TABLE accounts (...);
-
--- +goose Down
-DROP TABLE accounts;
+└── 001_create_accounts_table.up.sql    # Применение миграции
+└── 001_create_accounts_table.down.sql  # Откат миграции
 ```
 
 ## 🚀 Использование
@@ -45,217 +15,154 @@ DROP TABLE accounts;
 ### Применение всех миграций
 
 ```bash
-# Через goose
-goose -dir migrations postgres "DATABASE_URL" up
-
-# Через docker-compose (автоматически при старте)
-docker-compose -f deploy/docker-compose.yml up -d
+# Из корня проекта
+go run cmd/migrate/main.go -dsn "postgres://user:pass@localhost:5432/auth?sslmode=disable" up
 ```
 
 ### Откат последней миграции
 
 ```bash
-goose -dir migrations postgres "DATABASE_URL" down
+go run cmd/migrate/main.go -dsn "postgres://user:pass@localhost:5432/auth?sslmode=disable" down
 ```
 
 ### Проверка статуса
 
 ```bash
-goose -dir migrations postgres "DATABASE_URL" status
+go run cmd/migrate/main.go -dsn "postgres://user:pass@localhost:5432/auth?sslmode=disable" status
 ```
 
-### Применение конкретной миграции
+### Сборка утилиты
 
 ```bash
-goose -dir migrations postgres "DATABASE_URL" up 002
+go build -o bin/migrate ./cmd/migrate
+
+# Использование
+./bin/migrate -dsn "postgres://..." up
 ```
 
-## 📊 Миграции
+## 📝 Формат миграций
 
-### 001_create_accounts_table
+### Именование файлов
 
-**Версия:** 1.0.0  
-**Описание:** Создание основной таблицы accounts
+```
+{version}_{description}.{direction}.sql
+```
 
-**Что создаёт:**
-- Таблица `accounts` с полями:
-  - `id` (UUID, primary key)
-  - `email` (VARCHAR(254), unique)
-  - `password` (VARCHAR(72), bcrypt hash)
-  - `created_at` (TIMESTAMPTZ)
-  - `updated_at` (TIMESTAMPTZ)
-- Индексы:
-  - `idx_accounts_email` (unique, для поиска по email)
-  - `idx_accounts_created_at` (для сортировки)
-- Триггер `update_accounts_updated_at` (автообновление updated_at)
+- **version**: номер версии (001, 002, 003...)
+- **description**: описание на английском (snake_case)
+- **direction**: `up` (применение) или `down` (откат)
 
-**Производительность:**
-- Уникальный индекс на email для O(1) поиска
-- Триггер для автоматического updated_at
+### Пример
 
----
+**001_create_accounts_table.up.sql:**
+```sql
+-- +goose up
+CREATE TABLE accounts (...);
+CREATE INDEX idx_accounts_email ON accounts(email);
+```
 
-### 002_add_performance_indexes
+**001_create_accounts_table.down.sql:**
+```sql
+-- +goose down
+DROP TABLE IF EXISTS accounts;
+DROP INDEX IF EXISTS idx_accounts_email;
+```
 
-**Версия:** 1.1.0  
-**Описание:** Дополнительные индексы для высокой нагрузки
-
-**Что создаёт:**
-- `idx_accounts_email_login` — covering index для login запросов
-  - Включает: `email`, `id`, `password`, `created_at`
-  - Позволяет выполнять login без обращения к основной таблице
-- `idx_accounts_created_at_date` — для аналитики по дате
-
-**Производительность:**
-- Ускорение login на 40-60%
-- Создание через `CONCURRENTLY` (без блокировки таблицы)
-
----
-
-### 003_add_audit_columns
-
-**Версия:** 1.2.0  
-**Описание:** Audit поля для безопасности и мониторинга
-
-**Что создаёт:**
-- `last_login_at` — время последнего входа
-- `last_login_ip` — IP адрес (тип INET)
-- `failed_login_attempts` — счётчик неудачных попыток
-- `locked_until` — время блокировки (защита от брутфорса)
-
-**Индексы:**
-- `idx_accounts_locked_until` — partial index для заблокированных
-- `idx_accounts_failed_attempts` — partial index для мониторинга атак
-
-**Безопасность:**
-- Защита от брутфорса через блокировку
-- Аудит действий пользователей
-
----
-
-## 🔧 Создание новых миграций
+## 🔧 Создание новой миграции
 
 ### 1. Создать файлы
 
 ```bash
-# Копируем шаблон
-cp migrations/003_add_audit_columns.up.sql migrations/004_new_feature.up.sql
-cp migrations/003_add_audit_columns.down.sql migrations/004_new_feature.down.sql
+# Копировать существующую миграцию как шаблон
+cp migrations/001_create_accounts_table.up.sql migrations/002_new_feature.up.sql
+cp migrations/001_create_accounts_table.down.sql migrations/002_new_feature.down.sql
 ```
 
 ### 2. Отредактировать
 
+**002_new_feature.up.sql:**
 ```sql
--- Migration: 004_new_feature
--- Description: Описание новой фичи
--- Version: 1.3.0
--- Requires: 003_add_audit_columns
+-- +goose up
+-- Описание изменений
 
--- +goose Up
--- Ваш SQL код
-
--- +goose Down
--- Код для отката
+ALTER TABLE accounts ADD COLUMN new_column VARCHAR;
+CREATE INDEX idx_accounts_new_column ON accounts(new_column);
 ```
 
-### 3. Протестировать
+**002_new_feature.down.sql:**
+```sql
+-- +goose down
+-- Откат изменений
+
+DROP INDEX IF EXISTS idx_accounts_new_column;
+ALTER TABLE accounts DROP COLUMN IF EXISTS new_column;
+```
+
+### 3. Применить
 
 ```bash
-# Применить миграцию
-goose -dir migrations postgres "DATABASE_URL" up
-
-# Проверить
-goose -dir migrations postgres "DATABASE_URL" status
-
-# Откатить (если нужно)
-goose -dir migrations postgres "DATABASE_URL" down
+go run cmd/migrate/main.go -dsn "postgres://..." up
 ```
 
-## 🏗 Best Practices для High-Load
+## 🏗 Миграция 001_create_accounts_table
 
-### 1. Создание индексов
+### Что создаёт
 
-```sql
--- ✅ Правильно: не блокирует таблицу
-CREATE INDEX CONCURRENTLY idx_name ON table(column);
+**Таблица `accounts`:**
+- `id` UUID PRIMARY KEY — уникальный идентификатор
+- `email` VARCHAR(254) NOT NULL UNIQUE — email пользователя
+- `password` VARCHAR(72) NOT NULL — хеш пароля (bcrypt)
+- `created_at` TIMESTAMPTZ — время создания
+- `updated_at` TIMESTAMPTZ — время обновления
 
--- ❌ Неправильно: блокирует таблицу на время создания
-CREATE INDEX idx_name ON table(column);
-```
+**Индексы:**
+- `idx_accounts_email` — уникальный индекс на email (O(1) поиск)
+- `idx_accounts_created_at` — для сортировки по дате
 
-### 2. Изменение колонок
+**Триггер:**
+- `update_updated_at_column` — автоматическое обновление `updated_at`
 
-```sql
--- ✅ Правильно: добавлять колонки с DEFAULT NULL
-ALTER TABLE accounts ADD COLUMN new_column VARCHAR;
-ALTER TABLE accounts ALTER COLUMN new_column SET DEFAULT 'value';
-UPDATE accounts SET new_column = 'value' WHERE new_column IS NULL;
+### Производительность
 
--- ❌ Неправильно: блокирует таблицу при UPDATE всех строк
-ALTER TABLE accounts ADD COLUMN new_column VARCHAR DEFAULT 'value';
-```
-
-### 3. Удаление данных
-
-```sql
--- ✅ Правильно: удалять порциями
-DELETE FROM large_table WHERE created_at < '2024-01-01' LIMIT 1000;
-
--- ❌ Неправильно: может заблоки таблицу
-DELETE FROM large_table WHERE created_at < '2024-01-01';
-```
-
-### 4. Транзакции
-
-```sql
--- ✅ Правильно: оборачивать в транзакции
-BEGIN;
--- multiple changes
-COMMIT;
-
--- ❌ Неправильно: без транзакций
--- multiple changes without BEGIN/COMMIT
-```
+- Уникальный индекс на email — быстрый поиск при login
+- Триггер — автоматическое поддержание `updated_at`
 
 ## 🐛 Troubleshooting
 
-### Миграция не применяется
+### Ошибка "migration already applied"
 
 ```bash
 # Проверить статус
-goose -dir migrations postgres "DATABASE_URL" status
-
-# Проверить логи
-docker-compose logs postgres
+go run cmd/migrate/main.go -dsn "postgres://..." status
 
 # Принудительно установить версию
-goose -dir migrations postgres "DATABASE_URL" set_version 001
+# (осторожно, только если уверены что миграция применена)
 ```
 
-### Миграция заблокирована
+### Ошибка "relation already exists"
 
 ```bash
-# Найти блокирующие процессы
-SELECT pid, usename, state, query 
-FROM pg_stat_activity 
-WHERE datname = 'auth' AND state = 'active';
+# Миграция уже применена, проверить статус
+go run cmd/migrate/main.go -dsn "postgres://..." status
 
-# Убить процесс (осторожно!)
-SELECT pg_terminate_backend(pid);
+# Если нужно, откатить и применить заново
+go run cmd/migrate/main.go -dsn "postgres://..." down
+go run cmd/migrate/main.go -dsn "postgres://..." up
 ```
 
-### Откат неудачной миграции
+### Грязная миграция (dirty migration)
 
 ```bash
-# Откатить последнюю
-goose -dir migrations postgres "DATABASE_URL" down
+# Если миграция прервалась mid-flight
+# Проверить статус
+go run cmd/migrate/main.go -dsn "postgres://..." status
 
-# Если не работает, откатить вручную
-psql "DATABASE_URL" -f migrations/00X_migration.down.sql
+# Если показывает "dirty", нужно исправить вручную в БД
+psql "postgres://..." -c "SELECT * FROM schema_migrations;"
 ```
 
 ## 📚 Ссылки
 
-- [Goose documentation](https://github.com/pressly/goose)
-- [PostgreSQL CREATE INDEX CONCURRENTLY](https://www.postgresql.org/docs/current/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)
-- [PostgreSQL Best Practices](https://wiki.postgresql.org/wiki/Performance_Optimization)
+- [golang-migrate documentation](https://github.com/golang-migrate/migrate)
+- [PostgreSQL CREATE TABLE](https://www.postgresql.org/docs/current/sql-createtable.html)
+- [PostgreSQL CREATE INDEX](https://www.postgresql.org/docs/current/sql-createindex.html)
