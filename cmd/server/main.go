@@ -64,13 +64,9 @@ func run() error {
 		return fmt.Errorf("create gRPC listener: %w", err)
 	}
 
-	// Создаём mux для REST (grpc-gateway)
-	gwMux := runtime.NewServeMux()
-
 	// Создаём HTTP сервер для REST (запускается позже)
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf(":%d", app.Config.Server.HTTPPort),
-		Handler:      gwMux,
 		ReadTimeout:  time.Duration(app.Config.Server.ReadTimeout) * time.Second,
 		WriteTimeout: time.Duration(app.Config.Server.WriteTimeout) * time.Second,
 		IdleTimeout:  time.Duration(app.Config.Server.IdleTimeout) * time.Second,
