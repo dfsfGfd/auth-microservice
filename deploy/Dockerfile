@@ -1,5 +1,5 @@
 # ==================== BUILD STAGE ====================
-FROM golang:1.25-alpine3.21 AS builder
+FROM golang:1.26-alpine3.23 AS builder
 
 # Устанавливаем необходимые зависимости
 RUN apk add --no-cache git ca-certificates tzdata
@@ -29,7 +29,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     ./cmd/server/main.go
 
 # ==================== RUNTIME STAGE ====================
-FROM alpine:3.21 AS runtime
+FROM alpine:3.23 AS runtime
 
 # Устанавливаем необходимые пакеты
 RUN apk add --no-cache ca-certificates tzdata
