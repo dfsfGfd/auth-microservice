@@ -107,11 +107,17 @@
 ├── migrations/
 │   └── 001_create_accounts_table.sql  # Миграция БД
 │
-├── docs/
+├── docs/                       # Документация проекта
 │   ├── README.md               # Основная документация
 │   ├── api.md                  # API документация
-│   ├── config.md               # Руководство по конфигурации
-│   └── repository_methods.md   # Repository layer документация
+│   └── config.md               # Руководство по конфигурации
+│
+├── deploy/                     # Файлы для развёртывания (Docker)
+│   ├── DEPLOY.md               # Основное руководство по деплою
+│   ├── README.md               # Docker документация
+│   ├── Dockerfile              # Multi-stage Dockerfile
+│   ├── docker-compose.yml      # Development окружение
+│   └── docker-compose.production.yml  # Production окружение
 │
 ├── .env                        # Переменные окружения (не коммитить)
 ├── .env.example                # Шаблон переменных окружения
@@ -373,8 +379,9 @@ deps:
 | Документ | Описание |
 |----------|----------|
 | [API Documentation](api.md) | Полное описание API endpoints |
-| [Configuration Guide](config.md) | Руководство по настройке |
+| [Configuration Guide](config.md) | Руководство по настройке (.env) |
 | [Repository Methods](repository_methods.md) | Repository layer с DDD паттернами |
+| [Docker Deployment Guide](../deploy/README.md) | Развёртывание в Docker |
 | [Swagger UI](http://localhost:8080/swagger/) | Интерактивная документация (после запуска) |
 
 ---
