@@ -3,16 +3,13 @@
 // Использование:
 //
 //	# Применить все миграции
-//	migrate up
+//	migrate -dsn postgres://user:pass@localhost:5432/db?sslmode=disable up
 //
 //	# Откатить последнюю миграцию
-//	migrate down
+//	migrate -dsn postgres://user:pass@localhost:5432/db?sslmode=disable down
 //
 //	# Проверить статус
-//	migrate status
-//
-//	# Применить до конкретной версии
-//	migrate up 1
+//	migrate -dsn postgres://user:pass@localhost:5432/db?sslmode=disable status
 package main
 
 import (
@@ -21,28 +18,53 @@ import (
 	"os"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" //nolint:revive
+	_ "github.com/golang-migrate/migrate/v4/source/file"       //nolint:revive
+)
+
+const (
+	exitSuccess     = 0
+	exitError       = 1
+	exitUsageError  = 2
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	// Флаги командной строки
 	dsn := flag.String("dsn", "", "Database URL (обязательно)")
 	path := flag.String("path", "migrations", "Путь к миграциям")
+	version := flag.Bool("version", false, "Показать версию утилиты")
+	help := flag.Bool("help", false, "Показать помощь")
+	flag.Usage = usage
 	flag.Parse()
+
+	// Показать версию
+	if *version {
+		fmt.Println("migrate version 1.0.0")
+		return exitSuccess
+	}
+
+	// Показать помощь
+	if *help {
+		usage()
+		return exitSuccess
+	}
 
 	// Проверка DSN
 	if *dsn == "" {
 		fmt.Fprintln(os.Stderr, "Ошибка: требуется флаг -dsn")
-		fmt.Fprintln(os.Stderr, "Пример: migrate -dsn postgres://user:pass@localhost:5432/db?sslmode=disable up")
-		os.Exit(1)
+		usage()
+		return exitUsageError
 	}
 
 	// Получение команды (up, down, status)
 	if flag.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, "Ошибка: требуется команда (up, down, status)")
-		fmt.Fprintln(os.Stderr, "Пример: migrate -dsn <url> up")
-		os.Exit(1)
+		usage()
+		return exitUsageError
 	}
 
 	command := flag.Arg(0)
@@ -54,23 +76,31 @@ func main() {
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Ошибка создания миграции: %v\n", err)
-		os.Exit(1)
+		return exitError
 	}
 	defer m.Close()
 
 	// Выполнение команды
 	switch command {
 	case "up":
-		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Up(); err != nil {
+			if err == migrate.ErrNoChange {
+				fmt.Println("Нет новых миграций для применения")
+				return exitSuccess
+			}
 			fmt.Fprintf(os.Stderr, "Ошибка применения миграций: %v\n", err)
-			os.Exit(1)
+			return exitError
 		}
 		fmt.Println("Миграции успешно применены")
 
 	case "down":
-		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
+		if err := m.Down(); err != nil {
+			if err == migrate.ErrNoChange {
+				fmt.Println("Нет миграций для отката")
+				return exitSuccess
+			}
 			fmt.Fprintf(os.Stderr, "Ошибка отката миграций: %v\n", err)
-			os.Exit(1)
+			return exitError
 		}
 		fmt.Println("Миграции успешно откатаны")
 
@@ -78,7 +108,7 @@ func main() {
 		version, dirty, err := m.Version()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Ошибка получения статуса: %v\n", err)
-			os.Exit(1)
+			return exitError
 		}
 		if dirty {
 			fmt.Printf("Версия: %d (грязная)\n", version)
@@ -89,6 +119,32 @@ func main() {
 	default:
 		fmt.Fprintf(os.Stderr, "Неизвестная команда: %s\n", command)
 		fmt.Fprintln(os.Stderr, "Доступные команды: up, down, status")
-		os.Exit(1)
+		return exitUsageError
 	}
+
+	return exitSuccess
+}
+
+func usage() {
+	fmt.Fprintf(os.Stderr, `Утилита для управления миграциями базы данных.
+
+Использование:
+  migrate -dsn <url> <command>
+
+Команды:
+  up       Применить все миграции
+  down     Откатить последнюю миграцию
+  status   Показать текущую версию
+
+Флаги:
+  -dsn     Database URL (обязательно)
+  -path    Путь к миграциям (по умолчанию: migrations)
+  -version Показать версию утилиты
+  -help    Показать эту справку
+
+Примеры:
+  migrate -dsn postgres://user:pass@localhost:5432/auth?sslmode=disable up
+  migrate -dsn postgres://user:pass@localhost:5432/auth?sslmode=disable down
+  migrate -dsn postgres://user:pass@localhost:5432/auth?sslmode=disable status
+`)
 }
