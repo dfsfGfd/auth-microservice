@@ -409,7 +409,7 @@ CREATE INDEX idx_accounts_email ON accounts(email);
 
 | Настройка | Значение |
 |-----------|----------|
-| Allowed Origins | Конфигурируемо (см. config.yaml) |
+| Allowed Origins | Конфигурируемо (через .env: CORS_ALLOWED_ORIGINS) |
 | Allowed Methods | `GET, POST, PUT, DELETE, OPTIONS` |
 | Allowed Headers | `Authorization, Content-Type, X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset` |
 | Allow Credentials | `true` |

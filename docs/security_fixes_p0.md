@@ -16,7 +16,7 @@
 **Решение:**
 - Создан пакет `internal/middleware/rate_limiter.go`
 - Используется Redis-based sliding window алгоритм
-- Настройка лимитов через `config.yaml` (секция `rate_limit`)
+- Настройка лимитов через `.env` (переменные `RATE_LIMIT_*`)
 - Отдельные лимиты для каждого endpoint'а:
   - `register`: 5 запросов/мин
   - `login`: 10 запросов/мин
@@ -31,12 +31,11 @@
 
 **Использование:**
 ```bash
-# Настройка лимитов в config.yaml
-rate_limit:
-  register: 5
-  login: 10
-  refresh: 30
-  logout: 60
+# Настройка лимитов в .env
+RATE_LIMIT_REGISTER=5
+RATE_LIMIT_LOGIN=10
+RATE_LIMIT_REFRESH=30
+RATE_LIMIT_LOGOUT=60
 ```
 
 **Заголовки ответа:**
@@ -85,22 +84,22 @@ return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 
 **Решение:**
 - Добавлена поддержка переменной окружения `JWT_SECRET`
-- Приоритет: env var > config file
+- Загрузка из `.env` файла (приоритет)
 - Валидация в `internal/config/config.go`
-- Обновлён `config.example.yaml`
+- Обновлён `.env.example`
 
 **Файлы:**
 - `internal/config/config.go` — чтение из `JWT_SECRET`
-- `config.example.yaml` — обновлённая документация
+- `.env.example` — шаблон переменных
 
 **Использование:**
 ```bash
 # Production
 export JWT_SECRET="your-super-secret-key-minimum-32-characters-long"
 
-# config.yaml
-jwt:
-  secret: ""  # Оставьте пустым для использования из env
+# Или через .env
+cp .env.example .env
+# Отредактируйте .env, установив JWT_SECRET
 ```
 
 ---
@@ -134,31 +133,22 @@ export APP_ENV=production
 
 **Решение:**
 - Создан `internal/middleware/cors.go` с использованием `github.com/rs/cors`
-- Настройка из `config.yaml` (секция `cors`)
+- Настройка из `.env` (переменные `CORS_*`)
 - Применение в `cmd/server/main.go`
 
 **Файлы:**
 - `internal/middleware/cors.go` — CORS middleware
 - `cmd/server/main.go` — применение middleware
-- `config.example.yaml` — конфигурация
+- `.env.example` — конфигурация
 
 **Использование:**
-```yaml
-cors:
-  allowed_origins:
-    - https://your-domain.com
-    - https://app.your-domain.com
-  allowed_methods:
-    - GET
-    - POST
-    - PUT
-    - DELETE
-    - OPTIONS
-  allowed_headers:
-    - Authorization
-    - Content-Type
-    - X-Request-ID
-  max_age: 86400
+```bash
+# .env
+CORS_ALLOWED_ORIGINS=https://your-domain.com,https://app.your-domain.com
+CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
+CORS_ALLOWED_HEADERS=Authorization,Content-Type,X-Request-ID
+CORS_ALLOW_CREDENTIALS=true
+CORS_MAX_AGE=86400
 ```
 
 ---
@@ -229,37 +219,44 @@ version: '3.8'
 services:
   auth-service:
     image: auth-microservice:latest
-    environment:
-      - APP_ENV=production
-      - JWT_SECRET=${JWT_SECRET}
-      - DATABASE_URL=postgres://...
-      - REDIS_URL=redis://...
+    env_file:
+      - .env.production
     ports:
       - "8080:8080"
-    configs:
-      - source: config
-        target: /app/config.yaml
 ```
 
 ### Environment Variables
 ```bash
 # Обязательные для production
-export APP_ENV=production
 export JWT_SECRET="your-super-secret-key-minimum-32-characters-long"
+export APP_ENV=production
 
 # Опциональные
 export DATABASE_URL="postgres://..."
 export REDIS_URL="redis://..."
 ```
 
+### Через .env файл
+```bash
+# 1. Скопируйте шаблон
+cp .env.example .env
+
+# 2. Отредактируйте .env
+# Установите: JWT_SECRET, DATABASE_URL, REDIS_URL
+
+# 3. Запуск
+go run cmd/server/main.go
+```
+
 ---
 
 ## 📝 Checklist для Production
 
-- [ ] Установить `JWT_SECRET` через environment variable
-- [ ] Настроить `APP_ENV=production`
-- [ ] Настроить CORS `allowed_origins` для вашего домена
-- [ ] Настроить rate limits под вашу нагрузку
+- [ ] `.env` создан и настроен (не закоммичен в git!)
+- [ ] `JWT_SECRET` установлен через environment variable или .env
+- [ ] `APP_ENV=production`
+- [ ] Настроен CORS `CORS_ALLOWED_ORIGINS` для вашего домена
+- [ ] Rate limits настроены под вашу нагрузку
 - [ ] Включить HTTPS (reverse proxy: nginx, traefik)
 - [ ] Проверить, что cookie передаются только по HTTPS
 - [ ] Протестировать rate limiting

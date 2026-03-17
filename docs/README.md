@@ -113,8 +113,9 @@
 │   ├── config.md               # Руководство по конфигурации
 │   └── repository_methods.md   # Repository layer документация
 │
-├── config.yaml                 # Локальная конфигурация
-├── config.example.yaml         # Шаблон конфигурации
+├── .env                        # Переменные окружения (не коммитить)
+├── .env.example                # Шаблон переменных окружения
+├── config.example.yaml         # Шаблон YAML конфигурации (опционально)
 ├── Taskfile.yml                # Taskfile команды
 └── go.mod
 ```
@@ -152,31 +153,44 @@ task proto:gen
 
 ```bash
 # Пример с goose (если используется)
-goose -dir migrations postgres "DATABASE_URL" up
+goose -dir migrations postgres "$DATABASE_URL" up
 ```
 
 ### Запуск
 
 ```bash
-# Переменные окружения
-export DATABASE_URL="postgres://user:pass@localhost:5432/auth?sslmode=disable"
-export REDIS_URL="redis://localhost:6379"
-export JWT_SECRET="your-secret-key-minimum-32-characters-long"  # Обязательно!
-export APP_ENV="development"  # production для продакшена
+# 1. Скопируйте .env.example
+cp .env.example .env
 
-# Запуск сервера
+# 2. Настройте переменные в .env
+#    Обязательно: DATABASE_URL, REDIS_URL, JWT_SECRET
+
+# 3. Запуск сервера
 go run cmd/server/main.go
 ```
 
 ### Production запуск
 
 ```bash
-# Обязательно установите JWT_SECRET
+# Используйте environment variables напрямую
 export JWT_SECRET=$(openssl rand -base64 32)
 export APP_ENV=production
+export DATABASE_URL="postgres://..."
+export REDIS_URL="redis://..."
 
 # Запуск
 ./server
+```
+
+Или через Docker:
+
+```bash
+docker run -d \
+  -e JWT_SECRET="your-secret" \
+  -e APP_ENV=production \
+  -e DATABASE_URL="postgres://..." \
+  -e REDIS_URL="redis://..." \
+  auth-microservice:latest
 ```
 
 ---
