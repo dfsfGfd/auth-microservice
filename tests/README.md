@@ -1,132 +1,126 @@
 # Integration Tests
 
-Интеграционные тесты для auth-microservice с использованием testcontainers.
+Интеграционные тесты для auth-microservice с использованием Docker Compose.
 
 ## 📁 Структура
 
 ```
 tests/
-├── integration_test.go      # Основные интеграционные тесты
-├── database_test.go         # Тесты базы данных и Redis
-└── README.md                # Этот файл
+├── docker-compose.integration.yml  # Docker Compose для тестов
+├── integration_api_test.go         # API интеграционные тесты
+├── database_test.go                # Тесты базы данных и Redis
+└── README.md                       # Этот файл
 ```
 
-## 🚀 Запуск тестов
+## 🚀 Быстрый старт
 
-### Все тесты
+### 1. Поднять инфраструктуру
 
 ```bash
-# Из корня проекта
-go test ./tests -v
+cd tests
+
+# Запуск всех сервисов (auth-service + postgres + redis)
+docker-compose -f docker-compose.integration.yml up -d --build
+
+# Проверка статуса
+docker-compose -f docker-compose.integration.yml ps
 ```
 
-### Только интеграционные тесты
+### 2. Запустить тесты
 
 ```bash
-# С тегом integration
-go test -tags integration ./tests -v
+# Все интеграционные тесты
+go test -tags integration -v ./tests
+
+# Отдельный тест
+go test -tags integration -v ./tests -run TestIntegration_HealthCheck
+
+# Тесты регистрации
+go test -tags integration -v ./tests -run TestIntegration_Registration
+
+# Тесты входа
+go test -tags integration -v ./tests -run TestIntegration_Login
 ```
 
-### Отдельный тест
+### 3. Очистить
 
 ```bash
-# Конкретный тест
-go test ./tests -run TestDatabaseConnection -v
+# Остановка и удаление контейнеров
+docker-compose -f docker-compose.integration.yml down -v
 
-# Тесты базы данных
-go test ./tests -run TestDatabase -v
-
-# Тесты Redis
-go test ./tests -run TestRedis -v
-```
-
-### С очисткой контейнеров
-
-```bash
-# Автоматическая очистка после тестов
-go test ./tests -v -cleanup
-```
-
-### С выводом логов контейнеров
-
-```bash
-# Вывод логов PostgreSQL и Redis
-go test ./tests -v -args -container-logs
+# Удаление образов
+docker-compose -f docker-compose.integration.yml down -v --rmi all
 ```
 
 ## 📦 Зависимости
 
 ### Требования
 
-- **Docker** — для запуска testcontainers
+- **Docker** + **Docker Compose** — для запуска инфраструктуры
 - **Go 1.26+** — версия Go проекта
-- **testcontainers-go** — библиотека для управления контейнерами
 
-### Установка зависимостей
+### Проверка
 
 ```bash
-# Автоматическая установка через go mod
-go mod tidy
-
 # Проверка Docker
 docker --version
-docker ps
+docker compose version
+
+# Проверка Go
+go version
 ```
 
 ## 🏗 Архитектура тестов
 
-### TestMain
+### Инфраструктура
 
-`TestMain` запускается перед всеми тестами:
+`docker-compose.integration.yml` поднимает:
 
-1. **Создаёт контейнеры:**
-   - PostgreSQL 18-alpine
-   - Redis 7.4-alpine
+1. **auth-service** — тестируемый микросервис (порт 8080)
+2. **postgres:18-alpine** — база данных (порт 5432)
+3. **redis:7.4-alpine** — кэш для токенов (порт 6379)
+4. **migrate** — утилита для применения миграций
 
-2. **Применяет миграции:**
-   - Запускает `cmd/migrate` для создания таблиц
-
-3. **Устанавливает переменные окружения:**
-   - `DATABASE_URL`
-   - `REDIS_URL`
-   - `JWT_SECRET`
-   - `APP_ENV=test`
-
-4. **Очищает контейнеры** после всех тестов
-
-### Контейнеры
-
-#### PostgreSQL
-
-```go
-postgres.Run(ctx,
-    "postgres:18-alpine",
-    postgres.WithDatabase("auth_test"),
-    postgres.WithUsername("test_user"),
-    postgres.WithPassword("test_password"),
-)
+```yaml
+services:
+  auth-service:     # Тестируемый сервис
+    ports: [8080, 9090]
+    depends_on: [postgres, redis, migrate]
+  
+  migrate:          # Применяет миграции
+    depends_on: [postgres]
+  
+  postgres:         # База данных
+    ports: [5432]
+  
+  redis:            # Кэш
+    ports: [6379]
 ```
 
-**Параметры:**
-- Image: `postgres:18-alpine`
-- Database: `auth_test`
-- User: `test_user`
-- Password: `test_password`
-- Wait strategy: log "database system is ready"
+### Переменные окружения
 
-#### Redis
-
-```go
-redis.Run(ctx,
-    "redis:7.4-alpine",
-)
+```bash
+APP_ENV=test
+DATABASE_URL=postgres://test_user:test_password@postgres:5432/auth_test
+REDIS_URL=redis://redis:6379
+JWT_SECRET=test-secret-key-minimum-32-characters-long
 ```
-
-**Параметры:**
-- Image: `redis:7.4-alpine`
-- Wait strategy: log "Ready to accept connections"
 
 ## 📝 Тесты
+
+### API Integration Tests (`integration_api_test.go`)
+
+| Тест | Описание |
+|------|----------|
+| `TestIntegration_HealthCheck` | Проверка health check endpoint |
+| `TestIntegration_Registration_Success` | Успешная регистрация |
+| `TestIntegration_Registration_DuplicateEmail` | Регистрация с существующим email |
+| `TestIntegration_Registration_InvalidEmail` | Регистрация с невалидным email |
+| `TestIntegration_Registration_WeakPassword` | Регистрация со слабым паролем |
+| `TestIntegration_Login_Success` | Успешный вход |
+| `TestIntegration_Login_InvalidCredentials` | Вход с неверными данными |
+| `TestIntegration_TokenRefresh_Success` | Обновление токена |
+| `TestIntegration_Logout_Success` | Выход из системы |
 
 ### Database Tests (`database_test.go`)
 
@@ -142,44 +136,48 @@ redis.Run(ctx,
 | `TestConcurrentDatabaseAccess` | Конкурентный доступ к БД |
 | `TestConcurrentRedisAccess` | Конкурентный доступ к Redis |
 
-### Integration Tests (`integration_test.go`)
-
-| Тест | Описание |
-|------|----------|
-| `TestIntegration_Registration` | Регистрация пользователя |
-| `TestIntegration_Login` | Вход пользователя |
-| `TestIntegration_TokenRefresh` | Обновление токенов |
-| `TestIntegration_Logout` | Выход пользователя |
-| `TestIntegration_RateLimiting` | Rate limiting |
-
 ## 🔧 Отладка
 
-### Вывод логов контейнеров
+### Логи сервисов
 
 ```bash
-# Включить логи в TestMain
-fmt.Println(container.Logs(ctx))
+# Логи auth-service
+docker-compose -f docker-compose.integration.yml logs auth-service
+
+# Логи PostgreSQL
+docker-compose -f docker-compose.integration.yml logs postgres
+
+# Логи Redis
+docker-compose -f docker-compose.integration.yml logs redis
+
+# Логи migrate
+docker-compose -f docker-compose.integration.yml logs migrate
+
+# Все логи в реальном времени
+docker-compose -f docker-compose.integration.yml logs -f
 ```
 
-### Сохранение контейнеров после тестов
+### Подключение к контейнерам
 
 ```bash
-# Не удалять контейнеры (для отладки)
-export TESTCONTAINERS_RYUK_DISABLED=true
-go test ./tests -v
+# PostgreSQL
+docker-compose -f docker-compose.integration.yml exec postgres psql -U test_user -d auth_test
+
+# Redis
+docker-compose -f docker-compose.integration.yml exec redis redis-cli
+
+# Auth Service
+docker-compose -f docker-compose.integration.yml exec auth-service sh
 ```
 
-### Подключение к контейнеру во время тестов
+### Проверка здоровья
 
 ```bash
-# Найти контейнер
-docker ps | grep auth
+# Health check
+curl http://localhost:8080/health
 
-# Подключиться к PostgreSQL
-docker exec -it <container_id> psql -U test_user -d auth_test
-
-# Подключиться к Redis
-docker exec -it <container_id> redis-cli
+# Статус контейнеров
+docker-compose -f docker-compose.integration.yml ps
 ```
 
 ## 🐛 Troubleshooting
@@ -194,25 +192,38 @@ docker ps
 sudo systemctl start docker
 ```
 
-### Ошибка: "Container failed to start"
+### Ошибка: "Service not ready"
 
 ```bash
-# Проверить логи Docker
-docker logs <container_id>
+# Проверить логи
+docker-compose -f docker-compose.integration.yml logs auth-service
 
-# Увеличить таймаут
-export TEST_STARTUP_TIMEOUT=120s
-go test ./tests -v
+# Проверить, что миграции применились
+docker-compose -f docker-compose.integration.yml logs migrate
+
+# Перезапустить
+docker-compose -f docker-compose.integration.yml down -v
+docker-compose -f docker-compose.integration.yml up -d --build
 ```
 
 ### Ошибка: "Connection refused"
 
 ```bash
-# Проверить, что контейнер запущен
-docker ps
+# Проверить, что сервис запущен
+docker-compose -f docker-compose.integration.yml ps
 
 # Проверить порты
-docker port <container_id>
+docker-compose -f docker-compose.integration.yml port auth-service 8080
+```
+
+### Тесты не находят контейнеры
+
+```bash
+# Убедиться, что docker-compose запущен
+docker-compose -f docker-compose.integration.yml ps
+
+# Если сервисов нет, запустить
+docker-compose -f docker-compose.integration.yml up -d --build
 ```
 
 ### Ошибка: "No space left on device"
@@ -221,7 +232,7 @@ docker port <container_id>
 # Очистить Docker
 docker system prune -a
 
-# Очистить testcontainers
+# Очистить volumes
 docker volume prune
 ```
 
