@@ -18,15 +18,15 @@ cmd/server/main
 go.work
 
 # Docker
-.dockerignore
-docker-compose*.yml
-!docker-compose.yml
+deploy/Dockerfile
+deploy/docker-compose.yml
+deploy/.dockerignore
 
 # Environment
 .env
 !.env.example
-.env.production
-!.env.production.example
+deploy/.env.production
+!deploy/.env.production.example
 
 # Config
 config.yaml
