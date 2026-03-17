@@ -13,14 +13,18 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	// Валидация email
 	emailVO, err := model.NewEmail(email)
 	if err != nil {
-		return nil, err
+		// Возвращаем ErrInvalidCredentials вместо ErrEmailInvalid для предотвращения user enumeration
+		s.log.Warn("invalid email format", "email", email)
+		return nil, errors.ErrInvalidCredentials
 	}
 
 	// Поиск аккаунта по email
 	account, err := s.accountRepo.GetByEmail(ctx, emailVO.Value())
 	if err != nil {
-		s.log.Error("get account by email", "email", email, "error", err)
-		return nil, err
+		// Если аккаунт не найден, возвращаем ErrInvalidCredentials вместо ErrAccountNotFound
+		// Это предотвращает user enumeration - злоумышленник не узнает, существует ли email
+		s.log.Debug("account not found", "email", email)
+		return nil, errors.ErrInvalidCredentials
 	}
 
 	// Сравнение пароля

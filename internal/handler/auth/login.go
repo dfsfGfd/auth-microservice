@@ -34,15 +34,16 @@ func (h *Handler) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.
 }
 
 func (h *Handler) loginError(err error) (*authv1.LoginResponse, error) {
-	switch {
-	case stderrors.Is(err, errors.ErrEmailInvalid):
-		return nil, status.Error(codes.InvalidArgument, "invalid email")
-	case stderrors.Is(err, errors.ErrAccountNotFound):
-		return nil, status.Error(codes.NotFound, "account not found")
-	case stderrors.Is(err, errors.ErrInvalidCredentials):
-		return nil, status.Error(codes.Unauthenticated, "invalid credentials")
-	default:
+	// Логируем ошибку для внутреннего использования
+	if stderrors.Is(err, errors.ErrAccountNotFound) ||
+		stderrors.Is(err, errors.ErrInvalidCredentials) ||
+		stderrors.Is(err, errors.ErrEmailInvalid) {
+		h.log.Warn("login failed", "error", err)
+	} else {
 		h.log.Error("login failed", "error", err)
-		return nil, status.Error(codes.Internal, "internal error")
 	}
+
+	// Всегда возвращаем одинаковую ошибку для предотвращения user enumeration
+	// Злоумышленник не должен узнавать, существует ли аккаунт с таким email
+	return nil, status.Error(codes.Unauthenticated, "invalid credentials")
 }

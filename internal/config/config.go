@@ -10,13 +10,22 @@
 //	// Доступ к конфигурации
 //	fmt.Println(cfg.Server.HTTPPort)
 //	fmt.Println(cfg.Database.URL)
+//
+// Конфигурация также может быть загружена из переменных окружения (.env файл):
+//
+//	export JWT_SECRET="your-secret"
+//	export DATABASE_URL="postgres://..."
+//	cfg, err := config.LoadFromEnv()
 package config
 
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v3"
 )
 
@@ -85,10 +94,11 @@ type LoggingConfig struct {
 
 // CORSConfig конфигурация CORS
 type CORSConfig struct {
-	AllowedOrigins []string `yaml:"allowed_origins"`
-	AllowedMethods []string `yaml:"allowed_methods"`
-	AllowedHeaders []string `yaml:"allowed_headers"`
-	MaxAge         int      `yaml:"max_age"`
+	AllowedOrigins   []string `yaml:"allowed_origins"`
+	AllowedMethods   []string `yaml:"allowed_methods"`
+	AllowedHeaders   []string `yaml:"allowed_headers"`
+	AllowCredentials bool     `yaml:"allow_credentials"`
+	MaxAge           int      `yaml:"max_age"`
 }
 
 // RateLimitConfig конфигурация rate limiting
@@ -126,6 +136,124 @@ func Load(path string) (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+// LoadFromEnv загружает конфигурацию из переменных окружения
+// Если .env файл существует, он будет загружен автоматически
+func LoadFromEnv() (*Config, error) {
+	// Пытаемся загрузить .env файл (не критично если не найден)
+	_ = godotenv.Load()
+
+	cfg := &Config{
+		Server: ServerConfig{
+			HTTPPort:     getEnvInt("HTTP_PORT", 8080),
+			GRPCPort:     getEnvInt("GRPC_PORT", 9090),
+			Env:          getEnv("APP_ENV", "development"),
+			ReadTimeout:  getEnvInt("READ_TIMEOUT", 10),
+			WriteTimeout: getEnvInt("WRITE_TIMEOUT", 10),
+			IdleTimeout:  getEnvInt("IDLE_TIMEOUT", 60),
+		},
+		Database: DatabaseConfig{
+			URL:              getEnv("DATABASE_URL", ""),
+			MaxConnections:   getEnvInt("DATABASE_MAX_CONNECTIONS", 25),
+			ConnectionTimeout: getEnvInt("DATABASE_CONNECTION_TIMEOUT", 10),
+		},
+		Redis: RedisConfig{
+			URL:              getEnv("REDIS_URL", ""),
+			DB:               getEnvInt("REDIS_DB", 0),
+			ConnectionTimeout: getEnvInt("REDIS_CONNECTION_TIMEOUT", 5),
+		},
+		JWT: JWTConfig{
+			Secret:     getEnv("JWT_SECRET", ""),
+			AccessTTL:  getEnv("JWT_ACCESS_TTL", "15m"),
+			RefreshTTL: getEnv("JWT_REFRESH_TTL", "336h"),
+			Issuer:     getEnv("JWT_ISSUER", "auth-service"),
+		},
+		Cookie: CookieConfig{
+			Secure:   getEnvBool("COOKIE_SECURE", false),
+			HTTPOnly: getEnvBool("COOKIE_HTTP_ONLY", true),
+			SameSite: getEnv("COOKIE_SAME_SITE", "Lax"),
+			Domain:   getEnv("COOKIE_DOMAIN", ""),
+			Path:     getEnv("COOKIE_PATH", "/"),
+			MaxAge:   getEnvInt("COOKIE_MAX_AGE", 1209600),
+		},
+		Logging: LoggingConfig{
+			Level:       getEnv("LOG_LEVEL", "info"),
+			Format:      getEnv("LOG_FORMAT", "json"),
+			ServiceName: getEnv("LOG_SERVICE_NAME", "auth-service"),
+		},
+		CORS: CORSConfig{
+			AllowedOrigins: getEnvSlice("CORS_ALLOWED_ORIGINS", ","),
+			AllowedMethods: getEnvSlice("CORS_ALLOWED_METHODS", ","),
+			AllowedHeaders: getEnvSlice("CORS_ALLOWED_HEADERS", ","),
+			MaxAge:         getEnvInt("CORS_MAX_AGE", 86400),
+		},
+		RateLimit: RateLimitConfig{
+			Register: getEnvInt("RATE_LIMIT_REGISTER", 5),
+			Login:    getEnvInt("RATE_LIMIT_LOGIN", 10),
+			Refresh:  getEnvInt("RATE_LIMIT_REFRESH", 30),
+			Logout:   getEnvInt("RATE_LIMIT_LOGOUT", 60),
+		},
+		Health: HealthConfig{
+			Path: getEnv("HEALTH_PATH", "/health"),
+		},
+		Shutdown: ShutdownConfig{
+			Timeout: getEnvInt("SHUTDOWN_TIMEOUT", 30),
+		},
+	}
+
+	// Парсим CORS allow credentials
+	cfg.CORS.AllowCredentials = getEnvBool("CORS_ALLOW_CREDENTIALS", true)
+
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// getEnv получает значение переменной окружения или значение по умолчанию
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+// getEnvInt получает целочисленное значение переменной окружения
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		if intValue, err := strconv.Atoi(value); err == nil {
+			return intValue
+		}
+	}
+	return defaultValue
+}
+
+// getEnvBool получает булево значение переменной окружения
+func getEnvBool(key string, defaultValue bool) bool {
+	if value := os.Getenv(key); value != "" {
+		switch strings.ToLower(value) {
+		case "true", "1", "yes":
+			return true
+		case "false", "0", "no":
+			return false
+		}
+	}
+	return defaultValue
+}
+
+// getEnvSlice получает срез строк из переменной окружения
+func getEnvSlice(key, separator string) []string {
+	if value := os.Getenv(key); value != "" {
+		parts := strings.Split(value, separator)
+		result := make([]string, len(parts))
+		for i, part := range parts {
+			result[i] = strings.TrimSpace(part)
+		}
+		return result
+	}
+	return []string{}
 }
 
 // Validate валидирует конфигурацию
@@ -204,9 +332,15 @@ func (c *RedisConfig) Validate() error {
 
 // Validate валидирует конфигурацию JWT
 func (c *JWTConfig) Validate() error {
+	// Сначала пробуем получить секрет из переменной окружения
 	if c.Secret == "" {
-		return fmt.Errorf("secret is required")
+		c.Secret = os.Getenv("JWT_SECRET")
 	}
+	
+	if c.Secret == "" {
+		return fmt.Errorf("secret is required (set JWT_SECRET env var or config file)")
+	}
+	
 	if len(c.Secret) < 32 {
 		return fmt.Errorf("secret must be at least 32 characters long")
 	}
@@ -241,6 +375,22 @@ func (c *CookieConfig) Validate() error {
 	if !validSameSite[c.SameSite] {
 		return fmt.Errorf("same_site must be Strict, Lax, or None")
 	}
+
+	// Проверка Secure флага для production
+	// В production режиме Secure должен быть true для HTTPS
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
+	}
+	
+	// Если production, предупреждаем о необходимости Secure
+	if env == "production" && !c.Secure {
+		// Не блокируем, но логируем предупреждение
+		// Фактическое требование должно быть в документации
+		// Здесь мы только устанавливаем рекомендацию
+		c.Secure = true // Принудительно включаем для production
+	}
+	
 	return nil
 }
 

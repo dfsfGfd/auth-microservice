@@ -26,6 +26,9 @@
 | ✅ **Обновление токенов** | Ротация JWT access/refresh токенов |
 | ✅ **gRPC + REST** | Единый сервис для обоих протоколов (grpc-gateway) |
 | ✅ **Swagger/OpenAPI** | Автогенерируемая документация API |
+| ✅ **Rate Limiting** | Redis-based ограничение запросов (sliding window) |
+| ✅ **CORS Middleware** | Настройка跨origin запросов |
+| ✅ **Защита от User Enumeration** | Одинаковые ошибки аутентификации |
 
 ---
 
@@ -67,6 +70,11 @@
 │   │
 │   ├── cache/                  # Кэш слой
 │   │   └── token/              # Кэш для токенов (Redis)
+│   │
+│   ├── middleware/             # HTTP/gRPC middleware
+│   │   ├── rate_limiter.go     # Redis-based rate limiting
+│   │   ├── rate_limiter_http.go # HTTP/gRPC адаптеры
+│   │   └── cors.go             # CORS middleware
 │   │
 │   ├── repository/             # Репозитории (PostgreSQL)
 │   │   ├── repository.go       # Интерфейсы репозиториев
@@ -153,10 +161,22 @@ goose -dir migrations postgres "DATABASE_URL" up
 # Переменные окружения
 export DATABASE_URL="postgres://user:pass@localhost:5432/auth?sslmode=disable"
 export REDIS_URL="redis://localhost:6379"
-export JWT_SECRET="your-secret-key"
+export JWT_SECRET="your-secret-key-minimum-32-characters-long"  # Обязательно!
+export APP_ENV="development"  # production для продакшена
 
 # Запуск сервера
 go run cmd/server/main.go
+```
+
+### Production запуск
+
+```bash
+# Обязательно установите JWT_SECRET
+export JWT_SECRET=$(openssl rand -base64 32)
+export APP_ENV=production
+
+# Запуск
+./server
 ```
 
 ---
@@ -249,6 +269,36 @@ go test ./... -v
 }
 ```
 
+### Rate Limiting
+
+| Endpoint | Лимит (запросов/мин) |
+|----------|---------------------|
+| `/api/auth/register` | 5 |
+| `/api/auth/login` | 10 |
+| `/api/auth/refresh` | 30 |
+| `/api/auth/logout` | 60 |
+
+**Заголовки ответа:**
+```
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 5
+X-RateLimit-Reset: 1647389400
+Retry-After: 60
+```
+
+### Защита от User Enumeration
+
+Все ошибки аутентификации возвращают одинаковый ответ:
+```json
+{
+  "status_code": 401,
+  "message": "invalid credentials",
+  "data": null
+}
+```
+
+Это предотвращает определение существования email в системе.
+
 ### Требования к паролю
 
 | Требование | Значение |
@@ -265,6 +315,14 @@ go test ./... -v
 | Формат | RFC 5321 |
 | Максимальная длина | 254 символа |
 
+### Production Checklist
+
+- [ ] `JWT_SECRET` установлен через environment variable
+- [ ] `APP_ENV=production` для автоматического включения Secure cookies
+- [ ] Настроен CORS для ваших доменов
+- [ ] Rate limits настроены под вашу нагрузку
+- [ ] HTTPS включён (reverse proxy: nginx, traefik)
+
 ---
 
 ## 📦 Зависимости
@@ -272,15 +330,12 @@ go test ./... -v
 ### Внешние библиотеки
 
 ```go
-// Авторские библиотеки
-github.com/dfsfGfd/redis-connect        // Redis клиент
-github.com/dfsfGfd/postgresql-connect   // PostgreSQL клиент (pgx)
-
 // Стандартные библиотеки
 github.com/google/uuid                  // UUID генерация
 github.com/google/wire                  // Dependency Injection
 github.com/golang-jwt/jwt/v5            // JWT токены
 github.com/rs/zerolog                   // Логирование
+github.com/rs/cors                      // CORS middleware
 github.com/redis/go-redis/v9            // Redis клиент
 github.com/jackc/pgx/v5                 // PostgreSQL драйвер
 golang.org/x/crypto                     // bcrypt

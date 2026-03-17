@@ -20,6 +20,7 @@ import (
 	"auth-microservice/internal/config"
 	"auth-microservice/internal/cache/token"
 	"auth-microservice/internal/handler/auth"
+	"auth-microservice/internal/middleware"
 	"auth-microservice/internal/repository"
 	repositoryAuth "auth-microservice/internal/repository/auth"
 	serviceAuth "auth-microservice/internal/service/auth"
@@ -43,6 +44,7 @@ type Application struct {
 	TokenCache    *token.RedisCache
 	AuthService   *serviceAuth.AuthService
 	AuthHandler   *auth.Handler
+	RateLimiter   *middleware.RateLimiter
 }
 
 // CleanUp очищает ресурсы приложения
@@ -93,6 +95,10 @@ var ProviderSet = wire.NewSet(
 	// Bcrypt hasher
 	bcrypt.NewService,
 
+	// Rate Limiter
+	ProvideRateLimitConfigs,
+	middleware.NewRateLimiter,
+
 	// AuthService
 	serviceAuth.NewAuthService,
 
@@ -103,9 +109,21 @@ var ProviderSet = wire.NewSet(
 	NewApplication,
 )
 
-// loadConfig загружает конфигурацию из файла
+// loadConfig загружает конфигурацию из .env или YAML файла
 func loadConfig() (*config.Config, error) {
-	return config.Load("config.yaml")
+	// Сначала пробуем загрузить из .env (приоритет)
+	cfg, err := config.LoadFromEnv()
+	if err == nil {
+		return cfg, nil
+	}
+
+	// Если не удалось, пробуем config.yaml
+	cfg, err = config.Load("config.yaml")
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config from env or file: %w", err)
+	}
+
+	return cfg, nil
 }
 
 // ProvidePostgresConfig предоставляет конфигурацию PostgreSQL
@@ -199,6 +217,32 @@ func parseSameSite(s string) http.SameSite {
 	}
 }
 
+// ProvideRateLimitConfigs предоставляет конфигурации rate limiter для всех endpoint'ов
+func ProvideRateLimitConfigs(cfg *config.Config) map[string]middleware.RateLimiterConfig {
+	return map[string]middleware.RateLimiterConfig{
+		"register": {
+			Window: time.Minute,
+			Limit:  cfg.RateLimit.Register,
+			Prefix: "ratelimit:register:",
+		},
+		"login": {
+			Window: time.Minute,
+			Limit:  cfg.RateLimit.Login,
+			Prefix: "ratelimit:login:",
+		},
+		"refresh": {
+			Window: time.Minute,
+			Limit:  cfg.RateLimit.Refresh,
+			Prefix: "ratelimit:refresh:",
+		},
+		"logout": {
+			Window: time.Minute,
+			Limit:  cfg.RateLimit.Logout,
+			Prefix: "ratelimit:logout:",
+		},
+	}
+}
+
 // NewApplication создаёт приложение из зависимостей
 func NewApplication(
 	cfg *config.Config,
@@ -209,6 +253,7 @@ func NewApplication(
 	redisClient *goredis.Client,
 	accountRepo repository.AccountRepository,
 	tokenCache *token.RedisCache,
+	rateLimiter *middleware.RateLimiter,
 	authService *serviceAuth.AuthService,
 	authHandler *auth.Handler,
 ) (*Application, error) {
@@ -221,6 +266,7 @@ func NewApplication(
 		Redis:         redisClient,
 		AccountRepo:   accountRepo,
 		TokenCache:    tokenCache,
+		RateLimiter:   rateLimiter,
 		AuthService:   authService,
 		AuthHandler:   authHandler,
 	}, nil

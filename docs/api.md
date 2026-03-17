@@ -199,16 +199,30 @@ POST /api/auth/login
 | Код | HTTP | Описание |
 |-----|------|----------|
 | `INVALID_CREDENTIALS` | 401 | Неверный email или пароль |
-| `ACCOUNT_NOT_FOUND` | 404 | Аккаунт не найден |
+
+> **Примечание:** В целях безопасности все ошибки аутентификации возвращают одинаковый ответ `invalid credentials`. Это предотвращает определение существования email в системе (user enumeration).
 
 #### Пример ошибки (401 Unauthorized)
 
 ```json
 {
   "status_code": 401,
-  "message": "Invalid credentials",
+  "message": "invalid credentials",
   "data": null
 }
+```
+
+#### Rate Limiting
+
+| Лимит | Запросов в минуту |
+|-------|------------------|
+| Login | 10 |
+
+**Заголовки ответа:**
+```
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 5
+X-RateLimit-Reset: 1647389400
 ```
 
 ---
@@ -395,47 +409,39 @@ CREATE INDEX idx_accounts_email ON accounts(email);
 
 | Настройка | Значение |
 |-----------|----------|
-| Allowed Origins | Конфигурируемо |
-| Allowed Methods | `GET, POST, DELETE` |
-| Allowed Headers | `Authorization, Content-Type` |
+| Allowed Origins | Конфигурируемо (см. config.yaml) |
+| Allowed Methods | `GET, POST, PUT, DELETE, OPTIONS` |
+| Allowed Headers | `Authorization, Content-Type, X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset` |
+| Allow Credentials | `true` |
 | Max Age | `86400` (24 часа) |
 
 ### Rate Limiting
 
-| Endpoint | Лимит |
-|----------|-------|
-| `/api/auth/register` | 5 запросов/минуту |
-| `/api/auth/login` | 10 запросов/минуту |
-| `/api/auth/refresh` | 30 запросов/минуту |
-| `/api/auth/logout` | 60 запросов/минуту |
+Микросервис использует Redis-based sliding window алгоритм для ограничения запросов.
 
----
+| Endpoint | Лимит (запросов/мин) |
+|----------|---------------------|
+| `/api/auth/register` | 5 |
+| `/api/auth/login` | 10 |
+| `/api/auth/refresh` | 30 |
+| `/api/auth/logout` | 60 |
 
-## Разработка
+**Заголовки ответа:**
 
-### Taskfile Commands
+| Заголовок | Описание |
+|-----------|----------|
+| `X-RateLimit-Limit` | Максимальное количество запросов в окно |
+| `X-RateLimit-Remaining` | Оставшееся количество запросов |
+| `X-RateLimit-Reset` | Unix timestamp сброса лимита |
+| `Retry-After` | Секунд до следующего запроса (при 429) |
 
-```bash
-# Генерация Proto (gRPC + REST + Swagger)
-task proto:gen
-
-# Линтинг Proto
-task proto:lint
-
-# Обновление Proto зависимостей
-task proto:deps
-
-# Форматирование кода
-task format
-
-# Линтинг Go кода
-task lint
-
-# Очистка зависимостей
-task tidy
-
-# Генерация DI кода
-task wire:gen
+**Пример ответа при превышении лимита (429 Too Many Requests):**
+```json
+{
+  "status_code": 429,
+  "message": "rate limit exceeded",
+  "data": null
+}
 ```
 
 ### JWT Сервис

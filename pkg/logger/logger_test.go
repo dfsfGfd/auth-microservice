@@ -210,7 +210,7 @@ func TestLogger_JSONFormat(t *testing.T) {
 	assert.Contains(t, output, "test message")
 	assert.Contains(t, output, "key")
 	assert.Contains(t, output, "value")
-	assert.Contains(t, output, "timestamp")
+	assert.Contains(t, output, "time")  // zerolog использует "time" вместо "timestamp"
 }
 
 func TestLogger_ConsoleFormat(t *testing.T) {

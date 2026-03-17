@@ -30,3 +30,4 @@
 - DB модели в `internal/repository/model/`
 - Интерфейсы в `internal/repository/repository.go`
 - Реализация в `internal/repository/auth/`
+- Проект: Go auth-microservice (gRPC + REST). Реализованы ВСЕ слои: Domain (model), Repository (PostgreSQL), Service (бизнес-логика), Handler (gRPC), Cache (Redis для токенов), DI (Google Wire), cmd/server/main.go (запуск серверов). Ошибки: конвертация jwt ошибок в доменные через errors.Is(). Структура: internal/{model,repository,service,handler,cache,di,errors,config}, pkg/{proto,jwt,bcrypt,logger,cookies,db}, cmd/server/main.go. Коммиты: последние - fix: handle errors properly with errors.Is() (a0f3c65). Следующие шаги: написание интеграционных тестов, Dockerfile, docker-compose.yml.

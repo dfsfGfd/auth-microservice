@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"auth-microservice/internal/di"
+	"auth-microservice/internal/middleware"
 	"auth-microservice/pkg/logger"
 	"auth-microservice/pkg/proto/auth/v1"
 
@@ -40,9 +41,15 @@ func run() error {
 
 	log := app.Logger
 
-	// Создаём gRPC сервер
+	// Создаём gRPC сервер с rate limiting и логированием
+	rateLimitInterceptor := middleware.UnaryServerInterceptor(
+		app.RateLimiter,
+		middleware.MethodEndpointFunc(),
+		middleware.MethodKeyFunc(),
+	)
+
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(unaryLogger(log)),
+		grpc.ChainUnaryInterceptor(rateLimitInterceptor, unaryLogger(log)),
 	)
 
 	// Регистрируем Auth handler
@@ -89,6 +96,13 @@ func run() error {
 		return fmt.Errorf("create gateway: %w", err)
 	}
 
+	// Оборачиваем gateway в rate limiting middleware
+	gwWithRateLimit := middleware.HTTPRateLimitMiddleware(
+		app.RateLimiter,
+		middleware.HTTPPathEndpointFunc(),
+		middleware.IPKeyFunc(),
+	)(gw)
+
 	// Создаём корневой mux и добавляем health check + gateway
 	rootMux := http.NewServeMux()
 	rootMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -96,10 +110,20 @@ func run() error {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`))
 	})
-	rootMux.Handle("/", gw)
+	rootMux.Handle("/", gwWithRateLimit)
 
-	// Обновляем handler HTTP сервера
-	httpServer.Handler = rootMux
+	// Применяем CORS middleware
+	corsHandler := middleware.NewCORS(middleware.CORSConfig{
+		AllowedOrigins:   app.Config.CORS.AllowedOrigins,
+		AllowedMethods:   app.Config.CORS.AllowedMethods,
+		AllowedHeaders:   app.Config.CORS.AllowedHeaders,
+		AllowCredentials: true,
+		MaxAge:           app.Config.CORS.MaxAge,
+		Debug:            app.Config.Server.Env == "development",
+	})(rootMux)
+
+	// Обновляем handler HTTP сервера (с CORS)
+	httpServer.Handler = corsHandler
 
 	// Запускаем HTTP сервер (REST)
 	go func() {
