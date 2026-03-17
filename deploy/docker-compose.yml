@@ -62,7 +62,7 @@ services:
 
   # Redis
   redis:
-    image: redis:8-alpine
+    image: redis:7.4-alpine
     container_name: auth-redis
     ports:
       - "6379:6379"
