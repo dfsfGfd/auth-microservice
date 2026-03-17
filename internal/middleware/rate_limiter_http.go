@@ -73,6 +73,7 @@ func UnaryServerInterceptor(rl *RateLimiter, getEndpoint func(ctx context.Contex
 		}
 
 		// Добавляем метаданные rate limiting
+		// Игнорируем ошибку, так как это не критично для работы
 		_ = grpc.SendHeader(ctx, metadata.Pairs(
 			"X-RateLimit-Limit", strconv.Itoa(getLimit(rl, endpoint)),
 			"X-RateLimit-Remaining", strconv.Itoa(remaining),
@@ -84,6 +85,7 @@ func UnaryServerInterceptor(rl *RateLimiter, getEndpoint func(ctx context.Contex
 			if retryAfter < 0 {
 				retryAfter = 0
 			}
+			// Игнорируем ошибку отправки заголовка — не критично
 			_ = grpc.SendHeader(ctx, metadata.Pairs("Retry-After", strconv.Itoa(retryAfter)))
 			return nil, status.Error(codes.ResourceExhausted, "rate limit exceeded")
 		}
