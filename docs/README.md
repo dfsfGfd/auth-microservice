@@ -207,9 +207,10 @@ docker compose down
 
 | Документ | Описание |
 |----------|----------|
+| [Development Guide](docs/DEVELOPMENT.md) | **Для разработчиков** — архитектура, правила, генерация кода |
 | [API Documentation](docs/api.md) | Полное описание API endpoints |
 | [Configuration Guide](docs/config.md) | Настройка .env переменных |
-| [Docker Guide](deploy/DEPLOY.md) | Развёртывание в Docker |
+| [Docker Guide](deploy/README.md) | Развёртывание в Docker |
 | [JWT Package](pkg/jwt/README.md) | JWT сервис документация |
 | [Migrations](migrations/README.md) | Управление миграциями БД |
 
