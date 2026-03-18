@@ -1,130 +1,17 @@
 # Auth Microservice
 
-> Микросервис аутентификации с поддержкой gRPC и REST API, использующий JWT access/refresh токены.
+> Микросервис аутентификации с поддержкой gRPC + REST API (grpc-gateway), JWT access/refresh токенов, PostgreSQL и Redis.
 
 ---
 
 ## 📋 Оглавление
 
-- [Возможности](#-возможности)
-- [Архитектура](#-архитектура)
-- [Структура проекта](#-структура-проекта)
 - [Быстрый старт](#-быстрый-старт)
 - [API Endpoints](#-api-endpoints)
+- [Архитектура](#-архитектура)
 - [Разработка](#-разработка)
-- [Безопасность](#-безопасность)
-- [Зависимости](#-зависимости)
-
----
-
-## 📋 Возможности
-
-| Функция | Описание |
-|---------|----------|
-| ✅ **Регистрация** | Создание нового аккаунта |
-| ✅ **Вход/Выход** | Аутентификация и завершение сессии |
-| ✅ **Обновление токенов** | Ротация JWT access/refresh токенов |
-| ✅ **gRPC + REST** | Единый сервис для обоих протоколов (grpc-gateway) |
-| ✅ **Swagger/OpenAPI** | Автогенерируемая документация API |
-| ✅ **Rate Limiting** | Redis-based ограничение запросов (sliding window) |
-| ✅ **CORS Middleware** | Настройка跨origin запросов |
-| ✅ **Защита от User Enumeration** | Одинаковые ошибки аутентификации |
-
----
-
-## 🏗 Архитектура
-
-### Стек технологий
-
-| Компонент | Технология |
-|-----------|------------|
-| **RPC** | gRPC + REST (grpc-gateway) |
-| **Токены** | JWT (access + refresh) |
-| **Кэш** | Redis |
-| **БД** | PostgreSQL (pgx) |
-| **Протокол** | Protocol Buffers v3 |
-| **UUID** | Генерация на бэкенде (Go) |
-
-### Время жизни токенов
-
-| Токен | TTL | Хранение |
-|-------|-----|----------|
-| **Access Token** | 15 минут | Клиент (Authorization header) |
-| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `account_id`) |
-
----
-
-## 📁 Структура проекта
-
-```
-.
-├── cmd/
-│   └── server/                 # Точка входа приложения
-│
-├── internal/
-│   ├── model/                  # Доменные модели (агрегаты, VO)
-│   │   ├── account.go          # Account агрегат
-│   │   ├── email.go            # Email VO
-│   │   ├── password.go         # PlainPassword VO
-│   │   └── password_hash.go    # PasswordHash VO
-│   │
-│   ├── cache/                  # Кэш слой
-│   │   └── token/              # Кэш для токенов (Redis)
-│   │
-│   ├── middleware/             # HTTP/gRPC middleware
-│   │   ├── rate_limiter.go     # Redis-based rate limiting
-│   │   ├── rate_limiter_http.go # HTTP/gRPC адаптеры
-│   │   └── cors.go             # CORS middleware
-│   │
-│   ├── repository/             # Репозитории (PostgreSQL)
-│   │   ├── repository.go       # Интерфейсы репозиториев
-│   │   ├── model/              # DB модели
-│   │   ├── converter/          # Конвертеры domain ↔ DB
-│   │   └── auth/               # PostgreSQL реализация
-│   │
-│   ├── config/                 # Загрузка конфигурации
-│   ├── di/                     # Dependency Injection (Google Wire)
-│   ├── errors/                 # Доменные ошибки
-│   ├── service/                # Бизнес-логика (сервисный слой)
-│   └── handler/                # gRPC хендлеры
-│
-├── pkg/
-│   ├── proto/                  # Сгенерированный Proto код (gRPC + REST)
-│   ├── bcrypt/                 # Хеширование паролей
-│   ├── jwt/                    # JWT утилиты
-│   ├── cookies/                # Cookie утилиты
-│   ├── logger/                 # Логирование (zerolog)
-│   └── db/                     # Подключения к БД
-│       ├── postgresql/         # PostgreSQL подключение
-│       └── redisdb/            # Redis подключение
-│
-├── api/
-│   └── auth/v1/                # Swagger/OpenAPI спецификации
-├── proto/
-│   └── auth/v1/
-│       └── auth.proto          # Proto контракты
-│
-├── migrations/
-│   └── 001_create_accounts_table.sql  # Миграция БД
-│
-├── docs/                       # Документация проекта
-│   ├── README.md               # Основная документация
-│   ├── api.md                  # API документация
-│   └── config.md               # Руководство по конфигурации
-│
-├── deploy/                     # Файлы для развёртывания (Docker)
-│   ├── DEPLOY.md               # Основное руководство по деплою
-│   ├── README.md               # Docker документация
-│   ├── Dockerfile              # Multi-stage Dockerfile
-│   ├── docker-compose.yml      # Development окружение
-│   └── docker-compose.production.yml  # Production окружение
-│
-├── .env                        # Переменные окружения (не коммитить)
-├── .env.example                # Шаблон переменных окружения
-├── config.example.yaml         # Шаблон YAML конфигурации (опционально)
-├── Taskfile.yml                # Taskfile команды
-└── go.mod
-```
+- [Docker](#-docker)
+- [Документация](#-документация)
 
 ---
 
@@ -132,245 +19,187 @@
 
 ### Требования
 
-| Зависимость | Версия |
-|-------------|--------|
-| Go | 1.25+ |
-| PostgreSQL | 15+ |
-| Redis | 7+ |
-| Task | latest |
+- Go 1.25+
+- PostgreSQL 15+
+- Redis 7+
 
-### Установка зависимостей
+### Установка
 
 ```bash
-# Установка инструментов разработки
-task proto:install-plugins
-task install-buf
-task install-formatters
-task install-golangci-lint
-```
+# 1. Клонировать репозиторий
+git clone <repository-url>
+cd auth-microservice
 
-### Генерация Proto
-
-```bash
-task proto:gen
-```
-
-### Применение миграций
-
-```bash
-# Пример с goose (если используется)
-goose -dir migrations postgres "$DATABASE_URL" up
-```
-
-### Запуск
-
-```bash
-# 1. Скопируйте .env.example
+# 2. Скопировать .env
 cp .env.example .env
 
-# 2. Настройте переменные в .env
-#    Обязательно: DATABASE_URL, REDIS_URL, JWT_SECRET
+# 3. Настроить переменные (обязательно JWT_SECRET)
+#    edit .env
 
-# 3. Запуск сервера
+# 4. Запустить
 go run cmd/server/main.go
 ```
 
-### Production запуск
-
-```bash
-# Используйте environment variables напрямую
-export JWT_SECRET=$(openssl rand -base64 32)
-export APP_ENV=production
-export DATABASE_URL="postgres://..."
-export REDIS_URL="redis://..."
-
-# Запуск
-./server
-```
-
-Или через Docker:
-
-```bash
-docker run -d \
-  -e JWT_SECRET="your-secret" \
-  -e APP_ENV=production \
-  -e DATABASE_URL="postgres://..." \
-  -e REDIS_URL="redis://..." \
-  auth-microservice:latest
-```
+Сервер запустится на:
+- **REST API:** `http://localhost:8080`
+- **gRPC:** `localhost:9090`
+- **Health:** `http://localhost:8080/health`
 
 ---
 
 ## 📡 API Endpoints
 
-### Основные методы
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| `POST` | `/api/auth/register` | Регистрация |
+| `POST` | `/api/auth/login` | Вход |
+| `POST` | `/api/auth/logout` | Выход |
+| `POST` | `/api/auth/refresh` | Обновление токена |
 
-| Метод | gRPC | HTTP | Описание |
-|-------|------|------|----------|
-| `Register` | `Register` | `POST /api/auth/register` | Регистрация |
-| `Login` | `Login` | `POST /api/auth/login` | Вход |
-| `Logout` | `Logout` | `POST /api/auth/logout` | Выход |
-| `Refresh` | `Refresh` | `POST /api/auth/refresh` | Обновление токенов |
+### Примеры
 
-### Формат ответов
-
-Все ответы API имеют единую структуру:
-
-```json
-{
-  "status_code": 200,
-  "message": "Success",
-  "data": { ... }
-}
+**Регистрация:**
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Password123!"}'
 ```
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `status_code` | `int` | HTTP статус код |
-| `message` | `string` | Сообщение статуса |
-| `data` | `object` | Тело ответа (может быть `null`) |
+**Вход:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"Password123!"}'
+```
 
-📖 **Подробное описание API:** [docs/api.md](api.md)
+📖 **Полная документация API:** [docs/api.md](docs/api.md)
+
+---
+
+## 🏗 Архитектура
+
+### Стек
+
+| Компонент | Технология |
+|-----------|------------|
+| **RPC** | gRPC + REST (grpc-gateway) |
+| **Токены** | JWT (access + refresh) |
+| **Кэш** | Redis (refresh токены) |
+| **БД** | PostgreSQL (pgx) |
+| **DDD** | Domain/Repository/Service/Handler |
+
+### Структура
+
+```
+.
+├── cmd/server/           # Точка входа
+├── internal/
+│   ├── model/           # Domain layer (агрегаты, VO)
+│   ├── repository/      # Repository layer (PostgreSQL)
+│   ├── service/         # Service layer (бизнес-логика)
+│   ├── handler/         # Handler layer (gRPC)
+│   ├── cache/           # Кэш (Redis)
+│   ├── middleware/      # HTTP/gRPC middleware
+│   ├── di/              # Dependency Injection (Wire)
+│   ├── config/          # Конфигурация
+│   └── errors/          # Доменные ошибки
+├── pkg/                 # Общие пакеты (jwt, bcrypt, logger)
+├── proto/               # Proto контракты
+├── migrations/          # SQL миграции
+├── deploy/              # Docker файлы
+└── docs/                # Документация
+```
+
+### Время жизни токенов
+
+| Токен | TTL | Хранение |
+|-------|-----|----------|
+| **Access** | 15 мин | Client (Authorization header) |
+| **Refresh** | 14 дней | Redis (`refresh:{token}`) |
 
 ---
 
 ## 🛠 Разработка
 
-### Форматирование
+### Команды
 
 ```bash
+# Форматирование
 task format
-```
 
-### Линтинг
-
-```bash
-# Go код
+# Линтинг
 task lint
 
-# Proto файлы
-task proto:lint
-```
+# Генерация Proto
+task proto:gen
 
-### Тесты
+# Генерация DI
+task wire:gen
 
-```bash
+# Тесты
 go test ./... -v
 ```
 
-### Taskfile команды
+### Taskfile
 
 | Команда | Описание |
 |---------|----------|
 | `task proto:gen` | Генерация Proto (gRPC + REST + Swagger) |
-| `task proto:lint` | Линтинг Proto файлов |
-| `task proto:deps` | Обновление Proto зависимостей |
 | `task format` | Форматирование Go кода |
 | `task lint` | Линтинг Go кода |
 | `task tidy` | Очистка зависимостей |
-| `task wire:gen` | Генерация DI кода |
+
+---
+
+## 🐳 Docker
+
+### Запуск (Development)
+
+```bash
+cd deploy
+docker compose up -d --build
+```
+
+Сервисы:
+- **auth-service:** `http://localhost:8080`
+- **postgres:** `localhost:5432`
+- **redis:** `localhost:6379`
+
+### Остановка
+
+```bash
+docker compose down
+```
+
+📖 **Полное руководство:** [deploy/DEPLOY.md](deploy/DEPLOY.md)
 
 ---
 
 ## 🔒 Безопасность
 
-### JWT Claims
+### Требования к паролю
 
-Токены содержат название сервиса в поле `iss` (issuer):
-
-```json
-{
-  "iss": "auth-service",
-  "sub": "{account_id}",
-  "email": "{email}",
-  "iat": 1705312200,
-  "exp": 1705313100,
-  "type": "access"
-}
-```
+- Минимум 8 символов
+- 1 заглавная буква (A-Z)
+- 1 строчная буква (a-z)
+- 1 цифра (0-9)
 
 ### Rate Limiting
 
-| Endpoint | Лимит (запросов/мин) |
-|----------|---------------------|
-| `/api/auth/register` | 5 |
-| `/api/auth/login` | 10 |
-| `/api/auth/refresh` | 30 |
-| `/api/auth/logout` | 60 |
-
-**Заголовки ответа:**
-```
-X-RateLimit-Limit: 10
-X-RateLimit-Remaining: 5
-X-RateLimit-Reset: 1647389400
-Retry-After: 60
-```
-
-### Защита от User Enumeration
-
-Все ошибки аутентификации возвращают одинаковый ответ:
-```json
-{
-  "status_code": 401,
-  "message": "invalid credentials",
-  "data": null
-}
-```
-
-Это предотвращает определение существования email в системе.
-
-### Требования к паролю
-
-| Требование | Значение |
-|------------|----------|
-| Минимальная длина | 8 символов |
-| Заглавные буквы | Минимум 1 (A-Z) |
-| Строчные буквы | Минимум 1 (a-z) |
-| Цифры | Минимум 1 (0-9) |
-
-### Требования к email
-
-| Требование | Значение |
-|------------|----------|
-| Формат | RFC 5321 |
-| Максимальная длина | 254 символа |
+| Endpoint | Лимит/мин |
+|----------|-----------|
+| Register | 5 |
+| Login | 10 |
+| Refresh | 30 |
+| Logout | 60 |
 
 ### Production Checklist
 
-- [ ] `JWT_SECRET` установлен через environment variable
-- [ ] `APP_ENV=production` для автоматического включения Secure cookies
-- [ ] Настроен CORS для ваших доменов
-- [ ] Rate limits настроены под вашу нагрузку
-- [ ] HTTPS включён (reverse proxy: nginx, traefik)
-
----
-
-## 📦 Зависимости
-
-### Внешние библиотеки
-
-```go
-// Стандартные библиотеки
-github.com/google/uuid                  // UUID генерация
-github.com/google/wire                  // Dependency Injection
-github.com/golang-jwt/jwt/v5            // JWT токены
-github.com/rs/zerolog                   // Логирование
-github.com/rs/cors                      // CORS middleware
-github.com/redis/go-redis/v9            // Redis клиент
-github.com/jackc/pgx/v5                 // PostgreSQL драйвер
-golang.org/x/crypto                     // bcrypt
-google.golang.org/grpc                  // gRPC
-google.golang.org/protobuf              // Protocol Buffers
-github.com/grpc-ecosystem/grpc-gateway/v2 // gRPC → REST
-```
-
-### Proto зависимости
-
-```yaml
-deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/grpc-ecosystem/grpc-gateway
-```
+- [ ] `JWT_SECRET` ≥ 32 символов
+- [ ] `APP_ENV=production`
+- [ ] HTTPS включён
+- [ ] CORS настроен для ваших доменов
+- [ ] Rate limits под нагрузку
 
 ---
 
@@ -378,11 +207,11 @@ deps:
 
 | Документ | Описание |
 |----------|----------|
-| [API Documentation](api.md) | Полное описание API endpoints |
-| [Configuration Guide](config.md) | Руководство по настройке (.env) |
-| [Repository Methods](repository_methods.md) | Repository layer с DDD паттернами |
-| [Docker Deployment Guide](../deploy/README.md) | Развёртывание в Docker |
-| [Swagger UI](http://localhost:8080/swagger/) | Интерактивная документация (после запуска) |
+| [API Documentation](docs/api.md) | Полное описание API endpoints |
+| [Configuration Guide](docs/config.md) | Настройка .env переменных |
+| [Docker Guide](deploy/DEPLOY.md) | Развёртывание в Docker |
+| [JWT Package](pkg/jwt/README.md) | JWT сервис документация |
+| [Migrations](migrations/README.md) | Управление миграциями БД |
 
 ---
 

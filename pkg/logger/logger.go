@@ -14,6 +14,7 @@
 package logger
 
 import (
+	"context"
 	"io"
 	"os"
 	"strings"
@@ -45,6 +46,16 @@ const (
 	ErrorLevel Level = "error"
 	// FatalLevel фатальные ошибки (с завершением программы)
 	FatalLevel Level = "fatal"
+)
+
+// contextKey тип для ключей контекста
+type contextKey string
+
+const (
+	// RequestIDKey ключ для request_id в контексте
+	RequestIDKey contextKey = "request_id"
+	// TraceIDKey ключ для trace_id в контексте
+	TraceIDKey contextKey = "trace_id"
 )
 
 // Config конфигурация логгера
@@ -113,7 +124,7 @@ func New(config Config) (*Logger, error) {
 	}
 
 	return &Logger{
-		zlog: zlog.Caller().Logger(),
+		zlog: zlog.Logger(),
 	}, nil
 }
 
@@ -165,6 +176,13 @@ func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []inte
 	for i := 0; i < len(keysAndValues); i += 2 {
 		if i+1 < len(keysAndValues) {
 			if key, ok := keysAndValues[i].(string); ok {
+				// Специальная обработка ошибок
+				if key == "error" && keysAndValues[i+1] != nil {
+					if err, ok := keysAndValues[i+1].(error); ok {
+						event.Err(err)
+						continue
+					}
+				}
 				event.Any(key, keysAndValues[i+1])
 			}
 		}
@@ -176,7 +194,7 @@ func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []inte
 func (l *Logger) With(keysAndValues ...interface{}) *Logger {
 	// Создаём контекст с полями
 	ctx := l.zlog.With()
-	
+
 	// Добавляем каждое поле в контекст
 	for i := 0; i < len(keysAndValues); i += 2 {
 		if i+1 < len(keysAndValues) {
@@ -185,10 +203,43 @@ func (l *Logger) With(keysAndValues ...interface{}) *Logger {
 			}
 		}
 	}
-	
+
 	newLogger := ctx.Logger()
 	return &Logger{
 		zlog: newLogger,
+	}
+}
+
+// WithContext возвращает логгер с полями из контекста
+func (l *Logger) WithContext(ctx context.Context) *Logger {
+	event := l.zlog.With()
+
+	// Добавляем request_id если есть
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		event = event.Str("request_id", requestID.(string))
+	}
+
+	// Добавляем trace_id если есть
+	if traceID := ctx.Value(TraceIDKey); traceID != nil {
+		event = event.Str("trace_id", traceID.(string))
+	}
+
+	return &Logger{
+		zlog: event.Logger(),
+	}
+}
+
+// WithRequestID возвращает логгер с request_id
+func (l *Logger) WithRequestID(requestID string) *Logger {
+	return &Logger{
+		zlog: l.zlog.With().Str("request_id", requestID).Logger(),
+	}
+}
+
+// WithError возвращает логгер с ошибкой
+func (l *Logger) WithError(err error) *Logger {
+	return &Logger{
+		zlog: l.zlog.With().Err(err).Logger(),
 	}
 }
 
@@ -210,4 +261,17 @@ func DisableLogging() {
 // GetLevel возвращает текущий уровень логирования
 func (l *Logger) GetLevel() string {
 	return l.zlog.GetLevel().String()
+}
+
+// WithContext добавляет request_id в контекст
+func WithContext(ctx context.Context, requestID string) context.Context {
+	return context.WithValue(ctx, RequestIDKey, requestID)
+}
+
+// FromContext получает request_id из контекста
+func FromContext(ctx context.Context) string {
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		return requestID.(string)
+	}
+	return ""
 }

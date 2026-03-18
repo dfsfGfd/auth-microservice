@@ -1,60 +1,21 @@
-# Auth Microservice — API Documentation
+# API Documentation
 
-> Микросервис аутентификации с поддержкой JWT access/refresh токенов, gRPC и REST API.
-
----
-
-## 📋 Оглавление
-
-- [Обзор](#обзор)
-- [Архитектура](#архитектура)
-- [Формат ответов API](#формат-ответов-api)
-- [API Endpoints](#api-endpoints)
-- [Требования к данным](#требования-к-данным)
-- [Хранение данных](#хранение-данных)
-- [Безопасность](#безопасность)
-- [Разработка](#разработка)
+> Auth Microservice API: gRPC + REST (grpc-gateway)
 
 ---
 
-## Обзор
+## 📋 Endpoints
 
-Микросервис предоставляет следующие возможности:
-
-| Функция | Описание |
-|---------|----------|
-| 🔐 **Регистрация** | Создание нового аккаунта |
-| 🔑 **Вход/Выход** | Аутентификация и завершение сессии |
-| 🔄 **Обновление токенов** | Ротация JWT access/refresh токенов |
-| 🌐 **gRPC + REST** | Единый сервис для обоих протоколов |
+| Метод | HTTP | gRPC | Описание |
+|-------|------|------|----------|
+| `Register` | `POST /api/auth/register` | `Register` | Регистрация |
+| `Login` | `POST /api/auth/login` | `Login` | Вход |
+| `Logout` | `POST /api/auth/logout` | `Logout` | Выход |
+| `Refresh` | `POST /api/auth/refresh` | `Refresh` | Обновление токена |
 
 ---
 
-## Архитектура
-
-### Стек технологий
-
-| Компонент | Технология |
-|-----------|------------|
-| **RPC** | gRPC + REST (grpc-gateway) |
-| **Токены** | JWT (access + refresh) |
-| **Кэш** | Redis (refresh токены) |
-| **БД** | PostgreSQL (pgx) |
-| **Протокол** | Protocol Buffers v3 |
-| **UUID** | Генерация на бэкенде (Go) |
-
-### Время жизни токенов
-
-| Токен | TTL | Хранение |
-|-------|-----|----------|
-| **Access Token** | 15 минут | Клиент (Authorization header) |
-| **Refresh Token** | 2 недели | Redis (`refresh:{token}` → `account_id`) |
-
----
-
-## Формат ответов API
-
-Все ответы API имеют единую структуру:
+## Формат ответов
 
 ```json
 {
@@ -64,72 +25,24 @@
 }
 ```
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `status_code` | `int` | HTTP статус код |
-| `message` | `string` | Сообщение статуса |
-| `data` | `object` | Тело ответа (может быть `null`) |
-
-### Пример успешного ответа
-
-```json
-{
-  "status_code": 200,
-  "message": "Account registered successfully",
-  "data": {
-    "account_id": "550e8400-e29b-41d4-a716-446655440000",
-    "email": "user@example.com",
-    "created_at": "2024-01-15T10:30:00Z"
-  }
-}
-```
-
-### Пример ответа с ошибкой
-
-```json
-{
-  "status_code": 400,
-  "message": "Invalid email format",
-  "data": null
-}
-```
-
 ---
 
-## API Endpoints
-
-### gRPC Service: `AuthService`
-
-| Метод | HTTP | Описание |
-|-------|------|----------|
-| `Register` | `POST /api/auth/register` | Регистрация аккаунта |
-| `Login` | `POST /api/auth/login` | Вход (получение токенов) |
-| `Logout` | `POST /api/auth/logout` | Выход (отзыв refresh токена) |
-| `Refresh` | `POST /api/auth/refresh` | Обновление access токена |
-
----
-
-## Детали эндпоинтов
-
-### 1. Регистрация аккаунта
+## 1. Регистрация
 
 ```http
 POST /api/auth/register
+Content-Type: application/json
 ```
 
-**gRPC:** `Register(RegisterRequest) returns (RegisterResponse)`
-
-#### Request
-
+**Request:**
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123"
+  "password": "Password123!"
 }
 ```
 
-#### Response (200 OK)
-
+**Response (200):**
 ```json
 {
   "status_code": 200,
@@ -142,45 +55,32 @@ POST /api/auth/register
 }
 ```
 
-#### Ошибки
+**Ошибки:**
 
-| Код | HTTP | Описание |
-|-----|------|----------|
+| Код | HTTP | Сообщение |
+|-----|------|-----------|
 | `INVALID_EMAIL` | 400 | Неверный формат email |
 | `EMAIL_EXISTS` | 409 | Email уже зарегистрирован |
 | `INVALID_PASSWORD` | 400 | Пароль не соответствует требованиям |
 
-#### Пример ошибки (400 Bad Request)
-
-```json
-{
-  "status_code": 400,
-  "message": "Invalid email format",
-  "data": null
-}
-```
-
 ---
 
-### 2. Вход
+## 2. Вход
 
 ```http
 POST /api/auth/login
+Content-Type: application/json
 ```
 
-**gRPC:** `Login(LoginRequest) returns (LoginResponse)`
-
-#### Request
-
+**Request:**
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123"
+  "password": "Password123!"
 }
 ```
 
-#### Response (200 OK)
-
+**Response (200):**
 ```json
 {
   "status_code": 200,
@@ -194,58 +94,36 @@ POST /api/auth/login
 }
 ```
 
-#### Ошибки
+**Ошибки:**
 
-| Код | HTTP | Описание |
-|-----|------|----------|
+| Код | HTTP | Сообщение |
+|-----|------|-----------|
 | `INVALID_CREDENTIALS` | 401 | Неверный email или пароль |
 
-> **Примечание:** В целях безопасности все ошибки аутентификации возвращают одинаковый ответ `invalid credentials`. Это предотвращает определение существования email в системе (user enumeration).
+> **Примечание:** Все ошибки аутентификации возвращают `invalid credentials` для защиты от user enumeration.
 
-#### Пример ошибки (401 Unauthorized)
-
-```json
-{
-  "status_code": 401,
-  "message": "invalid credentials",
-  "data": null
-}
-```
-
-#### Rate Limiting
-
-| Лимит | Запросов в минуту |
-|-------|------------------|
-| Login | 10 |
-
-**Заголовки ответа:**
-```
-X-RateLimit-Limit: 10
-X-RateLimit-Remaining: 5
-X-RateLimit-Reset: 1647389400
-```
+**Rate Limiting:**
+- Лимит: 10 запросов/мин
+- Заголовки: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 
 ---
 
-### 3. Выход
+## 3. Выход
 
 ```http
 POST /api/auth/logout
 Authorization: Bearer <access_token>
+Content-Type: application/json
 ```
 
-**gRPC:** `Logout(LogoutRequest) returns (LogoutResponse)`
-
-#### Request
-
+**Request:**
 ```json
 {
   "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg..."
 }
 ```
 
-#### Response (200 OK)
-
+**Response (200):**
 ```json
 {
   "status_code": 200,
@@ -256,33 +134,30 @@ Authorization: Bearer <access_token>
 }
 ```
 
-#### Ошибки
+**Ошибки:**
 
-| Код | HTTP | Описание |
-|-----|------|----------|
+| Код | HTTP | Сообщение |
+|-----|------|-----------|
 | `UNAUTHORIZED` | 401 | Access токен недействителен |
 | `TOKEN_EXPIRED` | 401 | Access токен истёк |
 
 ---
 
-### 4. Обновление токенов
+## 4. Обновление токена
 
 ```http
 POST /api/auth/refresh
+Content-Type: application/json
 ```
 
-**gRPC:** `Refresh(RefreshRequest) returns (RefreshResponse)`
-
-#### Request
-
+**Request:**
 ```json
 {
   "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg..."
 }
 ```
 
-#### Response (200 OK)
-
+**Response (200):**
 ```json
 {
   "status_code": 200,
@@ -296,10 +171,10 @@ POST /api/auth/refresh
 }
 ```
 
-#### Ошибки
+**Ошибки:**
 
-| Код | HTTP | Описание |
-|-----|------|----------|
+| Код | HTTP | Сообщение |
+|-----|------|-----------|
 | `INVALID_REFRESH_TOKEN` | 401 | Refresh токен недействителен |
 | `REFRESH_TOKEN_EXPIRED` | 401 | Refresh токен истёк |
 | `ACCOUNT_NOT_FOUND` | 404 | Аккаунт не найден |
@@ -310,60 +185,21 @@ POST /api/auth/refresh
 
 ### Пароль
 
-| Требование | Значение |
-|------------|----------|
-| Минимальная длина | 8 символов |
-| Заглавные буквы | Минимум 1 (A-Z) |
-| Строчные буквы | Минимум 1 (a-z) |
-| Цифры | Минимум 1 (0-9) |
+- Минимум 8 символов
+- 1 заглавная буква (A-Z)
+- 1 строчная буква (a-z)
+- 1 цифра (0-9)
 
 ### Email
 
-| Требование | Значение |
-|------------|----------|
-| Формат | RFC 5321 |
-| Максимальная длина | 254 символа |
+- Формат: RFC 5321
+- Максимум: 254 символа
 
 ---
 
-## Хранение данных
+## JWT Claims
 
-### Redis
-
-#### Refresh Tokens
-
-```
-Ключ:   refresh:{refresh_token}
-Значение: {account_id}
-TTL:    14 дней
-```
-
-### PostgreSQL
-
-#### Таблица `accounts`
-
-```sql
-CREATE TABLE accounts (
-    id              UUID PRIMARY KEY,
-    email           VARCHAR(254) NOT NULL UNIQUE,
-    password        VARCHAR(72) NOT NULL,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_accounts_email ON accounts(email);
-```
-
-> **Примечание:** UUID генерируется на бэкенде (Go) перед вставкой.
-
----
-
-## Безопасность
-
-### JWT Claims
-
-#### Access Token
-
+**Access Token:**
 ```json
 {
   "iss": "auth-service",
@@ -375,8 +211,7 @@ CREATE INDEX idx_accounts_email ON accounts(email);
 }
 ```
 
-#### Refresh Token
-
+**Refresh Token:**
 ```json
 {
   "iss": "auth-service",
@@ -387,55 +222,33 @@ CREATE INDEX idx_accounts_email ON accounts(email);
 }
 ```
 
-#### Описание claim'ов
-
 | Claim | Описание |
 |-------|----------|
-| `iss` | Название сервиса (`auth-service`) |
-| `sub` | ID аккаунта (UUID) |
+| `iss` | Issuer (auth-service) |
+| `sub` | Account ID (UUID) |
 | `email` | Email аккаунта |
-| `iat` | Время выпуска токена (Unix timestamp) |
-| `exp` | Время истечения токена (Unix timestamp) |
-| `type` | Тип токена (`access` или `refresh`) |
+| `iat` | Время выпуска |
+| `exp` | Время истечения |
+| `type` | Тип токена |
 
-### Headers
+---
 
-| Header | Значение |
-|--------|----------|
-| `Authorization` | `Bearer <access_token>` |
-| `Content-Type` | `application/json` |
+## Rate Limiting
 
-### CORS
-
-| Настройка | Значение |
-|-----------|----------|
-| Allowed Origins | Конфигурируемо (через .env: CORS_ALLOWED_ORIGINS) |
-| Allowed Methods | `GET, POST, PUT, DELETE, OPTIONS` |
-| Allowed Headers | `Authorization, Content-Type, X-Request-ID, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset` |
-| Allow Credentials | `true` |
-| Max Age | `86400` (24 часа) |
-
-### Rate Limiting
-
-Микросервис использует Redis-based sliding window алгоритм для ограничения запросов.
-
-| Endpoint | Лимит (запросов/мин) |
-|----------|---------------------|
+| Endpoint | Лимит/мин |
+|----------|-----------|
 | `/api/auth/register` | 5 |
 | `/api/auth/login` | 10 |
 | `/api/auth/refresh` | 30 |
 | `/api/auth/logout` | 60 |
 
 **Заголовки ответа:**
+- `X-RateLimit-Limit` — максимум запросов
+- `X-RateLimit-Remaining` — осталось запросов
+- `X-RateLimit-Reset` — timestamp сброса
+- `Retry-After` — секунд до следующего запроса (429)
 
-| Заголовок | Описание |
-|-----------|----------|
-| `X-RateLimit-Limit` | Максимальное количество запросов в окно |
-| `X-RateLimit-Remaining` | Оставшееся количество запросов |
-| `X-RateLimit-Reset` | Unix timestamp сброса лимита |
-| `Retry-After` | Секунд до следующего запроса (при 429) |
-
-**Пример ответа при превышении лимита (429 Too Many Requests):**
+**429 Too Many Requests:**
 ```json
 {
   "status_code": 429,
@@ -444,64 +257,10 @@ CREATE INDEX idx_accounts_email ON accounts(email);
 }
 ```
 
-### JWT Сервис
-
-Пакет `pkg/jwt` предоставляет сервис для работы с JWT токенами. Может быть экспортирован в другие проекты.
-
-**Пример использования:**
-
-```go
-import "auth-microservice/pkg/jwt"
-
-// Создание сервиса
-service, _ := jwt.NewService(jwt.Config{
-    SecretKey:       "your-secret-key",
-    AccessTokenTTL:  15 * time.Minute,
-    RefreshTokenTTL: 14 * 24 * time.Hour,
-    Issuer:          "auth-service",
-})
-
-// Генерация токенов
-tokens, _ := service.GenerateTokens(accountID, email)
-
-// Валидация токена
-claims, _ := service.ValidateAccessToken(tokens.AccessToken)
-```
-
-📖 **Полная документация:** [pkg/jwt/README.md](../pkg/jwt/README.md)
-
-### Зависимости
-
-#### Внешние библиотеки
-
-```go
-github.com/dfsfGfd/redis-connect        // Redis клиент
-github.com/dfsfGfd/postgresql-connect   // PostgreSQL клиент (pgx)
-github.com/google/uuid                  // UUID генерация (Go)
-```
-
-#### Proto зависимости
-
-```yaml
-deps:
-  - buf.build/googleapis/googleapis
-  - buf.build/grpc-ecosystem/grpc-gateway
-```
-
-### Proto Files Structure
-
-```
-proto/
-├── auth/
-│   └── v1/
-│       └── auth.proto          # Service definition
-├── buf.yaml                    # Buf configuration
-└── buf.gen.yaml                # Generation plugins
-```
-
 ---
 
 ## Ссылки
 
-- [README](../README.md) — Основная документация проекта
-- [Proto файл](../proto/auth/v1/auth.proto) — gRPC контракты
+- [README](docs/README.md) — основная документация
+- [Config](docs/config.md) — настройка .env
+- [Proto](proto/auth/v1/auth.proto) — gRPC контракты

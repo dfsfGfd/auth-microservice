@@ -87,10 +87,11 @@ func run() error {
 	time.Sleep(100 * time.Millisecond)
 
 	// Настраиваем grpc-gateway (после запуска gRPC)
-	gw, err := createGateway(ctx, app.Config.Server.GRPCPort)
+	gw, grpcConn, err := createGateway(ctx, app.Config.Server.GRPCPort)
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)
 	}
+	defer grpcConn.Close()
 
 	// Оборачиваем gateway в rate limiting middleware
 	gwWithRateLimit := middleware.HTTPRateLimitMiddleware(
@@ -162,26 +163,26 @@ func run() error {
 	return nil
 }
 
-// createGateway создаёт grpc-gateway mux
-func createGateway(ctx context.Context, grpcPort int) (*runtime.ServeMux, error) {
+// createGateway создаёт grpc-gateway mux и возвращает соединение
+func createGateway(ctx context.Context, grpcPort int) (*runtime.ServeMux, *grpc.ClientConn, error) {
 	gwMux := runtime.NewServeMux()
 
-	// Создаём gRPC connection для gateway
+	// Создаём gRPC соединение для gateway
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("localhost:%d", grpcPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("dial grpc: %w", err)
+		return nil, nil, fmt.Errorf("dial grpc: %w", err)
 	}
-	defer conn.Close()
 
 	// Регистрируем gateway
 	if err := authv1.RegisterAuthServiceHandler(ctx, gwMux, conn); err != nil {
-		return nil, fmt.Errorf("register gateway: %w", err)
+		conn.Close()
+		return nil, nil, fmt.Errorf("register gateway: %w", err)
 	}
 
-	return gwMux, nil
+	return gwMux, conn, nil
 }
 
 // unaryLogger создаёт interceptor для логирования gRPC запросов
@@ -197,12 +198,20 @@ func unaryLogger(log *logger.Logger) grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		duration := time.Since(start)
-		log.Info(
-			"gRPC request",
-			"method", info.FullMethod,
-			"duration", duration.String(),
-			"error", err,
-		)
+		
+		// Логгируем с правильным форматом
+		if err != nil {
+			log.Error("gRPC request",
+				"method", info.FullMethod,
+				"duration_ms", duration.Milliseconds(),
+				"error", err,
+			)
+		} else {
+			log.Info("gRPC request",
+				"method", info.FullMethod,
+				"duration_ms", duration.Milliseconds(),
+			)
+		}
 
 		return resp, err
 	}

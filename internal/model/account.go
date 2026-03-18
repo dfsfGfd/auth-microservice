@@ -68,6 +68,21 @@ func (a *Account) UpdatedAt() time.Time {
 	return a.updatedAt
 }
 
+// SetID устанавливает идентификатор аккаунта (для конвертеров из БД).
+func (a *Account) SetID(id uuid.UUID) {
+	a.id = id
+}
+
+// SetCreatedAt устанавливает время создания (для конвертеров из БД).
+func (a *Account) SetCreatedAt(t time.Time) {
+	a.createdAt = t
+}
+
+// SetUpdatedAt устанавливает время обновления (для конвертеров из БД).
+func (a *Account) SetUpdatedAt(t time.Time) {
+	a.updatedAt = t
+}
+
 // UpdateEmail обновляет email.
 func (a *Account) UpdateEmail(email *Email) error {
 	if email == nil {

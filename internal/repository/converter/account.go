@@ -35,8 +35,18 @@ func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
 
 	passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
 
-	// Создаём агрегат
-	return model.NewAccount(email, passwordHash)
+	// Создаём агрегат с установленным ID
+	account, err := model.NewAccount(email, passwordHash)
+	if err != nil {
+		return nil, err
+	}
+
+	// Устанавливаем ID и временные метки из БД
+	account.SetID(db.ID)
+	account.SetCreatedAt(db.CreatedAt)
+	account.SetUpdatedAt(db.UpdatedAt)
+
+	return account, nil
 }
 
 // AccountListToDB конвертирует список domain Account в список DB моделей.

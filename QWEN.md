@@ -1,33 +1,79 @@
-## Qwen Added Memories
-- Пользователь работает над Go-микросервисом аутентификации (auth-microservice) с использованием gRPC + REST (grpc-gateway), JWT access/refresh токенов, PostgreSQL (pgx) и Redis. Проект использует DDD с Value Objects (Email, Username, Password, PasswordHash) и агрегатом User. GitHub username пользователя: dfsfGfd.
-- Пользователь работает над Go-микросервисом аутентификации (auth-microservice). Текущее состояние проекта:
+# Auth Microservice — Project Context
 
-**Реализовано:**
-1. **Domain layer** (`internal/model/`): User агрегат, Value Objects (Email, Username, Password, PasswordHash)
-2. **Repository layer** (`internal/repository/`):
-   - Интерфейс: `repository.go` — 6 методов (Save, DeleteByID, GetByID, GetByEmail, GetByUsername, GetAll)
-   - Реализация (`auth/`): repository.go (конструктор), save.go, delete_by_id.go, get_by_id.go, get_by_email.go, get_by_username.go, get_all.go
-   - DB модель: `model/user.go`
-   - Конвертер: `converter/user.go` (UserToDB, UserToDomain)
-   - Ошибки: `internal/errors/` (ErrUserNotFound, ErrRepository, ErrDBConnection, ErrDBQuery)
-3. **DI** (`internal/di/`): Google Wire с UserRepository
-4. **Config** (`internal/config/`): YAML конфигурация
-5. **DB подключения** (`pkg/db/`): postgresql/, redisdb/
-6. **Пакеты** (`pkg/`): logger, jwt, cookies, proto
-7. **Proto**: gRPC + REST (grpc-gateway), Swagger
-8. **Документация** (`docs/`): README.md, api.md, config.md, repository_methods.md
+> Go микросервис аутентификации с gRPC + REST (grpc-gateway), JWT токенами, PostgreSQL и Redis.
 
-**Следующие шаги:**
-- Реализация service layer (`internal/service/`)
-- Реализация handler layer (`internal/handler/`)
-- Создание cmd/server/main.go
-- Интеграция всех слоёв
+---
 
-**Важные правила проекта:**
-- Один файл = один метод в repository/auth/
-- Кастомные ошибки в `internal/errors/`
-- Конвертеры domain ↔ DB в `internal/repository/converter/`
-- DB модели в `internal/repository/model/`
-- Интерфейсы в `internal/repository/repository.go`
-- Реализация в `internal/repository/auth/`
-- Проект: Go auth-microservice (gRPC + REST). Реализованы ВСЕ слои: Domain (model), Repository (PostgreSQL), Service (бизнес-логика), Handler (gRPC), Cache (Redis для токенов), DI (Google Wire), cmd/server/main.go (запуск серверов). Ошибки: конвертация jwt ошибок в доменные через errors.Is(). Структура: internal/{model,repository,service,handler,cache,di,errors,config}, pkg/{proto,jwt,bcrypt,logger,cookies,db}, cmd/server/main.go. Коммиты: последние - fix: handle errors properly with errors.Is() (a0f3c65). Следующие шаги: написание интеграционных тестов, Dockerfile, docker-compose.yml.
+## 🏗 Архитектура
+
+**Стек:**
+- Go 1.26
+- gRPC + REST (grpc-gateway)
+- PostgreSQL (pgx)
+- Redis
+- JWT (access + refresh)
+- DDD (Domain/Repository/Service/Handler)
+
+**Структура:**
+```
+internal/
+├── model/          # Domain layer (агрегаты, VO)
+├── repository/     # Repository layer (PostgreSQL)
+├── service/        # Service layer (бизнес-логика)
+├── handler/        # Handler layer (gRPC)
+├── cache/          # Redis cache для токенов
+├── middleware/     # HTTP/gRPC middleware
+├── di/             # Google Wire DI
+├── config/         # Конфигурация из .env
+└── errors/         # Доменные ошибки
+```
+
+---
+
+## 📁 Важные файлы
+
+| Файл | Описание |
+|------|----------|
+| `cmd/server/main.go` | Точка входа |
+| `cmd/migrate/main.go` | Утилита миграций |
+| `deploy/docker-compose.yml` | Docker окружение |
+| `.env` | Переменные окружения |
+
+---
+
+## 🚀 Команды
+
+```bash
+# Запуск в Docker
+cd deploy && docker compose up -d --build
+
+# Локальный запуск
+go run cmd/server/main.go
+
+# Форматирование
+task format
+
+# Линтинг
+task lint
+
+# Генерация Proto
+task proto:gen
+
+# Генерация DI
+task wire:gen
+```
+
+---
+
+## 📚 Документация
+
+- [docs/README.md](docs/README.md) — основная документация
+- [docs/api.md](docs/api.md) — API endpoints
+- [docs/config.md](docs/config.md) — настройка .env
+- [deploy/README.md](deploy/README.md) — Docker guide
+
+---
+
+## GitHub
+
+Username: `dfsfGfd`

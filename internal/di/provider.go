@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/wire"
@@ -137,8 +138,14 @@ func ProvidePostgresConfig(cfg *config.Config) postgresql.Config {
 
 // ProvideRedisConfig предоставляет конфигурацию Redis
 func ProvideRedisConfig(cfg *config.Config) redisdb.Config {
+	// Удаляем протокол redis:// из URL если есть
+	addr := cfg.Redis.URL
+	if strings.HasPrefix(addr, "redis://") {
+		addr = strings.TrimPrefix(addr, "redis://")
+	}
+	
 	return redisdb.Config{
-		Addr:         cfg.Redis.URL,
+		Addr:         addr,
 		DB:           cfg.Redis.DB,
 		PoolSize:     10,
 		ConnTimeout:  time.Duration(cfg.Redis.ConnectionTimeout) * time.Second,
