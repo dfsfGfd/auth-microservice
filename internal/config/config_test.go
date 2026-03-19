@@ -45,13 +45,6 @@ jwt:
   refresh_ttl: 336h
   issuer: auth-service
 
-cookie:
-  secure: false
-  http_only: true
-  same_site: Lax
-  path: /
-  max_age: 1209600
-
 logging:
   level: debug
   format: console
@@ -95,12 +88,7 @@ shutdown:
 	assert.Equal(t, "15m", cfg.JWT.AccessTTL)
 	assert.Equal(t, "336h", cfg.JWT.RefreshTTL)
 	assert.Equal(t, "auth-service", cfg.JWT.Issuer)
-	
-	// Cookie
-	assert.Equal(t, false, cfg.Cookie.Secure)
-	assert.Equal(t, true, cfg.Cookie.HTTPOnly)
-	assert.Equal(t, "Lax", cfg.Cookie.SameSite)
-	
+
 	// Logging
 	assert.Equal(t, "debug", cfg.Logging.Level)
 	assert.Equal(t, "console", cfg.Logging.Format)
@@ -129,56 +117,52 @@ func TestConfig_Validate(t *testing.T) {
 			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
 			Redis: config.RedisConfig{URL: "redis://localhost:6379"},
 			JWT: config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Cookie: config.CookieConfig{SameSite: "Lax"},
 			Logging: config.LoggingConfig{Level: "info", Format: "json"},
 		}
-		
+
 		err := cfg.Validate()
 		assert.NoError(t, err)
 	})
-	
+
 	t.Run("отсутствует database url", func(t *testing.T) {
 		cfg := &config.Config{
 			Server: config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
 			Database: config.DatabaseConfig{},
 			Redis: config.RedisConfig{URL: "redis://localhost:6379"},
 			JWT: config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Cookie: config.CookieConfig{SameSite: "Lax"},
 			Logging: config.LoggingConfig{Level: "info", Format: "json"},
 		}
-		
+
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "database")
 		assert.Contains(t, err.Error(), "url is required")
 	})
-	
+
 	t.Run("отсутствует redis url", func(t *testing.T) {
 		cfg := &config.Config{
 			Server: config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
 			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
 			Redis: config.RedisConfig{},
 			JWT: config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Cookie: config.CookieConfig{SameSite: "Lax"},
 			Logging: config.LoggingConfig{Level: "info", Format: "json"},
 		}
-		
+
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "redis")
 		assert.Contains(t, err.Error(), "url is required")
 	})
-	
+
 	t.Run("короткий jwt secret", func(t *testing.T) {
 		cfg := &config.Config{
 			Server: config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
 			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
 			Redis: config.RedisConfig{URL: "redis://localhost:6379"},
 			JWT: config.JWTConfig{Secret: "short"},
-			Cookie: config.CookieConfig{SameSite: "Lax"},
 			Logging: config.LoggingConfig{Level: "info", Format: "json"},
 		}
-		
+
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "jwt")
@@ -272,37 +256,6 @@ func TestJWTConfig_Validate(t *testing.T) {
 		assert.Equal(t, "15m", cfg.AccessTTL)
 		assert.Equal(t, "336h", cfg.RefreshTTL)
 		assert.Equal(t, "auth-service", cfg.Issuer)
-	})
-}
-
-func TestCookieConfig_Validate(t *testing.T) {
-	t.Run("path по умолчанию", func(t *testing.T) {
-		cfg := config.CookieConfig{}
-		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "/", cfg.Path)
-	})
-	
-	t.Run("max_age по умолчанию", func(t *testing.T) {
-		cfg := config.CookieConfig{}
-		err := cfg.Validate()
-		assert.NoError(t, err)
-		expected := int((14 * 24 * time.Hour).Seconds())
-		assert.Equal(t, expected, cfg.MaxAge)
-	})
-	
-	t.Run("same_site по умолчанию", func(t *testing.T) {
-		cfg := config.CookieConfig{}
-		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "Lax", cfg.SameSite)
-	})
-	
-	t.Run("невалидный same_site", func(t *testing.T) {
-		cfg := config.CookieConfig{SameSite: "Invalid"}
-		err := cfg.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Strict, Lax, or None")
 	})
 }
 
