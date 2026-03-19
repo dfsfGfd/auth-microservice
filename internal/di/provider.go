@@ -139,11 +139,8 @@ func ProvidePostgresConfig(cfg *config.Config) postgresql.Config {
 // ProvideRedisConfig предоставляет конфигурацию Redis
 func ProvideRedisConfig(cfg *config.Config) redisdb.Config {
 	// Удаляем протокол redis:// из URL если есть
-	addr := cfg.Redis.URL
-	if strings.HasPrefix(addr, "redis://") {
-		addr = strings.TrimPrefix(addr, "redis://")
-	}
-	
+	addr := strings.TrimPrefix(cfg.Redis.URL, "redis://")
+
 	return redisdb.Config{
 		Addr:         addr,
 		DB:           cfg.Redis.DB,

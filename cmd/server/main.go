@@ -37,9 +37,13 @@ func run() error {
 	}
 
 	ctx := context.Background()
-	defer app.CleanUp(ctx)
 
 	log := app.Logger
+	defer func() {
+		if err := app.CleanUp(ctx); err != nil {
+			log.Error("cleanup error", "error", err)
+		}
+	}()
 
 	// Создаём gRPC сервер с rate limiting и логированием
 	rateLimitInterceptor := middleware.UnaryServerInterceptor(
@@ -108,7 +112,7 @@ func run() error {
 	rootMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"status":"ok"}`))
+		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
 	rootMux.Handle("/", gwWithCookie)
 

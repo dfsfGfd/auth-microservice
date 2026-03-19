@@ -83,7 +83,7 @@ func (rw *responseWrapper) Write(b []byte) (int, error) {
 		rw.wrote = true
 	}
 	// Сохраняем копию тела
-	rw.body.Write(b)
+	_, _ = rw.body.Write(b)
 	return rw.ResponseWriter.Write(b)
 }
 
