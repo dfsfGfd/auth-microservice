@@ -51,28 +51,45 @@ go run cmd/server/main.go
 
 | Метод | Endpoint | Описание |
 |-------|----------|----------|
-| `POST` | `/api/auth/register` | Регистрация |
-| `POST` | `/api/auth/login` | Вход |
-| `POST` | `/api/auth/logout` | Выход |
-| `POST` | `/api/auth/refresh` | Обновление токена |
+| `POST` | `/api/v1/auth/register` | Регистрация |
+| `POST` | `/api/v1/auth/login` | Вход |
+| `POST` | `/api/v1/auth/logout` | Выход |
+| `POST` | `/api/v1/auth/refresh` | Обновление токена |
+| `GET` | `/health` | Health check |
 
 ### Примеры
 
 **Регистрация:**
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
+curl -X POST http://localhost:8080/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"Password123!"}'
 ```
 
 **Вход:**
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"user@example.com","password":"Password123!"}'
 ```
 
-📖 **Полная документация API:** [docs/api.md](docs/api.md)
+**Обновление токена:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"<token>"}'
+```
+
+**Выход:**
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/logout \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <access_token>" \
+  -d '{"refresh_token":"<token>"}'
+```
+
+📖 **Полная документация API:** [docs/api.md](docs/api.md)  
+📦 **Postman коллекция:** [docs/POSTMAN_COLLECTION.md](docs/POSTMAN_COLLECTION.md)
 
 ---
 
@@ -153,11 +170,17 @@ go test ./... -v
 
 ## 🐳 Docker
 
-### Запуск (Development)
+### Быстрый старт
 
 ```bash
-cd deploy
-docker compose up -d --build
+# 1. Создать .env файл
+cp deploy/.env.example deploy/.env
+
+# 2. Запустить через Taskfile
+task server:docker:up
+
+# Или напрямую через docker compose
+cd deploy && docker compose up -d --build
 ```
 
 Сервисы:
@@ -168,10 +191,32 @@ docker compose up -d --build
 ### Остановка
 
 ```bash
+# Через Taskfile
+task server:docker:down
+
+# Или напрямую
 docker compose down
 ```
 
-📖 **Полное руководство:** [deploy/DEPLOY.md](deploy/DEPLOY.md)
+### Логи
+
+```bash
+task server:docker:logs
+```
+
+### Полезные команды Taskfile
+
+| Команда | Описание |
+|---------|----------|
+| `task server:build` | Сборка бинарного файла |
+| `task server:dev` | Запуск через `go run` |
+| `task server:docker:up` | Запуск в Docker |
+| `task server:docker:down` | Остановка Docker |
+| `task server:docker:logs` | Просмотр логов |
+| `task server:check` | Проверка health |
+| `task dev` | Быстрый старт для разработки |
+
+📖 **Полное руководство:** [deploy/README.md](deploy/README.md)
 
 ---
 
