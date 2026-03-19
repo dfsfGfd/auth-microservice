@@ -13,7 +13,7 @@ service AuthService {
   // Регистрация нового аккаунта
   rpc Register(RegisterRequest) returns (RegisterResponse) {
     option (google.api.http) = {
-      post: "/api/auth/register"
+      post: "/api/v1/auth/register"
       body: "*"
     };
   }
@@ -21,7 +21,7 @@ service AuthService {
   // Вход аккаунта (получение токенов)
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
-      post: "/api/auth/login"
+      post: "/api/v1/auth/login"
       body: "*"
     };
   }
@@ -29,7 +29,7 @@ service AuthService {
   // Выход аккаунта (отзыв refresh токена)
   rpc Logout(LogoutRequest) returns (LogoutResponse) {
     option (google.api.http) = {
-      post: "/api/auth/logout"
+      post: "/api/v1/auth/logout"
       body: "*"
     };
   }
@@ -37,7 +37,7 @@ service AuthService {
   // Обновление access токена
   rpc Refresh(RefreshRequest) returns (RefreshResponse) {
     option (google.api.http) = {
-      post: "/api/auth/refresh"
+      post: "/api/v1/auth/refresh"
       body: "*"
     };
   }

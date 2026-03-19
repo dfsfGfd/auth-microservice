@@ -16,7 +16,7 @@
     "application/json"
   ],
   "paths": {
-    "/api/auth/login": {
+    "/api/v1/auth/login": {
       "post": {
         "summary": "Вход аккаунта (получение токенов)",
         "operationId": "AuthService_Login",
@@ -49,7 +49,7 @@
         ]
       }
     },
-    "/api/auth/logout": {
+    "/api/v1/auth/logout": {
       "post": {
         "summary": "Выход аккаунта (отзыв refresh токена)",
         "operationId": "AuthService_Logout",
@@ -82,7 +82,7 @@
         ]
       }
     },
-    "/api/auth/refresh": {
+    "/api/v1/auth/refresh": {
       "post": {
         "summary": "Обновление access токена",
         "operationId": "AuthService_Refresh",
@@ -115,7 +115,7 @@
         ]
       }
     },
-    "/api/auth/register": {
+    "/api/v1/auth/register": {
       "post": {
         "summary": "Регистрация нового аккаунта",
         "operationId": "AuthService_Register",
