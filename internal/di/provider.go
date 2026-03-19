@@ -1,16 +1,13 @@
 // Package di предоставляет dependency injection для приложения.
 //
 // Использование:
-//   1. Запустить wiregen: go generate ./...
+//   1. Запустить wire: wire gen ./internal/di
 //   2. Скомпилировать: go build ./cmd/server
-//
-//go:generate go run github.com/google/wire/cmd/wiregen
 package di
 
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
@@ -28,7 +25,6 @@ import (
 	"auth-microservice/pkg/bcrypt"
 	"auth-microservice/pkg/db/postgresql"
 	"auth-microservice/pkg/db/redisdb"
-	"auth-microservice/pkg/cookies"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
 )
@@ -38,7 +34,6 @@ type Application struct {
 	Config        *config.Config
 	Logger        *logger.Logger
 	JWTService    *jwt.Service
-	CookieService *cookies.Service
 	DB            *pgxpool.Pool
 	Redis         *goredis.Client
 	AccountRepo   repository.AccountRepository
@@ -89,9 +84,6 @@ var ProviderSet = wire.NewSet(
 
 	// JWT сервис
 	NewJWTService,
-
-	// Cookie сервис
-	NewCookieService,
 
 	// Bcrypt hasher
 	bcrypt.NewService,
@@ -195,32 +187,6 @@ func NewJWTService(cfg *config.Config) (*jwt.Service, error) {
 	})
 }
 
-// NewCookieService создаёт cookie сервис из конфигурации
-func NewCookieService(cfg *config.Config) *cookies.Service {
-	return cookies.NewService(cookies.Config{
-		Secure:   cfg.Cookie.Secure,
-		HTTPOnly: cfg.Cookie.HTTPOnly,
-		SameSite: parseSameSite(cfg.Cookie.SameSite),
-		Domain:   cfg.Cookie.Domain,
-		Path:     cfg.Cookie.Path,
-		MaxAge:   cfg.Cookie.MaxAge,
-	})
-}
-
-// parseSameSite парсит строку в http.SameSite
-func parseSameSite(s string) http.SameSite {
-	switch s {
-	case "Strict":
-		return http.SameSiteStrictMode
-	case "None":
-		return http.SameSiteNoneMode
-	case "Lax", "":
-		return http.SameSiteLaxMode
-	default:
-		return http.SameSiteLaxMode
-	}
-}
-
 // ProvideRateLimitConfigs предоставляет конфигурации rate limiter для всех endpoint'ов
 func ProvideRateLimitConfigs(cfg *config.Config) map[string]middleware.RateLimiterConfig {
 	return map[string]middleware.RateLimiterConfig{
@@ -252,7 +218,6 @@ func NewApplication(
 	cfg *config.Config,
 	log *logger.Logger,
 	jwtSvc *jwt.Service,
-	cookieSvc *cookies.Service,
 	db *pgxpool.Pool,
 	redisClient *goredis.Client,
 	accountRepo repository.AccountRepository,
@@ -265,7 +230,6 @@ func NewApplication(
 		Config:        cfg,
 		Logger:        log,
 		JWTService:    jwtSvc,
-		CookieService: cookieSvc,
 		DB:            db,
 		Redis:         redisClient,
 		AccountRepo:   accountRepo,

@@ -61,16 +61,6 @@ JWT_REFRESH_TTL=336h           # 14 дней
 JWT_ISSUER=auth-service
 ```
 
-### Cookie
-
-```bash
-COOKIE_SECURE=false            # true для HTTPS
-COOKIE_HTTP_ONLY=true
-COOKIE_SAME_SITE=Lax
-COOKIE_PATH=/
-COOKIE_MAX_AGE=1209600         # 14 дней
-```
-
 ### Logging
 
 ```bash
@@ -115,7 +105,6 @@ SHUTDOWN_TIMEOUT=30
 APP_ENV=development
 LOG_LEVEL=debug
 LOG_FORMAT=console
-COOKIE_SECURE=false
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
 REDIS_URL=redis://localhost:6379
 ```
@@ -126,8 +115,6 @@ REDIS_URL=redis://localhost:6379
 APP_ENV=production
 LOG_LEVEL=warn
 LOG_FORMAT=json
-COOKIE_SECURE=true
-COOKIE_SAME_SITE=Strict
 DATABASE_URL=postgres://user:pass@db.prod:5432/auth?sslmode=require
 DATABASE_MAX_CONNECTIONS=100
 REDIS_URL=redis://redis.prod:6379
@@ -149,7 +136,6 @@ openssl rand -base64 32
 
 - [ ] `JWT_SECRET` ≥ 32 символа
 - [ ] `APP_ENV=production`
-- [ ] `COOKIE_SECURE=true`
 - [ ] `DATABASE_URL` с `sslmode=require`
 - [ ] CORS для ваших доменов
 - [ ] `.env` не в git

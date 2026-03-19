@@ -35,7 +35,6 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	Redis    RedisConfig    `yaml:"redis"`
 	JWT      JWTConfig      `yaml:"jwt"`
-	Cookie   CookieConfig   `yaml:"cookie"`
 	Logging  LoggingConfig  `yaml:"logging"`
 	CORS     CORSConfig     `yaml:"cors"`
 	RateLimit RateLimitConfig `yaml:"rate_limit"`
@@ -73,16 +72,6 @@ type JWTConfig struct {
 	AccessTTL    string `yaml:"access_ttl"`
 	RefreshTTL   string `yaml:"refresh_ttl"`
 	Issuer       string `yaml:"issuer"`
-}
-
-// CookieConfig конфигурация cookie
-type CookieConfig struct {
-	Secure    bool   `yaml:"secure"`
-	HTTPOnly  bool   `yaml:"http_only"`
-	SameSite  string `yaml:"same_site"`
-	Domain    string `yaml:"domain"`
-	Path      string `yaml:"path"`
-	MaxAge    int    `yaml:"max_age"`
 }
 
 // LoggingConfig конфигурация логирования
@@ -168,14 +157,6 @@ func LoadFromEnv() (*Config, error) {
 			AccessTTL:  getEnv("JWT_ACCESS_TTL", "15m"),
 			RefreshTTL: getEnv("JWT_REFRESH_TTL", "336h"),
 			Issuer:     getEnv("JWT_ISSUER", "auth-service"),
-		},
-		Cookie: CookieConfig{
-			Secure:   getEnvBool("COOKIE_SECURE", false),
-			HTTPOnly: getEnvBool("COOKIE_HTTP_ONLY", true),
-			SameSite: getEnv("COOKIE_SAME_SITE", "Lax"),
-			Domain:   getEnv("COOKIE_DOMAIN", ""),
-			Path:     getEnv("COOKIE_PATH", "/"),
-			MaxAge:   getEnvInt("COOKIE_MAX_AGE", 1209600),
 		},
 		Logging: LoggingConfig{
 			Level:       getEnv("LOG_LEVEL", "info"),
@@ -270,9 +251,6 @@ func (c *Config) Validate() error {
 	if err := c.JWT.Validate(); err != nil {
 		return fmt.Errorf("jwt: %w", err)
 	}
-	if err := c.Cookie.Validate(); err != nil {
-		return fmt.Errorf("cookie: %w", err)
-	}
 	if err := c.Logging.Validate(); err != nil {
 		return fmt.Errorf("logging: %w", err)
 	}
@@ -353,44 +331,6 @@ func (c *JWTConfig) Validate() error {
 	if c.Issuer == "" {
 		c.Issuer = "auth-service"
 	}
-	return nil
-}
-
-// Validate валидирует конфигурацию cookie
-func (c *CookieConfig) Validate() error {
-	if c.Path == "" {
-		c.Path = "/"
-	}
-	if c.MaxAge <= 0 {
-		c.MaxAge = int((14 * 24 * time.Hour).Seconds())
-	}
-	if c.SameSite == "" {
-		c.SameSite = "Lax"
-	}
-	validSameSite := map[string]bool{
-		"Strict": true,
-		"Lax":    true,
-		"None":   true,
-	}
-	if !validSameSite[c.SameSite] {
-		return fmt.Errorf("same_site must be Strict, Lax, or None")
-	}
-
-	// Проверка Secure флага для production
-	// В production режиме Secure должен быть true для HTTPS
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = "development"
-	}
-	
-	// Если production, предупреждаем о необходимости Secure
-	if env == "production" && !c.Secure {
-		// Не блокируем, но логируем предупреждение
-		// Фактическое требование должно быть в документации
-		// Здесь мы только устанавливаем рекомендацию
-		c.Secure = true // Принудительно включаем для production
-	}
-	
 	return nil
 }
 

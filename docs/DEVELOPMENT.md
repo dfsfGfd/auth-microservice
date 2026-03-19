@@ -85,7 +85,6 @@ auth-microservice/
 │   ├── jwt/              # JWT сервис
 │   ├── bcrypt/           # Хеширование паролей
 │   ├── logger/           # Логирование
-│   ├── cookies/          # Cookie утилиты
 │   └── db/               # DB подключения
 │       ├── postgresql/
 │       └── redisdb/

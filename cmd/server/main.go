@@ -104,9 +104,6 @@ func run() error {
 		middleware.IPKeyFunc(),
 	)(gw)
 
-	// Оборачиваем в middleware для установки refresh токена в cookie
-	gwWithCookie := middleware.CookieMiddleware(app.CookieService)(gwWithRateLimit)
-
 	// Создаём корневой mux и добавляем health check + gateway
 	rootMux := http.NewServeMux()
 	rootMux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +111,7 @@ func run() error {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
-	rootMux.Handle("/", gwWithCookie)
+	rootMux.Handle("/", gwWithRateLimit)
 
 	// Применяем CORS middleware
 	corsHandler := middleware.NewCORS(middleware.CORSConfig{
