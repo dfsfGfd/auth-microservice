@@ -138,4 +138,79 @@ tasks:
     cmds:
       - docker rm -f auth-postgres-test auth-redis-test auth-service-test 2>/dev/null || true
       - docker volume rm -f auth_postgres_test_data 2>/dev/null || true
-      - echo "✅ Full cleanup complete"
+      - echo "Full cleanup complete"
+
+  # ==================== Server Tasks ====================
+
+  server:build:
+    desc: "Сборка бинарного файла сервера"
+    cmds:
+      - |
+        echo "Building server..."
+        go build -o bin/server ./cmd/server
+        echo "Build complete: bin/server"
+
+  server:run:
+    desc: "Запуск сервера (локально, требуется .env)"
+    deps: [ server:build ]
+    cmds:
+      - |
+        echo "Starting server..."
+        ./bin/server
+
+  server:dev:
+    desc: "Запуск сервера в режиме разработки (с автоперезагрузкой)"
+    cmds:
+      - go run ./cmd/server
+
+  server:docker:up:
+    desc: "Запуск сервера в Docker (production-like окружение)"
+    cmds:
+      - |
+        echo "Starting auth service in Docker..."
+        docker compose -f deploy/docker-compose.yml up -d --build
+        sleep 3
+        echo "Services started:"
+        echo "  - HTTP: http://localhost:8080"
+        echo "  - gRPC: localhost:9090"
+        echo "  - Health: http://localhost:8080/health"
+
+  server:docker:down:
+    desc: "Остановка Docker контейнеров"
+    cmds:
+      - |
+        echo "Stopping auth service..."
+        docker compose -f deploy/docker-compose.yml down
+        echo "Services stopped"
+
+  server:docker:logs:
+    desc: "Просмотр логов сервера в Docker"
+    cmds:
+      - docker compose -f deploy/docker-compose.yml logs -f auth-service
+
+  server:docker:restart:
+    desc: "Перезапуск сервера в Docker"
+    deps: [ server:docker:down ]
+    cmds:
+      - task: server:docker:up
+
+  server:check:
+    desc: "Проверка доступности сервера"
+    cmds:
+      - |
+        echo "Checking server health..."
+        curl -s http://localhost:8080/health && echo " - OK" || echo " - NOT AVAILABLE"
+
+  # ==================== Quick Commands ====================
+
+  dev:
+    desc: "Быстрый старт для разработки (build + run)"
+    deps: [ format, lint, tidy ]
+    cmds:
+      - task: server:dev
+
+  docker:dev:
+    desc: "Запуск всего стека в Docker для разработки"
+    cmds:
+      - task: server:docker:up
+      - task: server:check
