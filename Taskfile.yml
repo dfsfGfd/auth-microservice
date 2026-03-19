@@ -106,18 +106,19 @@ tasks:
       - 'cd proto && PATH="$HOME/go/bin:$PATH" {{.BUF}} generate'
 
   test:e2e:
-    desc: "Запуск e2e интеграционных тестов (docker-compose up → test → down)"
+    desc: "Запуск e2e интеграционных тестов (docker-compose up -> test -> down)"
     cmds:
-      - echo "🧪 Running e2e integration tests..."
+      - echo "Running e2e integration tests..."
       - go test -tags integration -v -timeout 5m ./tests/...
 
   test:e2e:up:
     desc: "Только поднять контейнеры для e2e тестов (для отладки)"
     cmds:
-      - echo "🚀 Starting test infrastructure..."
-      - docker compose -f tests/docker-compose.integration.yml up -d --build
-      - sleep 5
-      - echo "✅ Services started. Run tests with: task test:e2e:run"
+      - |
+        echo "Starting test infrastructure..."
+        docker compose -f tests/docker-compose.integration.yml up -d --build
+        sleep 5
+        echo "Services started. Run tests with: task test:e2e:run"
 
   test:e2e:run:
     desc: "Запустить e2e тесты против работающих контейнеров"
@@ -127,9 +128,9 @@ tasks:
   test:e2e:down:
     desc: "Остановить и удалить контейнеры e2e тестов"
     cmds:
-      - echo "🧹 Cleaning up..."
+      - echo "Cleaning up..."
       - docker compose -f tests/docker-compose.integration.yml down -v --remove-orphans
-      - echo "✅ Cleanup complete"
+      - echo "Cleanup complete"
 
   test:e2e:clean:
     desc: "Полная очистка после e2e тестов"
