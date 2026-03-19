@@ -101,8 +101,7 @@ func run() error {
 	)(gw)
 
 	// Оборачиваем в middleware для установки refresh токена в cookie
-	secure := app.Config.Server.Env == "production"
-	gwWithCookie := middleware.TokenCookieMiddleware(secure, app.Config.Cookie.Domain)(gwWithRateLimit)
+	gwWithCookie := middleware.CookieMiddleware(app.CookieService)(gwWithRateLimit)
 
 	// Создаём корневой mux и добавляем health check + gateway
 	rootMux := http.NewServeMux()
