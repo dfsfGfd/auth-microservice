@@ -254,6 +254,9 @@ func (c *Config) Validate() error {
 	if err := c.Logging.Validate(); err != nil {
 		return fmt.Errorf("logging: %w", err)
 	}
+	if err := c.CORS.Validate(); err != nil {
+		return fmt.Errorf("cors: %w", err)
+	}
 	return nil
 }
 
@@ -362,6 +365,33 @@ func (c *LoggingConfig) Validate() error {
 	if c.ServiceName == "" {
 		c.ServiceName = "auth-service"
 	}
+	return nil
+}
+
+// Validate валидирует конфигурацию CORS
+func (c *CORSConfig) Validate() error {
+	if len(c.AllowedOrigins) == 0 {
+		c.AllowedOrigins = []string{"*"}
+	}
+	if len(c.AllowedMethods) == 0 {
+		c.AllowedMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	}
+	if len(c.AllowedHeaders) == 0 {
+		c.AllowedHeaders = []string{"Authorization", "Content-Type", "X-Request-ID"}
+	}
+	if c.MaxAge <= 0 {
+		c.MaxAge = 86400
+	}
+
+	// Проверка: wildcard с credentials — уязвимость безопасности
+	if c.AllowCredentials {
+		for _, origin := range c.AllowedOrigins {
+			if origin == "*" {
+				return fmt.Errorf("wildcard origin (*) is not allowed with credentials=true")
+			}
+		}
+	}
+
 	return nil
 }
 

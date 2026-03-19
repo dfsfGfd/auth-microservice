@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-
+	"fmt"
 	stderrors "errors"
 
 	"github.com/google/uuid"
@@ -38,14 +38,14 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	id, err := uuid.Parse(accountID)
 	if err != nil {
 		s.log.Error("parse account id", "account_id", accountID, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("parse account id: %w", err)
 	}
 
 	// Проверка: существует ли аккаунт
 	exists, err := s.accountRepo.ExistsByID(ctx, id)
 	if err != nil {
 		s.log.Error("check account exists", "account_id", accountID, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("check account exists: %w", err)
 	}
 	if !exists {
 		s.log.Warn("account not found", "account_id", accountID)
@@ -56,23 +56,25 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	tokens, err := s.jwtService.GenerateTokens(accountID, claims.Email)
 	if err != nil {
 		s.log.Error("generate tokens", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("generate tokens: %w", err)
 	}
 
 	// Обновление токена в кэше (сброс TTL)
 	refreshTTL, err := s.jwtService.RefreshTTLDuration()
 	if err != nil {
 		s.log.Error("get refresh ttl", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("get refresh ttl: %w", err)
 	}
 
 	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountID, refreshTTL); err != nil {
 		s.log.Error("cache refresh token", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}
 
-	// Удаление старого токена из кэша
-	_ = s.tokenCache.Delete(ctx, refreshToken)
+	// Удаление старого токена из кэша (ошибка не критична)
+	if err := s.tokenCache.Delete(ctx, refreshToken); err != nil {
+		s.log.Warn("delete old refresh token", "error", err)
+	}
 
 	s.log.Info("tokens refreshed", "account_id", accountID)
 	return tokens, nil

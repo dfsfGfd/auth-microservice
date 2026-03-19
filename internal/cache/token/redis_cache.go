@@ -36,7 +36,10 @@ func (c *RedisCache) key(token string) string {
 // Set сохраняет refresh токен с привязкой к account ID.
 func (c *RedisCache) Set(ctx context.Context, token string, accountID string, ttl time.Duration) error {
 	key := c.key(token)
-	return c.client.Set(ctx, key, accountID, ttl).Err()
+	if err := c.client.Set(ctx, key, accountID, ttl).Err(); err != nil {
+		return fmt.Errorf("redis set: %w", err)
+	}
+	return nil
 }
 
 // Get получает account ID по refresh токену.

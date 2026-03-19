@@ -54,9 +54,14 @@ func NewCORS(config CORSConfig) func(http.Handler) http.Handler {
 		Debug:            config.Debug,
 		// Обработка wildcard origin
 		AllowOriginFunc: func(origin string) bool {
-			// Если есть wildcard, разрешаем все
+			// Если есть wildcard, проверяем AllowCredentials
 			for _, allowed := range config.AllowedOrigins {
 				if allowed == "*" {
+					// ❌ Нельзя использовать wildcard с credentials
+					// Это нарушает CORS спецификацию и создаёт уязвимость
+					if config.AllowCredentials {
+						return false
+					}
 					return true
 				}
 				// Поддержка wildcard поддоменов
@@ -116,6 +121,10 @@ func Middleware(handler http.Handler, config CORSConfig, readTimeout, writeTimeo
 		AllowOriginFunc: func(origin string) bool {
 			for _, allowed := range config.AllowedOrigins {
 				if allowed == "*" {
+					// ❌ Нельзя использовать wildcard с credentials
+					if config.AllowCredentials {
+						return false
+					}
 					return true
 				}
 				if strings.HasPrefix(allowed, "*.") {

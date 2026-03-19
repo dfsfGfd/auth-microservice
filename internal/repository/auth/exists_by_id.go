@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -15,7 +16,7 @@ func (r *AccountRepository) ExistsByID(ctx context.Context, id uuid.UUID) (bool,
 	`, id).Scan(&exists)
 
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("check account exists by id [id=%s]: %w", id.String(), err)
 	}
 
 	return exists, nil

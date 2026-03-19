@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	stderrors "errors"
 
 	"github.com/google/uuid"
@@ -33,7 +34,7 @@ func (r *AccountRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.A
 		return nil, errors.ErrAccountNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get account by id [id=%s]: %w", id.String(), err)
 	}
 
 	return converter.AccountToDomain(&dbAccount)

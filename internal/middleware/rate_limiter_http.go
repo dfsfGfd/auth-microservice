@@ -22,7 +22,12 @@ func HTTPRateLimitMiddleware(rl *RateLimiter, getEndpoint func(r *http.Request) 
 
 			allowed, remaining, resetTime, err := rl.Allow(r.Context(), endpoint, key)
 			if err != nil {
-				// Если Redis недоступен, пропускаем запрос (fail-open)
+				// Для критичных endpoint'ов (login, register) блокируем запрос
+				// Для остальных — пропускаем (fail-open)
+				if endpoint == "login" || endpoint == "register" {
+					http.Error(w, `{"error":"rate limiter unavailable"}`, http.StatusServiceUnavailable)
+					return
+				}
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -68,7 +73,11 @@ func UnaryServerInterceptor(rl *RateLimiter, getEndpoint func(ctx context.Contex
 
 		allowed, remaining, resetTime, err := rl.Allow(ctx, endpoint, key)
 		if err != nil {
-			// Если Redis недоступен, пропускаем запрос (fail-open)
+			// Для критичных endpoint'ов (login, register) блокируем запрос
+			// Для остальных — пропускаем (fail-open)
+			if endpoint == "login" || endpoint == "register" {
+				return nil, status.Error(codes.Unavailable, "rate limiter unavailable")
+			}
 			return handler(ctx, req)
 		}
 

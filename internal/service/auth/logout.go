@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	stderrors "errors"
 
@@ -28,7 +29,7 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	// Удаление токена из кэша
 	if err := s.tokenCache.Delete(ctx, refreshToken); err != nil {
 		s.log.Error("delete refresh token", "error", err)
-		return err
+		return fmt.Errorf("delete refresh token: %w", err)
 	}
 
 	s.log.Info("account logged out")

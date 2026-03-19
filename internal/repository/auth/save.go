@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 
 	"auth-microservice/internal/model"
 	"auth-microservice/internal/repository/converter"
@@ -25,5 +26,8 @@ func (r *AccountRepository) Save(ctx context.Context, account *model.Account) er
 		dbAccount.UpdatedAt,
 	)
 
-	return err
+	if err != nil {
+		return fmt.Errorf("save account [email=%s]: %w", account.Email().Value(), err)
+	}
+	return nil
 }

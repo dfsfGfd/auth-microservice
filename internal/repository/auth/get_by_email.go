@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	stderrors "errors"
 
 	"github.com/jackc/pgx/v5"
@@ -32,7 +33,7 @@ func (r *AccountRepository) GetByEmail(ctx context.Context, email string) (*mode
 		return nil, errors.ErrAccountNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get account by email [email=%s]: %w", email, err)
 	}
 
 	return converter.AccountToDomain(&dbAccount)

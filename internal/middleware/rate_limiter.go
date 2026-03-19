@@ -64,6 +64,10 @@ func (rl *RateLimiter) Allow(ctx context.Context, endpoint, key string) (bool, i
 		return true, 0, time.Now(), nil
 	}
 
+	// Добавляем таймаут на Redis операцию для защиты от зависаний
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
 	now := time.Now()
 	windowStart := now.Add(-config.Window)
 	windowKey := config.Prefix + key
@@ -88,7 +92,13 @@ func (rl *RateLimiter) Allow(ctx context.Context, endpoint, key string) (bool, i
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return false, 0, now, fmt.Errorf("redis pipeline: %w", err)
+		// Для критичных endpoint'ов (login, register) используем fail-close
+		// Это предотвращает brute-force атаки при недоступности Redis
+		if endpoint == "login" || endpoint == "register" {
+			return false, 0, now, fmt.Errorf("rate limiter unavailable: %w", err)
+		}
+		// Для остальных endpoint'ов — fail-open (пропускаем запрос)
+		return true, 0, now, nil
 	}
 
 	count := int(countCmd.Val())
