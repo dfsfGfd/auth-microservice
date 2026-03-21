@@ -22,6 +22,8 @@ vars:
   BUF: '"{{.BIN_DIR}}/buf"'
 
 tasks:
+  # ==================== Build & Lint ====================
+
   install-formatters:
     desc: "Устанавливает форматтеры gci и gofumpt в ./bin"
     cmds:
@@ -59,6 +61,8 @@ tasks:
     desc: "Очистка зависимостей"
     cmds:
       - go mod tidy
+
+  # ==================== Code Generation ====================
 
   wire:gen:
     desc: "Генерация DI кода через Google Wire"
@@ -105,42 +109,7 @@ tasks:
     cmds:
       - 'cd proto && PATH="$HOME/go/bin:$PATH" {{.BUF}} generate'
 
-  test:e2e:
-    desc: "Запуск e2e интеграционных тестов (docker-compose up -> test -> down)"
-    cmds:
-      - echo "Running e2e integration tests..."
-      - go test -tags integration -v -timeout 5m ./tests/...
-
-  test:e2e:up:
-    desc: "Только поднять контейнеры для e2e тестов (для отладки)"
-    cmds:
-      - |
-        echo "Starting test infrastructure..."
-        docker compose -f tests/docker-compose.integration.yml up -d --build
-        sleep 5
-        echo "Services started. Run tests with: task test:e2e:run"
-
-  test:e2e:run:
-    desc: "Запустить e2e тесты против работающих контейнеров"
-    cmds:
-      - go test -tags integration -v -timeout 5m ./tests/...
-
-  test:e2e:down:
-    desc: "Остановить и удалить контейнеры e2e тестов"
-    cmds:
-      - echo "Cleaning up..."
-      - docker compose -f tests/docker-compose.integration.yml down -v --remove-orphans
-      - echo "Cleanup complete"
-
-  test:e2e:clean:
-    desc: "Полная очистка после e2e тестов"
-    deps: [ test:e2e:down ]
-    cmds:
-      - docker rm -f auth-postgres-test auth-redis-test auth-service-test 2>/dev/null || true
-      - docker volume rm -f auth_postgres_test_data 2>/dev/null || true
-      - echo "Full cleanup complete"
-
-  # ==================== Server Tasks ====================
+  # ==================== Server Commands ====================
 
   server:build:
     desc: "Сборка бинарного файла сервера"
@@ -159,58 +128,47 @@ tasks:
         ./bin/server
 
   server:dev:
-    desc: "Запуск сервера в режиме разработки (с автоперезагрузкой)"
+    desc: "Запуск сервера в режиме разработки (go run)"
     cmds:
       - go run ./cmd/server
 
-  server:docker:up:
-    desc: "Запуск сервера в Docker (production-like окружение)"
+  server:stop:
+    desc: "Остановка запущенного сервера (kill process)"
     cmds:
       - |
-        echo "Starting auth service in Docker..."
-        docker compose -f deploy/docker-compose.yml up -d --build
-        sleep 3
-        echo "Services started:"
-        echo "  - HTTP: http://localhost:8080"
-        echo "  - gRPC: localhost:9090"
-        echo "  - Health: http://localhost:8080/health"
+        echo "Stopping server..."
+        pkill -f "bin/server" 2>/dev/null || pkill -f "go run ./cmd/server" 2>/dev/null || echo "Server not running"
 
-  server:docker:down:
-    desc: "Остановка Docker контейнеров"
+  # ==================== Integration Tests ====================
+
+  test:integration:
+    desc: "Запуск интеграционных тестов (требует Docker)"
     cmds:
       - |
-        echo "Stopping auth service..."
-        docker compose -f deploy/docker-compose.yml down
-        echo "Services stopped"
+        echo "Running integration tests..."
+        go test -tags integration -v -timeout 5m ./tests/...
 
-  server:docker:logs:
-    desc: "Просмотр логов сервера в Docker"
-    cmds:
-      - docker compose -f deploy/docker-compose.yml logs -f auth-service
-
-  server:docker:restart:
-    desc: "Перезапуск сервера в Docker"
-    deps: [ server:docker:down ]
-    cmds:
-      - task: server:docker:up
-
-  server:check:
-    desc: "Проверка доступности сервера"
+  test:integration:up:
+    desc: "Поднять контейнеры для интеграционных тестов"
     cmds:
       - |
-        echo "Checking server health..."
-        curl -s http://localhost:8080/health && echo " - OK" || echo " - NOT AVAILABLE"
+        echo "Starting test infrastructure..."
+        docker compose -f tests/docker-compose.integration.yml up -d --build
+        sleep 5
+        echo "Services started. Run tests with: task test:integration"
+
+  test:integration:down:
+    desc: "Остановить и удалить контейнеры интеграционных тестов"
+    cmds:
+      - |
+        echo "Cleaning up test containers..."
+        docker compose -f tests/docker-compose.integration.yml down -v --remove-orphans
+        echo "Cleanup complete"
 
   # ==================== Quick Commands ====================
 
   dev:
-    desc: "Быстрый старт для разработки (build + run)"
+    desc: "Быстрый старт для разработки (format + lint + tidy + run)"
     deps: [ format, lint, tidy ]
     cmds:
       - task: server:dev
-
-  docker:dev:
-    desc: "Запуск всего стека в Docker для разработки"
-    cmds:
-      - task: server:docker:up
-      - task: server:check
