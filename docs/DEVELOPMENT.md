@@ -214,9 +214,9 @@ if err != nil {
 
 ```go
 // ✅ Правильно
-log.Info("user logged in", "user_id", userID, "email", email)
-log.Error("database error", "error", err)
-log.Warn("rate limit exceeded", "ip", clientIP, "attempts", attempts)
+log.Info("login", "user_id", userID, "status", 200, "dur_ms", duration)
+log.Error("db_error", "err", err, "dur_ms", duration)
+log.Warn("rate_limit", "ip", clientIP, "path", r.URL.Path)
 
 // ❌ Неправильно
 log.Info("user logged in")  // нет контекста
@@ -228,26 +228,42 @@ log.Error("error", err)     // неясно какая ошибка
 ```go
 // С request_id для трассировки
 reqLog := log.WithRequestID(requestID)
-reqLog.Info("processing request", "method", "Login")
+reqLog.Info("login", "user_id", userID)
 
 // С контекстом
 ctx := logger.WithContext(ctx, requestID)
 reqLog := log.WithContext(ctx)
-reqLog.Info("processing request")
+reqLog.Info("refresh_token", "user_id", userID)
 ```
 
-#### JSON формат (production)
+#### JSON формат (production, оптимизированный)
 
 ```json
 {
-  "level": "info",
-  "service": "auth-service",
-  "message": "user logged in",
-  "user_id": "13f9c5ac-...",
-  "email": "user@example.com",
-  "time": "2026-03-18T14:43:59Z"
+  "ts": "2026-03-21T15:00:00Z",
+  "lvl": "info",
+  "msg": "login",
+  "srv": "auth-service",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": 200,
+  "dur_ms": 45
 }
 ```
+
+**Оптимизированные имена полей:**
+
+| Поле | Описание |
+|------|----------|
+| `ts` | Timestamp (ISO 8601) |
+| `lvl` | Level (info/warn/error) |
+| `msg` | Message |
+| `srv` | Service name |
+| `user_id` | User ID |
+| `rid` | Request ID |
+| `trace` | Trace ID |
+| `dur_ms` | Duration (миллисекунды) |
+| `err` | Error |
+| `status` | Status code |
 
 ---
 
