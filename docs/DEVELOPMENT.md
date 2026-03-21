@@ -253,39 +253,29 @@ reqLog.Info("processing request")
 
 ## 🔧 Генерация кода
 
-### Proto (gRPC + REST + Swagger)
+### Taskfile команды
 
 ```bash
-# Генерация из .proto файлов
+# Форматирование
+task format
+
+# Линтинг
+task lint
+
+# Генерация кода
 task proto:gen
-```
-
-**Что генерирует:**
-- `pkg/proto/auth/v1/` — Go код для gRPC
-- `api/auth/v1/` — Swagger/OpenAPI спецификации
-- `internal/handler/` — gRPC хендлеры (частично)
-
-### Dependency Injection (Wire)
-
-```bash
-# Генерация DI кода
 task wire:gen
 
-# Проверка без генерации
-task wire:check
-```
+# Запуск сервера
+task server:build    # Сборка
+task server:run      # Запуск (локально)
+task server:dev      # go run
+task server:stop     # Остановка
 
-**Что генерирует:**
-- `internal/di/wire_gen.go` — код внедрения зависимостей
-
-### Миграции
-
-```bash
-# Применение всех миграций
-go run cmd/migrate/main.go -dsn "postgres://..." up
-
-# Откат последней
-go run cmd/migrate/main.go -dsn "postgres://..." down
+# Интеграционные тесты
+task test:integration:up     # Поднять контейнеры
+task test:integration        # Запустить тесты
+task test:integration:down   # Удалить контейнеры
 ```
 
 ---
@@ -302,20 +292,22 @@ go test ./... -v
 go test ./pkg/jwt/... -v
 ```
 
-### E2E тесты
+### Интеграционные тесты
 
 ```bash
-# Запуск через docker-compose
-task test:e2e
+# 1. Поднять контейнеры (PostgreSQL, Redis)
+task test:integration:up
 
-# Только поднять контейнеры
-task test:e2e:up
+# 2. Запустить тесты
+task test:integration
 
-# Запустить тесты против running контейнеров
-task test:e2e:run
+# 3. Удалить контейнеры
+task test:integration:down
+```
 
-# Очистка
-task test:e2e:down
+Или напрямую:
+```bash
+go test -tags integration -v -timeout 5m ./tests/...
 ```
 
 ### Структура теста
@@ -328,11 +320,11 @@ func TestRegisterAndLogin(t *testing.T) {
     // 1. Регистрация
     resp := registerUser(t, email, password)
     require.Equal(t, 200, resp.StatusCode)
-    
+
     // 2. Логин
     tokens := loginUser(t, email, password)
     require.NotEmpty(t, tokens.AccessToken)
-    
+
     // 3. Обновление токена
     newTokens := refreshToken(t, tokens.RefreshToken)
     require.NotEmpty(t, newTokens.AccessToken)
@@ -343,7 +335,7 @@ func TestRegisterAndLogin(t *testing.T) {
 
 ## 🐳 Docker
 
-### Разработка
+### Локальная разработка
 
 ```bash
 cd deploy
@@ -355,11 +347,23 @@ docker compose up -d --build
 - `postgres` (5432)
 - `redis` (6379)
 
+### Миграции
+
+Миграции применяются **автоматически** при первом запуске:
+
+```yaml
+# deploy/docker-compose.yml
+volumes:
+  - postgres_data:/var/lib/postgresql/data  # Сохранение данных
+```
+
+**Важно:** Миграция проходит **один раз** при первом запуске. При повторном запуске (после остановки) миграция **не применяется**, данные сохраняются в volume.
+
 ### Логи
 
 ```bash
 # JSON логи
-docker compose logs auth-service | grep -v cors
+docker compose logs auth-service
 
 # В реальном времени
 docker compose logs -f auth-service
@@ -423,10 +427,19 @@ func loadConfig() (*config.Config, error) {
 
 ### Пароли
 
-- Минимум 8 символов
-- 1 заглавная (A-Z)
-- 1 строчная (a-z)
-- 1 цифра (0-9)
+Согласно **NIST 800-63B**, длина важнее сложности:
+
+- ✅ Минимум **8 символов**
+- ✅ Без требований к заглавным/строчным буквам или цифрам
+- ✅ Поддержка passphrase
+
+**Примеры:**
+```
+✅ password123    (валиден)
+✅ PASSWORD123    (валиден)
+✅ Password       (валиден)
+❌ 1234567        (слишком короткий)
+```
 
 ### JWT токены
 
@@ -443,6 +456,15 @@ func loadConfig() (*config.Config, error) {
 | Login | 10 |
 | Refresh | 30 |
 | Logout | 60 |
+
+### Bcrypt Cost
+
+Стоимость хеширования: **12** (OWASP 2024 рекомендация)
+
+```go
+// pkg/bcrypt/bcrypt.go
+const BCryptCost = 12
+```
 
 ---
 

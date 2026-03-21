@@ -161,10 +161,28 @@ go test ./... -v
 
 | Команда | Описание |
 |---------|----------|
-| `task proto:gen` | Генерация Proto (gRPC + REST + Swagger) |
 | `task format` | Форматирование Go кода |
 | `task lint` | Линтинг Go кода |
 | `task tidy` | Очистка зависимостей |
+| `task proto:gen` | Генерация Proto (gRPC + REST + Swagger) |
+| `task wire:gen` | Генерация DI кода |
+
+### Запуск сервера
+
+| Команда | Описание |
+|---------|----------|
+| `task server:build` | Сборка бинарного файла |
+| `task server:run` | Запуск сервера (локально, требуется `.env`) |
+| `task server:dev` | Запуск через `go run` |
+| `task server:stop` | Остановка сервера |
+
+### Интеграционные тесты
+
+| Команда | Описание |
+|---------|----------|
+| `task test:integration:up` | Поднять контейнеры (PostgreSQL, Redis) |
+| `task test:integration` | Запустить интеграционные тесты |
+| `task test:integration:down` | Удалить контейнеры тестов |
 
 ---
 
@@ -204,17 +222,8 @@ docker compose down
 task server:docker:logs
 ```
 
-### Полезные команды Taskfile
-
-| Команда | Описание |
-|---------|----------|
-| `task server:build` | Сборка бинарного файла |
-| `task server:dev` | Запуск через `go run` |
-| `task server:docker:up` | Запуск в Docker |
-| `task server:docker:down` | Остановка Docker |
-| `task server:docker:logs` | Просмотр логов |
-| `task server:check` | Проверка health |
-| `task dev` | Быстрый старт для разработки |
+> ⚠️ **Важно:** Docker команды доступны только для развёртывания в production-like окружении.
+> Для локальной разработки используйте `task server:dev` или `task server:run`.
 
 📖 **Полное руководство:** [deploy/README.md](deploy/README.md)
 
@@ -224,10 +233,27 @@ task server:docker:logs
 
 ### Требования к паролю
 
-- Минимум 8 символов
-- 1 заглавная буква (A-Z)
-- 1 строчная буква (a-z)
-- 1 цифра (0-9)
+Согласно рекомендациям **NIST 800-63B**, длина пароля важнее сложности:
+
+- ✅ Минимум **8 символов**
+- ✅ Без требований к заглавным/строчным буквам или цифрам
+- ✅ Поддержка passphrase (например, `correct horse battery staple`)
+
+**Примеры валидных паролей:**
+```
+✅ password123      (нет заглавной)
+✅ PASSWORD123      (нет строчной)
+✅ Password         (нет цифры)
+✅ abcdefgh         (только буквы)
+✅ MyPass123        (все символы)
+```
+
+**Примеры невалидных паролей:**
+```
+❌ 1234567          (слишком короткий)
+❌ Pass1            (слишком короткий)
+❌ (пустой)         (пустой пароль)
+```
 
 ### Rate Limiting
 
