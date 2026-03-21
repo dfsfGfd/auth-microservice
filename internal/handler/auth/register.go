@@ -2,15 +2,13 @@ package auth
 
 import (
 	"context"
-
 	stderrors "errors"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/internal/handler/converter"
 	"auth-microservice/pkg/proto/auth/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // Register регистрирует нового пользователя.

@@ -4,9 +4,8 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
-
 	"auth-microservice/internal/model"
+	"github.com/google/uuid"
 )
 
 // AccountRepository интерфейс для работы с аккаунтами в PostgreSQL.

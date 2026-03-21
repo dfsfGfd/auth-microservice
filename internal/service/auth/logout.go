@@ -2,9 +2,8 @@ package auth
 
 import (
 	"context"
-	"fmt"
-
 	stderrors "errors"
+	"fmt"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/pkg/jwt"

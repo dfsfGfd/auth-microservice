@@ -31,15 +31,15 @@ import (
 
 // Config полная конфигурация приложения
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Redis    RedisConfig    `yaml:"redis"`
-	JWT      JWTConfig      `yaml:"jwt"`
-	Logging  LoggingConfig  `yaml:"logging"`
-	CORS     CORSConfig     `yaml:"cors"`
+	Server    ServerConfig    `yaml:"server"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Redis     RedisConfig     `yaml:"redis"`
+	JWT       JWTConfig       `yaml:"jwt"`
+	Logging   LoggingConfig   `yaml:"logging"`
+	CORS      CORSConfig      `yaml:"cors"`
 	RateLimit RateLimitConfig `yaml:"rate_limit"`
-	Health   HealthConfig   `yaml:"health"`
-	Shutdown ShutdownConfig `yaml:"shutdown"`
+	Health    HealthConfig    `yaml:"health"`
+	Shutdown  ShutdownConfig  `yaml:"shutdown"`
 }
 
 // ServerConfig конфигурация сервера
@@ -54,31 +54,31 @@ type ServerConfig struct {
 
 // DatabaseConfig конфигурация PostgreSQL
 type DatabaseConfig struct {
-	URL              string `yaml:"url"`
-	MaxConnections   int    `yaml:"max_connections"`
-	ConnectionTimeout int   `yaml:"connection_timeout"`
+	URL               string `yaml:"url"`
+	MaxConnections    int    `yaml:"max_connections"`
+	ConnectionTimeout int    `yaml:"connection_timeout"`
 }
 
 // RedisConfig конфигурация Redis
 type RedisConfig struct {
-	URL              string `yaml:"url"`
-	DB               int    `yaml:"db"`
-	ConnectionTimeout int   `yaml:"connection_timeout"`
+	URL               string `yaml:"url"`
+	DB                int    `yaml:"db"`
+	ConnectionTimeout int    `yaml:"connection_timeout"`
 }
 
 // JWTConfig конфигурация JWT
 type JWTConfig struct {
-	Secret       string `yaml:"secret"`
-	AccessTTL    string `yaml:"access_ttl"`
-	RefreshTTL   string `yaml:"refresh_ttl"`
-	Issuer       string `yaml:"issuer"`
+	Secret     string `yaml:"secret"`
+	AccessTTL  string `yaml:"access_ttl"`
+	RefreshTTL string `yaml:"refresh_ttl"`
+	Issuer     string `yaml:"issuer"`
 }
 
 // LoggingConfig конфигурация логирования
 type LoggingConfig struct {
-	Level        string `yaml:"level"`
-	Format       string `yaml:"format"`
-	ServiceName  string `yaml:"service_name"`
+	Level       string `yaml:"level"`
+	Format      string `yaml:"format"`
+	ServiceName string `yaml:"service_name"`
 }
 
 // CORSConfig конфигурация CORS
@@ -143,13 +143,13 @@ func LoadFromEnv() (*Config, error) {
 			IdleTimeout:  getEnvInt("IDLE_TIMEOUT", 60),
 		},
 		Database: DatabaseConfig{
-			URL:              getEnv("DATABASE_URL", ""),
-			MaxConnections:   getEnvInt("DATABASE_MAX_CONNECTIONS", 25),
+			URL:               getEnv("DATABASE_URL", ""),
+			MaxConnections:    getEnvInt("DATABASE_MAX_CONNECTIONS", 25),
 			ConnectionTimeout: getEnvInt("DATABASE_CONNECTION_TIMEOUT", 10),
 		},
 		Redis: RedisConfig{
-			URL:              getEnv("REDIS_URL", ""),
-			DB:               getEnvInt("REDIS_DB", 0),
+			URL:               getEnv("REDIS_URL", ""),
+			DB:                getEnvInt("REDIS_DB", 0),
 			ConnectionTimeout: getEnvInt("REDIS_CONNECTION_TIMEOUT", 5),
 		},
 		JWT: JWTConfig{
@@ -317,11 +317,11 @@ func (c *JWTConfig) Validate() error {
 	if c.Secret == "" {
 		c.Secret = os.Getenv("JWT_SECRET")
 	}
-	
+
 	if c.Secret == "" {
 		return fmt.Errorf("secret is required (set JWT_SECRET env var or config file)")
 	}
-	
+
 	if len(c.Secret) < 32 {
 		return fmt.Errorf("secret must be at least 32 characters long")
 	}

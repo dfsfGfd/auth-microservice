@@ -2,13 +2,12 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	stderrors "errors"
-
-	"github.com/google/uuid"
+	"fmt"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/pkg/jwt"
+	"github.com/google/uuid"
 )
 
 // Refresh обновляет пару токенов.

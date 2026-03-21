@@ -7,12 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"auth-microservice/pkg/proto/auth/v1"
+	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	"auth-microservice/pkg/proto/auth/v1"
-
-	"github.com/stretchr/testify/suite"
 )
 
 // E2ETestSuite набор e2e тестов для auth-сервиса

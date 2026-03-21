@@ -4,10 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"auth-microservice/pkg/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"auth-microservice/pkg/jwt"
 )
 
 func TestNewService(t *testing.T) {

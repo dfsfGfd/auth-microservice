@@ -29,7 +29,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	}
 
 	// Сравнение пароля
-	if err := s.hasher.Compare(account.PasswordHash().Value(), password); err != nil {
+	if cmpErr := s.hasher.Compare(account.PasswordHash().Value(), password); cmpErr != nil {
 		s.log.Warn("login_failed", "reason", "invalid_password")
 		return nil, errors.ErrInvalidCredentials
 	}

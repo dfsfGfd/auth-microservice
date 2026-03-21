@@ -9,7 +9,7 @@ import (
 // TokenCache интерфейс для кэширования токенов.
 type TokenCache interface {
 	// Set сохраняет refresh токен с привязкой к account ID.
-	Set(ctx context.Context, token string, accountID string, ttl time.Duration) error
+	Set(ctx context.Context, token, accountID string, ttl time.Duration) error
 
 	// Get получает account ID по refresh токену.
 	Get(ctx context.Context, token string) (string, error)

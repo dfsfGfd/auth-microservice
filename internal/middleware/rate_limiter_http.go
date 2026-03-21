@@ -14,7 +14,7 @@ import (
 
 // HTTPRateLimitMiddleware создаёт HTTP middleware для rate limiting
 // Возвращает функцию-обёртку для http.Handler
-func HTTPRateLimitMiddleware(rl *RateLimiter, getEndpoint func(r *http.Request) string, getKey func(r *http.Request) string) func(http.Handler) http.Handler {
+func HTTPRateLimitMiddleware(rl *RateLimiter, getEndpoint, getKey func(r *http.Request) string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			endpoint := getEndpoint(r)
@@ -61,7 +61,7 @@ func getLimit(rl *RateLimiter, endpoint string) int {
 }
 
 // UnaryServerInterceptor создаёт gRPC interceptor для rate limiting
-func UnaryServerInterceptor(rl *RateLimiter, getEndpoint func(ctx context.Context, fullMethod string) string, getKey func(ctx context.Context, fullMethod string) string) grpc.UnaryServerInterceptor {
+func UnaryServerInterceptor(rl *RateLimiter, getEndpoint, getKey func(ctx context.Context, fullMethod string) string) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},

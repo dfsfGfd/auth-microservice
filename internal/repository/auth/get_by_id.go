@@ -2,16 +2,15 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	stderrors "errors"
-
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"fmt"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/internal/model"
 	"auth-microservice/internal/repository/converter"
 	dbmodel "auth-microservice/internal/repository/model"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // GetByID получает аккаунт по ID.

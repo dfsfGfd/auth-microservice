@@ -2,9 +2,8 @@
 package auth
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
-
 	"auth-microservice/internal/repository"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // AccountRepository реализация repository.AccountRepository.

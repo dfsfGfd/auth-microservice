@@ -2,15 +2,14 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	stderrors "errors"
-
-	"github.com/jackc/pgx/v5"
+	"fmt"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/internal/model"
 	"auth-microservice/internal/repository/converter"
 	dbmodel "auth-microservice/internal/repository/model"
+	"github.com/jackc/pgx/v5"
 )
 
 // GetByEmail получает аккаунт по email.

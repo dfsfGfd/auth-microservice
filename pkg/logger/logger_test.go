@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"testing"
 
+	"auth-microservice/pkg/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"auth-microservice/pkg/logger"
 )
 
 func TestNew(t *testing.T) {
@@ -179,7 +178,7 @@ func TestDisableLogging(t *testing.T) {
 
 	// Отключаем логирование
 	logger.DisableLogging()
-	
+
 	// Восстанавливаем уровень логирования после теста
 	t.Cleanup(func() {
 		logger.SetGlobalLevel("debug")
@@ -210,7 +209,7 @@ func TestLogger_JSONFormat(t *testing.T) {
 	assert.Contains(t, output, "test message")
 	assert.Contains(t, output, "key")
 	assert.Contains(t, output, "value")
-	assert.Contains(t, output, "ts")  // zerolog использует "ts" вместо "time"
+	assert.Contains(t, output, "ts") // zerolog использует "ts" вместо "time"
 }
 
 func TestLogger_ConsoleFormat(t *testing.T) {

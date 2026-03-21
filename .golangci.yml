@@ -1,0 +1,115 @@
+# GolangCI-Lint конфигурация
+# https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    # Стандартные
+    - gofmt
+    - govet
+    - staticcheck
+    - errcheck
+    - unused
+    
+    # Дополнительные
+    - gosec          # Безопасность
+    - goconst        # Повторяющиеся константы
+    - gocritic       # Критика кода
+    - godot          # Комментарии
+    - importas       # Алиасы импортов
+    - misspell       # Опечатки
+    - nakedret       # Возврат без аргументов
+    - nolintlint     # Проверка nolint директив
+    - prealloc       # Предварительное выделение
+    - predeclared    # Зарезервированные имена
+    - unconvert      # Лишние преобразования
+    - unparam        # Неиспользуемые параметры
+    
+  disable:
+    - typecheck      # Отключить (go build проверяет)
+
+linters-settings:
+  gofmt:
+    simplify: true
+  
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment  # Слишком строгий
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - whyNoLint  # Конфликтует с nolintlint
+  
+  godot:
+    scope: declarations
+    capital: true
+  
+  misspell:
+    locale: US
+  
+  nakedret:
+    max-func-lines: 10  # Разрешить naked return в функциях < 10 строк
+
+issues:
+  # Не игнорировать ошибки из тестов
+  exclude-use-default: false
+  
+  # Максимум ошибок
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  # Исключения
+  exclude-rules:
+    # Разрешить unused parameters в интерфейсах
+    - path: internal/repository/.*\.go$
+      linters:
+        - unparam
+    
+    # Разрешить long lines в тестах
+    - path: _test\.go$
+      linters:
+        - lll
+    
+    # Разрешить gosec на password в тестах
+    - path: _test\.go$
+      linters:
+        - gosec
+      text: "G101"
+    
+    # Разрешить errcheck в defer (Close часто игнорируют)
+    - path: cmd/server/main.go
+      linters:
+        - errcheck
+      text: "Close"
+    
+    # Разрешить gosec на file inclusion (конфиг файлы)
+    - path: internal/config/config.go
+      linters:
+        - gosec
+      text: "G304"
+    
+    # Разрешить integer conversion в handler (protobuf)
+    - path: internal/handler/.*\.go$
+      linters:
+        - gosec
+      text: "G115"
+    
+    # Разрешить unused functions в tests
+    - path: tests/.*\.go$
+      linters:
+        - unused
+
+# Вывод
+output:
+  formats:
+    - format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true

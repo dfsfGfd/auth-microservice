@@ -1,8 +1,8 @@
 // Package di предоставляет dependency injection для приложения.
 //
 // Использование:
-//   1. Запустить wire: wire gen ./internal/di
-//   2. Скомпилировать: go build ./cmd/server
+//  1. Запустить wire: wire gen ./internal/di
+//  2. Скомпилировать: go build ./cmd/server
 package di
 
 import (
@@ -11,12 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/wire"
-	goredis "github.com/redis/go-redis/v9"
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"auth-microservice/internal/config"
 	"auth-microservice/internal/cache/token"
+	"auth-microservice/internal/config"
 	"auth-microservice/internal/handler/auth"
 	"auth-microservice/internal/middleware"
 	"auth-microservice/internal/repository"
@@ -27,20 +23,23 @@ import (
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
+	"github.com/google/wire"
+	"github.com/jackc/pgx/v5/pgxpool"
+	goredis "github.com/redis/go-redis/v9"
 )
 
 // Application содержит все зависимости приложения
 type Application struct {
-	Config        *config.Config
-	Logger        *logger.Logger
-	JWTService    *jwt.Service
-	DB            *pgxpool.Pool
-	Redis         *goredis.Client
-	AccountRepo   repository.AccountRepository
-	TokenCache    *token.RedisCache
-	AuthService   *serviceAuth.AuthService
-	AuthHandler   *auth.Handler
-	RateLimiter   *middleware.RateLimiter
+	Config      *config.Config
+	Logger      *logger.Logger
+	JWTService  *jwt.Service
+	DB          *pgxpool.Pool
+	Redis       *goredis.Client
+	AccountRepo repository.AccountRepository
+	TokenCache  *token.RedisCache
+	AuthService *serviceAuth.AuthService
+	AuthHandler *auth.Handler
+	RateLimiter *middleware.RateLimiter
 }
 
 // CleanUp очищает ресурсы приложения
@@ -227,15 +226,15 @@ func NewApplication(
 	authHandler *auth.Handler,
 ) (*Application, error) {
 	return &Application{
-		Config:        cfg,
-		Logger:        log,
-		JWTService:    jwtSvc,
-		DB:            db,
-		Redis:         redisClient,
-		AccountRepo:   accountRepo,
-		TokenCache:    tokenCache,
-		RateLimiter:   rateLimiter,
-		AuthService:   authService,
-		AuthHandler:   authHandler,
+		Config:      cfg,
+		Logger:      log,
+		JWTService:  jwtSvc,
+		DB:          db,
+		Redis:       redisClient,
+		AccountRepo: accountRepo,
+		TokenCache:  tokenCache,
+		RateLimiter: rateLimiter,
+		AuthService: authService,
+		AuthHandler: authHandler,
 	}, nil
 }

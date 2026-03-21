@@ -25,7 +25,6 @@ func (r *AccountRepository) Save(ctx context.Context, account *model.Account) er
 		dbAccount.CreatedAt,
 		dbAccount.UpdatedAt,
 	)
-
 	if err != nil {
 		return fmt.Errorf("save account [email=%s]: %w", account.Email().Value(), err)
 	}

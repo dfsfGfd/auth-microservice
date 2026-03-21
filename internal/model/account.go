@@ -3,9 +3,8 @@ package model
 import (
 	"time"
 
-	"github.com/google/uuid"
-
 	errs "auth-microservice/internal/errors"
+	"github.com/google/uuid"
 )
 
 // Account — агрегат аккаунта.

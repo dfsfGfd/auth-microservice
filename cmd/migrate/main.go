@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	exitSuccess     = 0
-	exitError       = 1
-	exitUsageError  = 2
+	exitSuccess    = 0
+	exitError      = 1
+	exitUsageError = 2
 )
 
 func main() {
@@ -79,9 +79,11 @@ func run() int {
 		fmt.Fprintf(os.Stderr, "Ошибка создания миграции: %v\n", err)
 		return exitError
 	}
-	defer m.Close()
-
-	// Выполнение команды
+	defer func() {
+		if _, closeErr := m.Close(); closeErr != nil {
+			fmt.Fprintf(os.Stderr, "Ошибка закрытия миграции: %v\n", closeErr)
+		}
+	}()
 	switch command {
 	case "up":
 		if err := m.Up(); err != nil {

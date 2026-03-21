@@ -38,7 +38,7 @@ Content-Type: application/json
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123!"
+  "password": "password123"
 }
 ```
 
@@ -61,7 +61,24 @@ Content-Type: application/json
 |-----|------|-----------|
 | `INVALID_EMAIL` | 400 | Неверный формат email |
 | `EMAIL_EXISTS` | 409 | Email уже зарегистрирован |
-| `INVALID_PASSWORD` | 400 | Пароль не соответствует требованиям |
+| `PASSWORD_TOO_SHORT` | 400 | Пароль короче 8 символов |
+
+---
+
+## Требования к паролю
+
+Согласно **NIST 800-63B**, длина важнее сложности:
+
+- ✅ Минимум **8 символов**
+- ✅ Без требований к заглавным/строчным буквам или цифрам
+
+**Примеры валидных паролей:**
+```
+password123    ✅ (нет заглавной)
+PASSWORD123    ✅ (нет строчной)
+Password       ✅ (нет цифры)
+abcdefgh       ✅ (только буквы)
+```
 
 ---
 

@@ -43,24 +43,42 @@ internal/
 
 ## 🚀 Команды
 
+### Taskfile (рекомендуется)
+
 ```bash
-# Запуск в Docker
-cd deploy && docker compose up -d --build
-
-# Локальный запуск
-go run cmd/server/main.go
-
 # Форматирование
 task format
 
 # Линтинг
 task lint
 
-# Генерация Proto
-task proto:gen
+# Запуск сервера
+task server:build    # Сборка
+task server:run      # Запуск (локально)
+task server:dev      # go run
+task server:stop     # Остановка
 
-# Генерация DI
-task wire:gen
+# Интеграционные тесты
+task test:integration:up     # Поднять контейнеры
+task test:integration        # Запустить тесты
+task test:integration:down   # Удалить контейнеры
+
+# Генерация кода
+task proto:gen       # Proto → Go
+task wire:gen        # DI код
+```
+
+### Docker
+
+```bash
+# Запуск в Docker
+cd deploy && docker compose up -d --build
+
+# Логи
+docker compose logs -f auth-service
+
+# Остановка
+docker compose down
 ```
 
 ---

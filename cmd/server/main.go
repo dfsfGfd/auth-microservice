@@ -10,16 +10,14 @@ import (
 	"syscall"
 	"time"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
-
 	"auth-microservice/internal/di"
 	"auth-microservice/internal/middleware"
 	"auth-microservice/pkg/logger"
 	"auth-microservice/pkg/proto/auth/v1"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {

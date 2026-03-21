@@ -12,7 +12,6 @@ func (r *AccountRepository) ExistsByEmail(ctx context.Context, email string) (bo
 	err := r.pool.QueryRow(ctx, `
 		SELECT EXISTS(SELECT 1 FROM accounts WHERE email = $1)
 	`, email).Scan(&exists)
-
 	if err != nil {
 		return false, fmt.Errorf("check account exists by email [email=%s]: %w", email, err)
 	}

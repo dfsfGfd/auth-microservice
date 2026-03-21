@@ -16,9 +16,9 @@ const (
 	dockerComposeFile = "docker-compose.integration.yml"
 
 	// Таймауты
-	composeUpTimeout   = 2 * time.Minute
+	composeUpTimeout    = 2 * time.Minute
 	serviceReadyTimeout = 30 * time.Second
-	composeDownTimeout = 30 * time.Second
+	composeDownTimeout  = 30 * time.Second
 
 	// Адреса сервисов для тестов
 	grpcAddress = "localhost:9091"

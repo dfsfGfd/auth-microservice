@@ -203,7 +203,7 @@ func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []inte
 func optimizeFieldName(key string) string {
 	switch key {
 	case "user_id":
-		return "user_id"  // Оставляем user_id для читаемости
+		return "user_id" // Оставляем user_id для читаемости
 	case "request_id":
 		return "rid"
 	case "trace_id":
