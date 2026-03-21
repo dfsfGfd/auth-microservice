@@ -1,8 +1,6 @@
 package model
 
 import (
-	"unicode"
-
 	errs "auth-microservice/internal/errors"
 )
 
@@ -10,6 +8,9 @@ import (
 type PlainPassword string
 
 // NewPlainPassword создаёт новый PlainPassword с валидацией правил
+// Требования:
+//   - Минимум 8 символов
+//   - Без ограничений на регистр и наличие цифр
 func NewPlainPassword(value string) (*PlainPassword, error) {
 	if value == "" {
 		return nil, errs.ErrPasswordInvalid
@@ -17,25 +18,6 @@ func NewPlainPassword(value string) (*PlainPassword, error) {
 
 	if len(value) < 8 {
 		return nil, errs.ErrPasswordTooShort
-	}
-
-	hasUpper := false
-	hasLower := false
-	hasDigit := false
-
-	for _, r := range value {
-		switch {
-		case unicode.IsUpper(r):
-			hasUpper = true
-		case unicode.IsLower(r):
-			hasLower = true
-		case unicode.IsDigit(r):
-			hasDigit = true
-		}
-	}
-
-	if !hasUpper || !hasLower || !hasDigit {
-		return nil, errs.ErrPasswordInvalid
 	}
 
 	password := PlainPassword(value)
