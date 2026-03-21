@@ -69,11 +69,11 @@ func (s *E2ETestSuite) TestRegister() {
 			errContains: "invalid",
 		},
 		{
-			name:        "weak password",
+			name:        "password too short",
 			email:       "test2.e2e@example.com",
 			password:    "123",
 			wantErr:     true,
-			errContains: "password",
+			errContains: "password too short",
 		},
 		{
 			name:        "empty email",
@@ -87,7 +87,7 @@ func (s *E2ETestSuite) TestRegister() {
 			email:       "test3.e2e@example.com",
 			password:    "",
 			wantErr:     true,
-			errContains: "password",
+			errContains: "invalid password",
 		},
 	}
 
@@ -112,6 +112,37 @@ func (s *E2ETestSuite) TestRegister() {
 			s.NotEmpty(resp.Data.GetAccountId())
 			s.Equal(tt.email, resp.Data.GetEmail())
 			s.NotEmpty(resp.Data.GetCreatedAt())
+		})
+	}
+}
+
+// TestRegister_ValidPasswords тестирует регистрацию с различными валидными паролями
+// После упрощения валидации (NIST 800-63B): только длина ≥8, без требований к регистру/цифрам
+func (s *E2ETestSuite) TestRegister_ValidPasswords() {
+	tests := []struct {
+		name     string
+		email    string
+		password string
+	}{
+		{"no uppercase", "test.upper@example.com", "password123"},
+		{"no lowercase", "test.lower@example.com", "PASSWORD123"},
+		{"no digit", "test.digit@example.com", "Password"},
+		{"all lowercase", "test.alllower@example.com", "abcdefgh"},
+		{"simple 8 chars", "test.simple@example.com", "qwerty12"},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			resp, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
+				Email:    tt.email,
+				Password: tt.password,
+			})
+
+			s.Require().NoError(err)
+			s.Require().NotNil(resp)
+			s.Require().NotNil(resp.Data)
+			s.NotEmpty(resp.Data.GetAccountId())
+			s.Equal(tt.email, resp.Data.GetEmail())
 		})
 	}
 }
