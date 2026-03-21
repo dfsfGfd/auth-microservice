@@ -13,7 +13,7 @@
 //	log.Error("database error", "error", err)
 //
 // Формат JSON лога (оптимизированный):
-// {"ts":"2026-03-21T15:00:00Z","lvl":"info","msg":"user logged in","srv":"auth-service","trace":"abc123","uid":"550e8400","dur_ms":45}
+// {"ts":"2026-03-21T15:00:00Z","lvl":"info","msg":"user logged in","srv":"auth-service","user_id":"550e8400","dur_ms":45}
 package logger
 
 import (
@@ -203,7 +203,7 @@ func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []inte
 func optimizeFieldName(key string) string {
 	switch key {
 	case "user_id":
-		return "uid"
+		return "user_id"  // Оставляем user_id для читаемости
 	case "request_id":
 		return "rid"
 	case "trace_id":

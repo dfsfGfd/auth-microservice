@@ -73,7 +73,7 @@ func TestLogger_Levels(t *testing.T) {
 		buf.Reset()
 		log.Info("info message", "user_id", "123")
 		assert.Contains(t, buf.String(), "info message")
-		assert.Contains(t, buf.String(), "uid")
+		assert.Contains(t, buf.String(), "user_id")
 	})
 
 	t.Run("Warn", func(t *testing.T) {
@@ -270,7 +270,7 @@ func TestLogger_MultipleFields(t *testing.T) {
 		)
 
 		output := buf.String()
-		assert.Contains(t, output, "uid")
+		assert.Contains(t, output, "user_id")
 		assert.Contains(t, output, "123")
 		assert.Contains(t, output, "email")
 		assert.Contains(t, output, "user@example.com")
