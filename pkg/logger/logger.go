@@ -11,6 +11,9 @@
 //	// Логирование
 //	log.Info("user logged in", "user_id", userID)
 //	log.Error("database error", "error", err)
+//
+// Формат JSON лога (оптимизированный):
+// {"ts":"2026-03-21T15:00:00Z","lvl":"info","msg":"user logged in","srv":"auth-service","trace":"abc123","uid":"550e8400","dur_ms":45}
 package logger
 
 import (
@@ -89,7 +92,7 @@ type Logger struct {
 	zlog zerolog.Logger
 }
 
-// New создаёт новый логгер
+// New создаёт новый логгер с оптимизированными именами полей
 func New(config Config) (*Logger, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
@@ -112,7 +115,11 @@ func New(config Config) (*Logger, error) {
 		}
 	}
 
-	// Создаём zerolog логгер
+	// Создаём zerolog логгер с оптимизированными именами полей
+	zerolog.TimestampFieldName = "ts"
+	zerolog.LevelFieldName = "lvl"
+	zerolog.MessageFieldName = "msg"
+
 	zlog := zerolog.New(output).
 		Level(level).
 		With().
@@ -120,7 +127,7 @@ func New(config Config) (*Logger, error) {
 
 	// Добавляем название сервиса если указано
 	if config.ServiceName != "" {
-		zlog = zlog.Str("service", config.ServiceName)
+		zlog = zlog.Str("srv", config.ServiceName)
 	}
 
 	return &Logger{
@@ -171,7 +178,7 @@ func (l *Logger) Fatal(msg string, keysAndValues ...interface{}) {
 	l.logEvent(l.zlog.Fatal(), msg, keysAndValues)
 }
 
-// logEvent записывает событие с полями
+// logEvent записывает событие с полями (оптимизированные имена)
 func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []interface{}) {
 	for i := 0; i < len(keysAndValues); i += 2 {
 		if i+1 < len(keysAndValues) {
@@ -183,11 +190,41 @@ func (l *Logger) logEvent(event *zerolog.Event, msg string, keysAndValues []inte
 						continue
 					}
 				}
-				event.Any(key, keysAndValues[i+1])
+				// Оптимизированные имена полей
+				optKey := optimizeFieldName(key)
+				event.Any(optKey, keysAndValues[i+1])
 			}
 		}
 	}
 	event.Msg(msg)
+}
+
+// optimizeFieldName сокращает имена полей для компактности
+func optimizeFieldName(key string) string {
+	switch key {
+	case "user_id":
+		return "uid"
+	case "request_id":
+		return "rid"
+	case "trace_id":
+		return "trace"
+	case "span_id":
+		return "span"
+	case "duration_ms":
+		return "dur_ms"
+	case "email":
+		return "email"
+	case "method":
+		return "method"
+	case "path":
+		return "path"
+	case "status":
+		return "status"
+	case "error":
+		return "err"
+	default:
+		return key
+	}
 }
 
 // With возвращает новый логгер с дополнительными полями
@@ -214,14 +251,14 @@ func (l *Logger) With(keysAndValues ...interface{}) *Logger {
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	event := l.zlog.With()
 
-	// Добавляем request_id если есть
-	if requestID := ctx.Value(RequestIDKey); requestID != nil {
-		event = event.Str("request_id", requestID.(string))
+	// Добавляем trace_id если есть (оптимизированное имя)
+	if traceID := ctx.Value(TraceIDKey); traceID != nil {
+		event = event.Str("trace", traceID.(string))
 	}
 
-	// Добавляем trace_id если есть
-	if traceID := ctx.Value(TraceIDKey); traceID != nil {
-		event = event.Str("trace_id", traceID.(string))
+	// Добавляем request_id если есть (оптимизированное имя)
+	if requestID := ctx.Value(RequestIDKey); requestID != nil {
+		event = event.Str("rid", requestID.(string))
 	}
 
 	return &Logger{
@@ -232,7 +269,7 @@ func (l *Logger) WithContext(ctx context.Context) *Logger {
 // WithRequestID возвращает логгер с request_id
 func (l *Logger) WithRequestID(requestID string) *Logger {
 	return &Logger{
-		zlog: l.zlog.With().Str("request_id", requestID).Logger(),
+		zlog: l.zlog.With().Str("rid", requestID).Logger(),
 	}
 }
 

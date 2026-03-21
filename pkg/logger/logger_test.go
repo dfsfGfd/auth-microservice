@@ -73,7 +73,7 @@ func TestLogger_Levels(t *testing.T) {
 		buf.Reset()
 		log.Info("info message", "user_id", "123")
 		assert.Contains(t, buf.String(), "info message")
-		assert.Contains(t, buf.String(), "user_id")
+		assert.Contains(t, buf.String(), "uid")
 	})
 
 	t.Run("Warn", func(t *testing.T) {
@@ -87,7 +87,7 @@ func TestLogger_Levels(t *testing.T) {
 		buf.Reset()
 		log.Error("error message", "error", "something went wrong")
 		assert.Contains(t, buf.String(), "error message")
-		assert.Contains(t, buf.String(), "error")
+		assert.Contains(t, buf.String(), "err")
 	})
 }
 
@@ -206,11 +206,11 @@ func TestLogger_JSONFormat(t *testing.T) {
 
 	output := buf.String()
 	// JSON должен содержать ключи
-	assert.Contains(t, output, "message")
+	assert.Contains(t, output, "msg")
 	assert.Contains(t, output, "test message")
 	assert.Contains(t, output, "key")
 	assert.Contains(t, output, "value")
-	assert.Contains(t, output, "time")  // zerolog использует "time" вместо "timestamp"
+	assert.Contains(t, output, "ts")  // zerolog использует "ts" вместо "time"
 }
 
 func TestLogger_ConsoleFormat(t *testing.T) {
@@ -246,7 +246,7 @@ func TestLogger_ServiceName(t *testing.T) {
 	log.Info("service log")
 
 	output := buf.String()
-	assert.Contains(t, output, "service")
+	assert.Contains(t, output, "srv")
 	assert.Contains(t, output, "auth-service")
 }
 
@@ -270,7 +270,7 @@ func TestLogger_MultipleFields(t *testing.T) {
 		)
 
 		output := buf.String()
-		assert.Contains(t, output, "user_id")
+		assert.Contains(t, output, "uid")
 		assert.Contains(t, output, "123")
 		assert.Contains(t, output, "email")
 		assert.Contains(t, output, "user@example.com")
