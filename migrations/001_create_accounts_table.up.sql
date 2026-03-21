@@ -2,8 +2,9 @@
 -- Создание таблицы accounts для хранения аккаунтов пользователей
 
 -- Таблица аккаунтов
+-- Примечание: UUID генерируется в доменном слое (Go), а не в БД
 CREATE TABLE IF NOT EXISTS accounts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY,
     email VARCHAR(254) NOT NULL,
     password VARCHAR(72) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
