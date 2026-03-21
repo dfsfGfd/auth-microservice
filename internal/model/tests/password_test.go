@@ -36,11 +36,9 @@ func TestNewPlainPassword(t *testing.T) {
 			err   string
 		}{
 			{"empty string", "", "invalid password"},
-			{"too short", "Pass1", "password too short"},
-			{"no uppercase", "password1", "invalid password"},
-			{"no lowercase", "PASSWORD1", "invalid password"},
-			{"no digit", "Password", "invalid password"},
-			{"only 7 chars", "Pass123", "password too short"},
+			{"too short (4 chars)", "Pass1", "password too short"},
+			{"too short (7 chars)", "Pass123", "password too short"},
+			{"too short (1 char)", "a", "password too short"},
 		}
 
 		for _, tt := range tests {
@@ -50,6 +48,57 @@ func TestNewPlainPassword(t *testing.T) {
 				assert.Error(t, err)
 				assert.Nil(t, password)
 				assert.Contains(t, err.Error(), tt.err)
+			})
+		}
+	})
+
+	t.Run("valid passwords - no uppercase required", func(t *testing.T) {
+		validPasswords := []string{
+			"password1",
+			"qwerty123",
+			"abcdefgh",
+		}
+
+		for _, passwordStr := range validPasswords {
+			t.Run(passwordStr, func(t *testing.T) {
+				password, err := model.NewPlainPassword(passwordStr)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, password)
+			})
+		}
+	})
+
+	t.Run("valid passwords - no lowercase required", func(t *testing.T) {
+		validPasswords := []string{
+			"PASSWORD1",
+			"QWERTY123",
+			"ABCDEFGH",
+		}
+
+		for _, passwordStr := range validPasswords {
+			t.Run(passwordStr, func(t *testing.T) {
+				password, err := model.NewPlainPassword(passwordStr)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, password)
+			})
+		}
+	})
+
+	t.Run("valid passwords - no digit required", func(t *testing.T) {
+		validPasswords := []string{
+			"Password",
+			"qwertyui",
+			"abcdefgh",
+		}
+
+		for _, passwordStr := range validPasswords {
+			t.Run(passwordStr, func(t *testing.T) {
+				password, err := model.NewPlainPassword(passwordStr)
+
+				assert.NoError(t, err)
+				assert.NotNil(t, password)
 			})
 		}
 	})

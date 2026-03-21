@@ -28,10 +28,8 @@ func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
 	}
 
 	// Создаём Value Objects
-	email, err := model.NewEmail(db.Email)
-	if err != nil {
-		return nil, err
-	}
+	// Email уже валидирован при сохранении, используем доверенный конструктор
+	email := model.NewEmailFromDB(db.Email)
 
 	passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
 

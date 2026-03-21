@@ -123,3 +123,46 @@ func TestEmail_String(t *testing.T) {
 
 	assert.Equal(t, "user@example.com", email.String())
 }
+
+func TestNewEmailFromDB(t *testing.T) {
+	t.Run("creates email without validation", func(t *testing.T) {
+		// NewEmailFromDB не валидирует, принимает любой email
+		email := model.NewEmailFromDB("user@example.com")
+
+		assert.NotNil(t, email)
+		assert.Equal(t, "user@example.com", email.String())
+	})
+
+	t.Run("accepts emails that would fail NewEmail", func(t *testing.T) {
+		// Эти email не прошли бы валидацию в NewEmail,
+		// но NewEmailFromDB принимает их (доверенные данные из БД)
+		email := model.NewEmailFromDB("invalid-without-at")
+
+		assert.NotNil(t, email)
+		assert.Equal(t, "invalid-without-at", email.String())
+	})
+
+	t.Run("accepts empty string without error", func(t *testing.T) {
+		// NewEmailFromDB не возвращает ошибку, даже если email пустой
+		email := model.NewEmailFromDB("")
+
+		assert.NotNil(t, email)
+		assert.Equal(t, "", email.String())
+	})
+
+	t.Run("Value method works correctly", func(t *testing.T) {
+		email := model.NewEmailFromDB("test@example.com")
+
+		assert.Equal(t, "test@example.com", email.Value())
+	})
+
+	t.Run("Equal method works correctly", func(t *testing.T) {
+		email1 := model.NewEmailFromDB("user@example.com")
+		email2 := model.NewEmailFromDB("user@example.com")
+		email3 := model.NewEmailFromDB("other@example.com")
+
+		assert.True(t, email1.Equal(email2))
+		assert.False(t, email1.Equal(email3))
+		assert.False(t, email1.Equal(nil))
+	})
+}

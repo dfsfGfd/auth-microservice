@@ -57,3 +57,11 @@ func (e Email) Equal(other *Email) bool {
 	}
 	return e == *other
 }
+
+// NewEmailFromDB создаёт Email из БД без валидации.
+// Используется при загрузке из БД, где данные уже прошли валидацию.
+// НЕ используйте для новых данных — используйте NewEmail().
+func NewEmailFromDB(value string) *Email {
+	email := Email(value)
+	return &email
+}
