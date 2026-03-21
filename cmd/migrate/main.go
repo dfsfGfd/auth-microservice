@@ -13,6 +13,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -84,7 +85,7 @@ func run() int {
 	switch command {
 	case "up":
 		if err := m.Up(); err != nil {
-			if err == migrate.ErrNoChange {
+			if errors.Is(err, migrate.ErrNoChange) {
 				fmt.Println("Нет новых миграций для применения")
 				return exitSuccess
 			}
@@ -95,7 +96,7 @@ func run() int {
 
 	case "down":
 		if err := m.Down(); err != nil {
-			if err == migrate.ErrNoChange {
+			if errors.Is(err, migrate.ErrNoChange) {
 				fmt.Println("Нет миграций для отката")
 				return exitSuccess
 			}
