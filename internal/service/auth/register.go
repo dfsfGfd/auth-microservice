@@ -25,40 +25,41 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*mo
 	// Проверка: существует ли аккаунт с таким email
 	exists, err := s.accountRepo.ExistsByEmail(ctx, emailVO.Value())
 	if err != nil {
-		s.log.Error("check email exists", "email", email, "error", err)
+		s.log.Error("check_email_exists", "err", err)
 		return nil, fmt.Errorf("check email exists: %w", err)
 	}
 	if exists {
+		s.log.Warn("register_failed", "reason", "account_exists")
 		return nil, errors.ErrAccountExists
 	}
 
 	// Хеширование пароля
 	hashedPassword, err := s.hasher.Hash(passwordVO.Value(), 0)
 	if err != nil {
-		s.log.Error("hash password", "error", err)
+		s.log.Error("hash_password", "err", err)
 		return nil, fmt.Errorf("hash password: %w", err)
 	}
 
 	// Создание PasswordHash VO
 	passwordHash, err := model.NewPasswordHash(hashedPassword)
 	if err != nil {
-		s.log.Error("create password hash", "error", err)
+		s.log.Error("create_password_hash", "err", err)
 		return nil, fmt.Errorf("create password hash: %w", err)
 	}
 
 	// Создание аккаунта
 	account, err := model.NewAccount(emailVO, passwordHash)
 	if err != nil {
-		s.log.Error("create account", "error", err)
+		s.log.Error("create_account", "err", err)
 		return nil, fmt.Errorf("create account: %w", err)
 	}
 
 	// Сохранение аккаунта
 	if err := s.accountRepo.Save(ctx, account); err != nil {
-		s.log.Error("save account", "email", email, "error", err)
+		s.log.Error("save_account", "err", err)
 		return nil, fmt.Errorf("save account: %w", err)
 	}
 
-	s.log.Info("account registered", "account_id", account.ID(), "email", email)
+	s.log.Info("register", "user_id", account.ID().String())
 	return account, nil
 }

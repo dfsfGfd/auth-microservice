@@ -41,7 +41,7 @@ func run() error {
 	log := app.Logger
 	defer func() {
 		if err := app.CleanUp(ctx); err != nil {
-			log.Error("cleanup error", "error", err)
+			log.Error("cleanup_error", "err", err)
 		}
 	}()
 
@@ -81,7 +81,7 @@ func run() error {
 
 	// Запускаем gRPC сервер
 	go func() {
-		log.Info("starting gRPC server", "port", app.Config.Server.GRPCPort)
+		log.Info("grpc_server_start", "port", app.Config.Server.GRPCPort)
 		if err := grpcServer.Serve(grpcListener); err != nil {
 			errCh <- fmt.Errorf("serve gRPC: %w", err)
 		}
@@ -128,7 +128,7 @@ func run() error {
 
 	// Запускаем HTTP сервер (REST)
 	go func() {
-		log.Info("starting REST server (grpc-gateway)", "port", app.Config.Server.HTTPPort)
+		log.Info("rest_server_start", "port", app.Config.Server.HTTPPort)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errCh <- fmt.Errorf("serve HTTP: %w", err)
 		}
@@ -140,9 +140,9 @@ func run() error {
 
 	select {
 	case sig := <-quit:
-		log.Info("shutdown signal received", "signal", sig)
+		log.Info("shutdown_signal", "signal", sig)
 	case err := <-errCh:
-		log.Error("server error", "error", err)
+		log.Error("server_error", "err", err)
 		return err
 	}
 
@@ -155,15 +155,15 @@ func run() error {
 
 	// Останавливаем gRPC сервер
 	grpcServer.GracefulStop()
-	log.Info("gRPC server stopped")
+	log.Info("grpc_server_stop")
 
 	// Останавливаем HTTP сервер
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown HTTP server: %w", err)
 	}
-	log.Info("REST server stopped")
+	log.Info("rest_server_stop")
 
-	log.Info("application shutdown complete")
+	log.Info("application_shutdown")
 	return nil
 }
 
@@ -202,18 +202,18 @@ func unaryLogger(log *logger.Logger) grpc.UnaryServerInterceptor {
 		resp, err := handler(ctx, req)
 
 		duration := time.Since(start)
-		
-		// Логгируем с правильным форматом
+
+		// Логгируем с оптимизированным форматом
 		if err != nil {
-			log.Error("gRPC request",
+			log.Error("grpc_request",
 				"method", info.FullMethod,
-				"duration_ms", duration.Milliseconds(),
-				"error", err,
+				"dur_ms", duration.Milliseconds(),
+				"err", err,
 			)
 		} else {
-			log.Info("gRPC request",
+			log.Info("grpc_request",
 				"method", info.FullMethod,
-				"duration_ms", duration.Milliseconds(),
+				"dur_ms", duration.Milliseconds(),
 			)
 		}
 

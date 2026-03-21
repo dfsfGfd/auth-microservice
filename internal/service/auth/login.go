@@ -15,7 +15,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	emailVO, err := model.NewEmail(email)
 	if err != nil {
 		// Возвращаем ErrInvalidCredentials вместо ErrEmailInvalid для предотвращения user enumeration
-		s.log.Warn("invalid email format", "email", email)
+		s.log.Warn("login_failed", "reason", "invalid_email")
 		return nil, errors.ErrInvalidCredentials
 	}
 
@@ -24,35 +24,35 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	if err != nil {
 		// Если аккаунт не найден, возвращаем ErrInvalidCredentials вместо ErrAccountNotFound
 		// Это предотвращает user enumeration - злоумышленник не узнает, существует ли email
-		s.log.Debug("account not found", "email", email)
+		s.log.Debug("login_failed", "reason", "account_not_found")
 		return nil, errors.ErrInvalidCredentials
 	}
 
 	// Сравнение пароля
 	if err := s.hasher.Compare(account.PasswordHash().Value(), password); err != nil {
-		s.log.Warn("invalid password", "email", email)
+		s.log.Warn("login_failed", "reason", "invalid_password")
 		return nil, errors.ErrInvalidCredentials
 	}
 
 	// Генерация JWT токенов
 	tokens, err := s.jwtService.GenerateTokens(account.ID().String(), account.Email().Value())
 	if err != nil {
-		s.log.Error("generate tokens", "error", err)
+		s.log.Error("generate_tokens", "err", err)
 		return nil, fmt.Errorf("generate tokens: %w", err)
 	}
 
 	// Сохранение refresh токена в кэш
 	refreshTTL, err := s.jwtService.RefreshTTLDuration()
 	if err != nil {
-		s.log.Error("get refresh ttl", "error", err)
+		s.log.Error("get_refresh_ttl", "err", err)
 		return nil, fmt.Errorf("get refresh ttl: %w", err)
 	}
 
 	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, account.ID().String(), refreshTTL); err != nil {
-		s.log.Error("cache refresh token", "error", err)
+		s.log.Error("cache_refresh_token", "err", err)
 		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}
 
-	s.log.Info("account logged in", "account_id", account.ID(), "email", email)
+	s.log.Info("login", "user_id", account.ID().String())
 	return tokens, nil
 }
