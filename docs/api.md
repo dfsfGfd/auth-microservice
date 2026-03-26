@@ -8,10 +8,10 @@
 
 | Метод | HTTP | gRPC | Описание |
 |-------|------|------|----------|
-| `Register` | `POST /api/auth/register` | `Register` | Регистрация |
-| `Login` | `POST /api/auth/login` | `Login` | Вход |
-| `Logout` | `POST /api/auth/logout` | `Logout` | Выход |
-| `Refresh` | `POST /api/auth/refresh` | `Refresh` | Обновление токена |
+| `Register` | `POST /api/v1/auth/register` | `Register` | Регистрация |
+| `Login` | `POST /api/v1/auth/login` | `Login` | Вход |
+| `Logout` | `POST /api/v1/auth/logout` | `Logout` | Выход |
+| `Refresh` | `POST /api/v1/auth/refresh` | `Refresh` | Обновление токена |
 
 ---
 
@@ -30,7 +30,7 @@
 ## 1. Регистрация
 
 ```http
-POST /api/auth/register
+POST /api/v1/auth/register
 Content-Type: application/json
 ```
 
@@ -85,7 +85,7 @@ abcdefgh       ✅ (только буквы)
 ## 2. Вход
 
 ```http
-POST /api/auth/login
+POST /api/v1/auth/login
 Content-Type: application/json
 ```
 
@@ -128,9 +128,9 @@ Content-Type: application/json
 ## 3. Выход
 
 ```http
-POST /api/auth/logout
-Authorization: Bearer <access_token>
+POST /api/v1/auth/logout
 Content-Type: application/json
+Authorization: Bearer <access_token>
 ```
 
 **Request:**
@@ -163,7 +163,7 @@ Content-Type: application/json
 ## 4. Обновление токена
 
 ```http
-POST /api/auth/refresh
+POST /api/v1/auth/refresh
 Content-Type: application/json
 ```
 
@@ -254,10 +254,10 @@ Content-Type: application/json
 
 | Endpoint | Лимит/мин |
 |----------|-----------|
-| `/api/auth/register` | 5 |
-| `/api/auth/login` | 10 |
-| `/api/auth/refresh` | 30 |
-| `/api/auth/logout` | 60 |
+| `/api/v1/auth/register` | 5 |
+| `/api/v1/auth/login` | 10 |
+| `/api/v1/auth/refresh` | 30 |
+| `/api/v1/auth/logout` | 60 |
 
 **Заголовки ответа:**
 - `X-RateLimit-Limit` — максимум запросов
