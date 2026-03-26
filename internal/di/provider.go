@@ -101,21 +101,9 @@ var ProviderSet = wire.NewSet(
 	NewApplication,
 )
 
-// loadConfig загружает конфигурацию из .env или YAML файла
+// loadConfig загружает конфигурацию из .env файла
 func loadConfig() (*config.Config, error) {
-	// Сначала пробуем загрузить из .env (приоритет)
-	cfg, err := config.LoadFromEnv()
-	if err == nil {
-		return cfg, nil
-	}
-
-	// Если не удалось, пробуем config.yaml
-	cfg, err = config.Load("config.yaml")
-	if err != nil {
-		return nil, fmt.Errorf("failed to load config from env or file: %w", err)
-	}
-
-	return cfg, nil
+	return config.Load()
 }
 
 // ProvidePostgresConfig предоставляет конфигурацию PostgreSQL

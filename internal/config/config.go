@@ -1,8 +1,8 @@
-// Package config предоставляет загрузку и валидацию конфигурации приложения.
+// Package config предоставляет загрузку конфигурации из .env файла.
 //
 // Пример использования:
 //
-//	cfg, err := config.Load("config.yaml")
+//	cfg, err := config.Load()
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
@@ -10,12 +10,6 @@
 //	// Доступ к конфигурации
 //	fmt.Println(cfg.Server.HTTPPort)
 //	fmt.Println(cfg.Database.URL)
-//
-// Конфигурация также может быть загружена из переменных окружения (.env файл):
-//
-//	export JWT_SECRET="your-secret"
-//	export DATABASE_URL="postgres://..."
-//	cfg, err := config.LoadFromEnv()
 package config
 
 import (
@@ -26,110 +20,89 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
-	"gopkg.in/yaml.v3"
 )
 
 // Config полная конфигурация приложения
 type Config struct {
-	Server    ServerConfig    `yaml:"server"`
-	Database  DatabaseConfig  `yaml:"database"`
-	Redis     RedisConfig     `yaml:"redis"`
-	JWT       JWTConfig       `yaml:"jwt"`
-	Logging   LoggingConfig   `yaml:"logging"`
-	CORS      CORSConfig      `yaml:"cors"`
-	RateLimit RateLimitConfig `yaml:"rate_limit"`
-	Health    HealthConfig    `yaml:"health"`
-	Shutdown  ShutdownConfig  `yaml:"shutdown"`
+	Server    ServerConfig
+	Database  DatabaseConfig
+	Redis     RedisConfig
+	JWT       JWTConfig
+	Logging   LoggingConfig
+	CORS      CORSConfig
+	RateLimit RateLimitConfig
+	Health    HealthConfig
+	Shutdown  ShutdownConfig
 }
 
 // ServerConfig конфигурация сервера
 type ServerConfig struct {
-	HTTPPort     int    `yaml:"http_port"`
-	GRPCPort     int    `yaml:"grpc_port"`
-	Env          string `yaml:"env"`
-	ReadTimeout  int    `yaml:"read_timeout"`
-	WriteTimeout int    `yaml:"write_timeout"`
-	IdleTimeout  int    `yaml:"idle_timeout"`
+	HTTPPort     int
+	GRPCPort     int
+	Env          string
+	ReadTimeout  int
+	WriteTimeout int
+	IdleTimeout  int
 }
 
 // DatabaseConfig конфигурация PostgreSQL
 type DatabaseConfig struct {
-	URL               string `yaml:"url"`
-	MaxConnections    int    `yaml:"max_connections"`
-	ConnectionTimeout int    `yaml:"connection_timeout"`
+	URL               string
+	MaxConnections    int
+	ConnectionTimeout int
 }
 
 // RedisConfig конфигурация Redis
 type RedisConfig struct {
-	URL               string `yaml:"url"`
-	DB                int    `yaml:"db"`
-	ConnectionTimeout int    `yaml:"connection_timeout"`
+	URL               string
+	DB                int
+	ConnectionTimeout int
 }
 
 // JWTConfig конфигурация JWT
 type JWTConfig struct {
-	Secret     string `yaml:"secret"`
-	AccessTTL  string `yaml:"access_ttl"`
-	RefreshTTL string `yaml:"refresh_ttl"`
-	Issuer     string `yaml:"issuer"`
+	Secret     string
+	AccessTTL  string
+	RefreshTTL string
+	Issuer     string
 }
 
 // LoggingConfig конфигурация логирования
 type LoggingConfig struct {
-	Level       string `yaml:"level"`
-	Format      string `yaml:"format"`
-	ServiceName string `yaml:"service_name"`
+	Level       string
+	Format      string
+	ServiceName string
 }
 
 // CORSConfig конфигурация CORS
 type CORSConfig struct {
-	AllowedOrigins   []string `yaml:"allowed_origins"`
-	AllowedMethods   []string `yaml:"allowed_methods"`
-	AllowedHeaders   []string `yaml:"allowed_headers"`
-	AllowCredentials bool     `yaml:"allow_credentials"`
-	MaxAge           int      `yaml:"max_age"`
+	AllowedOrigins   []string
+	AllowedMethods   []string
+	AllowedHeaders   []string
+	AllowCredentials bool
+	MaxAge           int
 }
 
 // RateLimitConfig конфигурация rate limiting
 type RateLimitConfig struct {
-	Register int `yaml:"register"`
-	Login    int `yaml:"login"`
-	Refresh  int `yaml:"refresh"`
-	Logout   int `yaml:"logout"`
+	Register int
+	Login    int
+	Refresh  int
+	Logout   int
 }
 
 // HealthConfig конфигурация health check
 type HealthConfig struct {
-	Path string `yaml:"path"`
+	Path string
 }
 
 // ShutdownConfig конфигурация graceful shutdown
 type ShutdownConfig struct {
-	Timeout int `yaml:"timeout"`
+	Timeout int
 }
 
-// Load загружает конфигурацию из YAML файла
-func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
-	}
-
-	var cfg Config
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
-	}
-
-	if err := cfg.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %w", err)
-	}
-
-	return &cfg, nil
-}
-
-// LoadFromEnv загружает конфигурацию из переменных окружения
-// Если .env файл существует, он будет загружен автоматически
-func LoadFromEnv() (*Config, error) {
+// Load загружает конфигурацию из .env файла
+func Load() (*Config, error) {
 	// Пытаемся загрузить .env файл (не критично если не найден)
 	_ = godotenv.Load()
 
@@ -183,8 +156,8 @@ func LoadFromEnv() (*Config, error) {
 		},
 	}
 
-	// Парсим CORS allow credentials
-	cfg.CORS.AllowCredentials = getEnvBool("CORS_ALLOW_CREDENTIALS", true)
+	// Парсим CORS allow credentials (default false для безопасности)
+	cfg.CORS.AllowCredentials = getEnvBool("CORS_ALLOW_CREDENTIALS", false)
 
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)

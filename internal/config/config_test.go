@@ -1,8 +1,6 @@
 package config_test
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -11,60 +9,39 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func createTempConfig(t *testing.T, content string) string {
+func setTestEnv(t *testing.T) {
 	t.Helper()
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "config.yaml")
+	envs := map[string]string{
+		"HTTP_PORT":                "8080",
+		"GRPC_PORT":                "9090",
+		"APP_ENV":                  "development",
+		"DATABASE_URL":             "postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
+		"DATABASE_MAX_CONNECTIONS": "25",
+		"REDIS_URL":                "redis://localhost:6379",
+		"REDIS_DB":                 "0",
+		"JWT_SECRET":               "super-secret-key-minimum-32-characters-long",
+		"JWT_ACCESS_TTL":           "15m",
+		"JWT_REFRESH_TTL":          "336h",
+		"JWT_ISSUER":               "auth-service",
+		"LOG_LEVEL":                "debug",
+		"LOG_FORMAT":               "console",
+		"LOG_SERVICE_NAME":         "auth-service",
+		"CORS_ALLOWED_ORIGINS":     "http://localhost:3000",
+		"CORS_ALLOW_CREDENTIALS":   "false",
+		"HEALTH_PATH":              "/health",
+		"SHUTDOWN_TIMEOUT":         "30",
+	}
 
-	err := os.WriteFile(tmpFile, []byte(content), 0o644)
-	require.NoError(t, err)
-
-	return tmpFile
+	for k, v := range envs {
+		t.Setenv(k, v)
+	}
 }
 
-func TestLoad_Success(t *testing.T) {
-	content := `
-server:
-  http_port: 8080
-  grpc_port: 9090
-  env: development
+func TestLoad(t *testing.T) {
+	setTestEnv(t)
 
-database:
-  url: postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
-  max_connections: 25
-
-redis:
-  url: redis://localhost:6379
-  db: 0
-
-jwt:
-  secret: super-secret-key-minimum-32-characters-long
-  access_ttl: 15m
-  refresh_ttl: 336h
-  issuer: auth-service
-
-logging:
-  level: debug
-  format: console
-  service_name: auth-service
-
-cors:
-  allowed_origins:
-    - http://localhost:3000
-  allowed_methods:
-    - GET
-    - POST
-  allowed_headers:
-    - Authorization
-
-shutdown:
-  timeout: 30
-`
-
-	tmpFile := createTempConfig(t, content)
-
-	cfg, err := config.Load(tmpFile)
+	cfg, err := config.Load()
 
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
@@ -93,20 +70,24 @@ shutdown:
 	assert.Equal(t, "console", cfg.Logging.Format)
 }
 
-func TestLoad_FileNotFound(t *testing.T) {
-	_, err := config.Load("nonexistent.yaml")
+func TestLoad_Defaults(t *testing.T) {
+	// Устанавливаем только обязательные переменные
+	t.Setenv("DATABASE_URL", "postgres://localhost/auth")
+	t.Setenv("REDIS_URL", "redis://localhost:6379")
+	t.Setenv("JWT_SECRET", "super-secret-key-minimum-32-characters-long")
 
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to read config file")
-}
+	cfg, err := config.Load()
 
-func TestLoad_InvalidYAML(t *testing.T) {
-	tmpFile := createTempConfig(t, "invalid: yaml: content: [")
+	require.NoError(t, err)
+	require.NotNil(t, cfg)
 
-	_, err := config.Load(tmpFile)
-
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse config file")
+	// Проверяем дефолты
+	assert.Equal(t, 8080, cfg.Server.HTTPPort)
+	assert.Equal(t, 9090, cfg.Server.GRPCPort)
+	assert.Equal(t, "development", cfg.Server.Env)
+	assert.Equal(t, 25, cfg.Database.MaxConnections)
+	assert.Equal(t, "info", cfg.Logging.Level)
+	assert.Equal(t, "json", cfg.Logging.Format)
 }
 
 func TestConfig_Validate(t *testing.T) {
@@ -166,6 +147,24 @@ func TestConfig_Validate(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "jwt")
 		assert.Contains(t, err.Error(), "at least 32 characters")
+	})
+
+	t.Run("wildcard origin с credentials", func(t *testing.T) {
+		cfg := &config.Config{
+			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
+			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
+			CORS: config.CORSConfig{
+				AllowedOrigins:   []string{"*"},
+				AllowCredentials: true,
+			},
+		}
+
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "wildcard")
 	})
 }
 
