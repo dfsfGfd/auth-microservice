@@ -142,13 +142,13 @@ func MethodEndpointFunc() func(ctx context.Context, fullMethod string) string {
 func HTTPPathEndpointFunc() func(r *http.Request) string {
 	return func(r *http.Request) string {
 		switch r.URL.Path {
-		case "/api/auth/register":
+		case "/api/v1/auth/register":
 			return "register"
-		case "/api/auth/login":
+		case "/api/v1/auth/login":
 			return "login"
-		case "/api/auth/refresh":
+		case "/api/v1/auth/refresh":
 			return "refresh"
-		case "/api/auth/logout":
+		case "/api/v1/auth/logout":
 			return "logout"
 		default:
 			return ""

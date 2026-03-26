@@ -209,6 +209,6 @@ func (s *Service) GetConfig() Config {
 }
 
 // RefreshTTLDuration возвращает время жизни refresh токена
-func (s *Service) RefreshTTLDuration() (time.Duration, error) {
-	return s.config.RefreshTokenTTL, nil
+func (s *Service) RefreshTTLDuration() time.Duration {
+	return s.config.RefreshTokenTTL
 }

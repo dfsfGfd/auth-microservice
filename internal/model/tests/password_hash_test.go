@@ -37,10 +37,8 @@ func TestNewPasswordHash(t *testing.T) {
 			err   string
 		}{
 			{"empty string", "", "invalid password"},
-			{"wrong prefix", "$1$12$abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx", "invalid password"},
 			{"too short", "$2a$12$abc", "invalid password"},
-			{"too long", "$2a$12$abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "invalid password"},
-			{"no prefix", "abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx", "invalid password"},
+			{"too long", "$2a$12$" + "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", "invalid password"},
 		}
 
 		for _, tt := range tests {

@@ -42,13 +42,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	}
 
 	// Сохранение refresh токена в кэш
-	refreshTTL, err := s.jwtService.RefreshTTLDuration()
-	if err != nil {
-		s.log.Error("get_refresh_ttl", "err", err)
-		return nil, fmt.Errorf("get refresh ttl: %w", err)
-	}
-
-	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, account.ID().String(), refreshTTL); err != nil {
+	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, account.ID().String(), s.jwtService.RefreshTTLDuration()); err != nil {
 		s.log.Error("cache_refresh_token", "err", err)
 		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}

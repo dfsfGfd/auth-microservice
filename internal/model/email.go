@@ -20,6 +20,9 @@ type Email string
 
 // NewEmail создаёт новый Email с валидацией инвариантов домена
 func NewEmail(value string) (*Email, error) {
+	// Нормализуем: убираем пробелы по краям
+	value = strings.TrimSpace(value)
+
 	if value == "" {
 		return nil, errs.ErrEmailInvalid
 	}
@@ -27,9 +30,6 @@ func NewEmail(value string) (*Email, error) {
 	if len(value) > EmailMaxLength {
 		return nil, errs.ErrEmailTooLong
 	}
-
-	// Нормализуем: убираем пробелы по краям
-	value = strings.TrimSpace(value)
 
 	// mail.ParseAddress парсит "Name <email>" и просто "email"
 	if _, err := mail.ParseAddress(value); err != nil {
@@ -40,14 +40,14 @@ func NewEmail(value string) (*Email, error) {
 	return &email, nil
 }
 
-// String возвращает строковое представление email
-func (e Email) String() string {
-	return string(e)
-}
-
 // Value возвращает значение email
 func (e Email) Value() string {
 	return string(e)
+}
+
+// String реализует fmt.Stringer
+func (e Email) String() string {
+	return e.Value()
 }
 
 // Equal сравнивает два Email

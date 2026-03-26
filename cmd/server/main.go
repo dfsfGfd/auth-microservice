@@ -116,7 +116,7 @@ func run() error {
 		AllowedOrigins:   app.Config.CORS.AllowedOrigins,
 		AllowedMethods:   app.Config.CORS.AllowedMethods,
 		AllowedHeaders:   app.Config.CORS.AllowedHeaders,
-		AllowCredentials: true,
+		AllowCredentials: app.Config.CORS.AllowCredentials,
 		MaxAge:           app.Config.CORS.MaxAge,
 		Debug:            app.Config.Server.Env == "development",
 	})(rootMux)

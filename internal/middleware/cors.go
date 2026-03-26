@@ -4,25 +4,18 @@ package middleware
 import (
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/rs/cors"
 )
 
 // CORSConfig конфигурация CORS
 type CORSConfig struct {
-	// AllowedOrigins разрешённые origin
-	AllowedOrigins []string
-	// AllowedMethods разрешённые методы
-	AllowedMethods []string
-	// AllowedHeaders разрешённые заголовки
-	AllowedHeaders []string
-	// AllowCredentials разрешает отправку credentials
+	AllowedOrigins   []string
+	AllowedMethods   []string
+	AllowedHeaders   []string
 	AllowCredentials bool
-	// MaxAge для preflight запросов
-	MaxAge int
-	// Debug включает debug логирование
-	Debug bool
+	MaxAge           int
+	Debug            bool
 }
 
 // Validate валидирует и устанавливает значения по умолчанию
@@ -52,76 +45,9 @@ func NewCORS(config CORSConfig) func(http.Handler) http.Handler {
 		AllowCredentials: config.AllowCredentials,
 		MaxAge:           config.MaxAge,
 		Debug:            config.Debug,
-		// Обработка wildcard origin
-		AllowOriginFunc: func(origin string) bool {
-			// Если есть wildcard, проверяем AllowCredentials
-			for _, allowed := range config.AllowedOrigins {
-				if allowed == "*" {
-					// ❌ Нельзя использовать wildcard с credentials
-					// Это нарушает CORS спецификацию и создаёт уязвимость
-					if config.AllowCredentials {
-						return false
-					}
-					return true
-				}
-				// Поддержка wildcard поддоменов
-				if strings.HasPrefix(allowed, "*.") {
-					suffix := allowed[1:] // .example.com
-					if strings.HasSuffix(origin, suffix) {
-						return true
-					}
-				}
-				// Точное совпадение
-				if allowed == origin {
-					return true
-				}
-			}
-			return false
-		},
-	})
-
-	return c.Handler
-}
-
-// WithDefaultCORS создаёт CORS middleware с настройками по умолчанию
-func WithDefaultCORS() func(http.Handler) http.Handler {
-	return NewCORS(CORSConfig{
-		AllowedOrigins:   []string{"*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"},
-		AllowCredentials: false,
-		MaxAge:           86400,
-		Debug:            false,
-	})
-}
-
-// WithSecureCORS создаёт безопасный CORS middleware для production
-func WithSecureCORS(allowedOrigins []string) func(http.Handler) http.Handler {
-	return NewCORS(CORSConfig{
-		AllowedOrigins:   allowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"},
-		AllowCredentials: true,
-		MaxAge:           86400,
-		Debug:            false,
-	})
-}
-
-// Middleware создаёт CORS handler с таймаутом
-func Middleware(handler http.Handler, config CORSConfig, readTimeout, writeTimeout time.Duration) http.Handler {
-	config.Validate()
-
-	c := cors.New(cors.Options{
-		AllowedOrigins:   config.AllowedOrigins,
-		AllowedMethods:   config.AllowedMethods,
-		AllowedHeaders:   config.AllowedHeaders,
-		AllowCredentials: config.AllowCredentials,
-		MaxAge:           config.MaxAge,
-		Debug:            config.Debug,
 		AllowOriginFunc: func(origin string) bool {
 			for _, allowed := range config.AllowedOrigins {
 				if allowed == "*" {
-					// ❌ Нельзя использовать wildcard с credentials
 					if config.AllowCredentials {
 						return false
 					}
@@ -141,9 +67,5 @@ func Middleware(handler http.Handler, config CORSConfig, readTimeout, writeTimeo
 		},
 	})
 
-	// Оборачиваем в CORS middleware
-	corsHandler := c.Handler(handler)
-
-	// Добавляем timeout handler
-	return http.TimeoutHandler(corsHandler, readTimeout+writeTimeout, "request timeout")
+	return c.Handler
 }

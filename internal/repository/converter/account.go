@@ -46,33 +46,3 @@ func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
 
 	return account, nil
 }
-
-// AccountListToDB конвертирует список domain Account в список DB моделей.
-func AccountListToDB(accounts []*model.Account) []*dbmodel.Account {
-	if accounts == nil {
-		return nil
-	}
-
-	result := make([]*dbmodel.Account, 0, len(accounts))
-	for _, account := range accounts {
-		result = append(result, AccountToDB(account))
-	}
-	return result
-}
-
-// AccountListToDomain конвертирует список DB моделей в список domain Account.
-func AccountListToDomain(dbAccounts []*dbmodel.Account) ([]*model.Account, error) {
-	if dbAccounts == nil {
-		return nil, nil
-	}
-
-	result := make([]*model.Account, 0, len(dbAccounts))
-	for _, db := range dbAccounts {
-		account, err := AccountToDomain(db)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, account)
-	}
-	return result, nil
-}

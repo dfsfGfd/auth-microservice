@@ -59,13 +59,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	}
 
 	// Обновление токена в кэше (сброс TTL)
-	refreshTTL, err := s.jwtService.RefreshTTLDuration()
-	if err != nil {
-		s.log.Error("get_refresh_ttl", "err", err)
-		return nil, fmt.Errorf("get refresh ttl: %w", err)
-	}
-
-	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountID, refreshTTL); err != nil {
+	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountID, s.jwtService.RefreshTTLDuration()); err != nil {
 		s.log.Error("cache_refresh_token", "err", err)
 		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}
