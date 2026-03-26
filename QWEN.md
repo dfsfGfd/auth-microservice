@@ -102,7 +102,15 @@ Username: `dfsfGfd`
 
 ## 🔄 История изменений
 
-### v1.1 Refactor (последний коммит)
+### v1.2 Config (последний коммит)
+
+**Конфигурация:**
+- Загрузка конфига только из .env файла (YAML удален)
+- `config.Load()` - единая точка входа
+- Упрощен DI provider
+- CORS AllowCredentials default = false
+
+### v1.1 Refactor
 
 **Исправленные баги:**
 - Rate limiter для REST API теперь работает с正确的 путями `/api/v1/auth/*`

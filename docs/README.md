@@ -33,12 +33,14 @@ cd auth-microservice
 # 2. Скопировать .env
 cp .env.example .env
 
-# 3. Настроить переменные (обязательно JWT_SECRET)
+# 3. Настроить переменные (обязательно JWT_SECRET, DATABASE_URL, REDIS_URL)
 #    edit .env
 
 # 4. Запустить
 go run cmd/server/main.go
 ```
+
+> **Примечание:** Конфигурация загружается только из .env файла. YAML формат не поддерживается.
 
 Сервер запустится на:
 - **REST API:** `http://localhost:8080`
