@@ -109,23 +109,35 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 
 ```
 .
-├── cmd/server/           # Точка входа
+├── cmd/
+│   ├── server/          # Точка входа сервиса
+│   └── migrate/         # Утилита миграций
 ├── internal/
 │   ├── model/           # Domain layer (агрегаты, VO)
 │   ├── repository/      # Repository layer (PostgreSQL)
 │   ├── service/         # Service layer (бизнес-логика)
 │   ├── handler/         # Handler layer (gRPC)
-│   ├── cache/           # Кэш (Redis)
-│   ├── middleware/      # HTTP/gRPC middleware
+│   ├── cache/           # Redis cache для токенов
+│   ├── middleware/      # HTTP/gRPC middleware (rate limiter, CORS)
 │   ├── di/              # Dependency Injection (Wire)
-│   ├── config/          # Конфигурация
+│   ├── config/          # Конфигурация из .env
 │   └── errors/          # Доменные ошибки
-├── pkg/                 # Общие пакеты (jwt, bcrypt, logger)
-├── proto/               # Proto контракты
-├── migrations/          # SQL миграции
+├── pkg/                 # Общие пакеты (jwt, bcrypt, logger, db)
+├── proto/               # Proto контракты (Buf)
+├── api/                 # Swagger/OpenAPI спецификация
+├── migrations/          # SQL миграции (golang-migrate)
 ├── deploy/              # Docker файлы
+├── tests/               # Интеграционные тесты
 └── docs/                # Документация
 ```
+
+### Оптимизации (v1.1)
+
+- ✅ Удален неиспользуемый код (DeleteByID, GetByID, list конвертеры)
+- ✅ Упрощена CORS middleware (убраны дублирующие функции)
+- ✅ Исправлен rate limiter для REST API (пути `/api/v1/auth/*`)
+- ✅ Исправлена валидация email (trim перед проверкой длины)
+- ✅ Упрощена валидация PasswordHash (только проверка длины)
 
 ### Время жизни токенов
 

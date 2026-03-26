@@ -34,10 +34,12 @@ internal/
 
 | Файл | Описание |
 |------|----------|
-| `cmd/server/main.go` | Точка входа |
-| `cmd/migrate/main.go` | Утилита миграций |
+| `cmd/server/main.go` | Точка входа сервиса |
+| `cmd/migrate/main.go` | Утилита миграций БД |
 | `deploy/docker-compose.yml` | Docker окружение |
-| `.env` | Переменные окружения |
+| `.env.example` | Шаблон переменных окружения |
+| `proto/auth/v1/auth.proto` | gRPC/REST API контракт |
+| `Taskfile.yml` | Build автоматизация |
 
 ---
 
@@ -95,3 +97,21 @@ docker compose down
 ## GitHub
 
 Username: `dfsfGfd`
+
+---
+
+## 🔄 История изменений
+
+### v1.1 Refactor (последний коммит)
+
+**Исправленные баги:**
+- Rate limiter для REST API теперь работает с正确的 путями `/api/v1/auth/*`
+- AllowCredentials теперь берется из конфига, а не хардкодится
+- Email валидация: trim теперь выполняется перед проверкой длины
+
+**Оптимизации:**
+- Удален неиспользуемый код: `DeleteByID`, `GetByID` в репозитории
+- Удалены неиспользуемые list конвертеры
+- Удалены дублирующие CORS функции
+- Упрощена PasswordHash валидация (убран хардкод bcrypt префиксов)
+- Упрощен `RefreshTTLDuration()` (убрана лишняя обертка ошибки)
