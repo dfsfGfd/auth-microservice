@@ -1,13 +1,3 @@
-// Package logger предоставляет утилиты для структурированного логирования.
-//
-// Пример использования:
-//
-//	log := logger.New(logger.Config{
-//	    Level:  "info",
-//	    Format: "json",
-//	})
-//	log.Info("user logged in", "user_id", userID)
-//	log.Error("database error", "error", err)
 package logger
 
 import (

@@ -101,8 +101,8 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("валидная конфигурация", func(t *testing.T) {
 		cfg := &config.Config{
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, ConnectionTimeout: 5},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, MinConnections: 0, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
 			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 			RateLimit: config.RateLimitConfig{Register: 5, Login: 10, Refresh: 30, Logout: 60},
@@ -118,7 +118,7 @@ func TestConfig_Validate(t *testing.T) {
 		cfg := &config.Config{
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
 			Database: config.DatabaseConfig{},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, ConnectionTimeout: 5},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
 			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
@@ -132,7 +132,7 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("отсутствует redis url", func(t *testing.T) {
 		cfg := &config.Config{
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, MinConnections: 0, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300},
 			Redis:    config.RedisConfig{},
 			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
@@ -147,8 +147,8 @@ func TestConfig_Validate(t *testing.T) {
 	t.Run("короткий jwt secret", func(t *testing.T) {
 		cfg := &config.Config{
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, ConnectionTimeout: 5},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, MinConnections: 0, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
 			JWT:      config.JWTConfig{Secret: "short", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
@@ -199,10 +199,24 @@ func TestDatabaseConfig_Validate(t *testing.T) {
 	})
 
 	t.Run("невалидный max_connections", func(t *testing.T) {
-		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 0, ConnectionTimeout: 10}
+		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 0, MinConnections: 0, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "max_connections must be positive")
+	})
+
+	t.Run("невалидный min_connections", func(t *testing.T) {
+		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, MinConnections: -1, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300}
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "min_connections must be non-negative")
+	})
+
+	t.Run("min_connections > max_connections", func(t *testing.T) {
+		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 5, MinConnections: 10, ConnectionTimeout: 10, MaxConnLifetime: 1800, MaxConnIdleTime: 300}
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "min_connections cannot exceed max_connections")
 	})
 }
 
@@ -215,10 +229,17 @@ func TestRedisConfig_Validate(t *testing.T) {
 	})
 
 	t.Run("невалидный db", func(t *testing.T) {
-		cfg := config.RedisConfig{URL: "redis://localhost", DB: 20, ConnectionTimeout: 5}
+		cfg := config.RedisConfig{URL: "redis://localhost", DB: 20, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db must be between 0 and 15")
+	})
+
+	t.Run("невалидный pool_size", func(t *testing.T) {
+		cfg := config.RedisConfig{URL: "redis://localhost", DB: 0, PoolSize: 0, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3}
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "pool_size must be positive")
 	})
 }
 

@@ -109,9 +109,12 @@ func loadConfig() (*config.Config, error) {
 // ProvidePostgresConfig предоставляет конфигурацию PostgreSQL
 func ProvidePostgresConfig(cfg *config.Config) postgresql.Config {
 	return postgresql.Config{
-		DSN:         cfg.Database.URL,
-		MaxConns:    int32(cfg.Database.MaxConnections),
-		ConnTimeout: time.Duration(cfg.Database.ConnectionTimeout) * time.Second,
+		DSN:             cfg.Database.URL,
+		MaxConns:        int32(cfg.Database.MaxConnections),
+		MinConns:        int32(cfg.Database.MinConnections),
+		ConnTimeout:     time.Duration(cfg.Database.ConnectionTimeout) * time.Second,
+		MaxConnLifetime: time.Duration(cfg.Database.MaxConnLifetime) * time.Second,
+		MaxConnIdleTime: time.Duration(cfg.Database.MaxConnIdleTime) * time.Second,
 	}
 }
 
@@ -122,11 +125,13 @@ func ProvideRedisConfig(cfg *config.Config) redisdb.Config {
 
 	return redisdb.Config{
 		Addr:         addr,
+		Password:     cfg.Redis.Password,
 		DB:           cfg.Redis.DB,
-		PoolSize:     10,
+		PoolSize:     cfg.Redis.PoolSize,
+		MinIdleConns: 0,
 		ConnTimeout:  time.Duration(cfg.Redis.ConnectionTimeout) * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		ReadTimeout:  time.Duration(cfg.Redis.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Redis.WriteTimeout) * time.Second,
 	}
 }
 

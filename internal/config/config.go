@@ -45,14 +45,21 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	URL               string `env:"DATABASE_URL,required"`
 	MaxConnections    int    `env:"DATABASE_MAX_CONNECTIONS" envDefault:"25"`
+	MinConnections    int    `env:"DATABASE_MIN_CONNECTIONS" envDefault:"0"`
 	ConnectionTimeout int    `env:"DATABASE_CONNECTION_TIMEOUT" envDefault:"10"`
+	MaxConnLifetime   int    `env:"DATABASE_MAX_CONN_LIFETIME" envDefault:"1800"`
+	MaxConnIdleTime   int    `env:"DATABASE_MAX_CONN_IDLE_TIME" envDefault:"300"`
 }
 
 // RedisConfig конфигурация Redis
 type RedisConfig struct {
 	URL               string `env:"REDIS_URL,required"`
+	Password          string `env:"REDIS_PASSWORD"`
 	DB                int    `env:"REDIS_DB" envDefault:"0"`
+	PoolSize          int    `env:"REDIS_POOL_SIZE" envDefault:"10"`
 	ConnectionTimeout int    `env:"REDIS_CONNECTION_TIMEOUT" envDefault:"5"`
+	ReadTimeout       int    `env:"REDIS_READ_TIMEOUT" envDefault:"3"`
+	WriteTimeout      int    `env:"REDIS_WRITE_TIMEOUT" envDefault:"3"`
 }
 
 // JWTConfig конфигурация JWT
@@ -153,8 +160,20 @@ func (c *DatabaseConfig) Validate() error {
 	if c.MaxConnections <= 0 {
 		return fmt.Errorf("max_connections must be positive")
 	}
+	if c.MinConnections < 0 {
+		return fmt.Errorf("min_connections must be non-negative")
+	}
+	if c.MinConnections > c.MaxConnections {
+		return fmt.Errorf("min_connections cannot exceed max_connections")
+	}
 	if c.ConnectionTimeout <= 0 {
 		return fmt.Errorf("connection_timeout must be positive")
+	}
+	if c.MaxConnLifetime <= 0 {
+		return fmt.Errorf("max_conn_lifetime must be positive")
+	}
+	if c.MaxConnIdleTime <= 0 {
+		return fmt.Errorf("max_conn_idle_time must be positive")
 	}
 	return nil
 }
@@ -167,8 +186,17 @@ func (c *RedisConfig) Validate() error {
 	if c.DB < 0 || c.DB > 15 {
 		return fmt.Errorf("db must be between 0 and 15")
 	}
+	if c.PoolSize <= 0 {
+		return fmt.Errorf("pool_size must be positive")
+	}
 	if c.ConnectionTimeout <= 0 {
 		return fmt.Errorf("connection_timeout must be positive")
+	}
+	if c.ReadTimeout <= 0 {
+		return fmt.Errorf("read_timeout must be positive")
+	}
+	if c.WriteTimeout <= 0 {
+		return fmt.Errorf("write_timeout must be positive")
 	}
 	return nil
 }
