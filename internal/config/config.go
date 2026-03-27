@@ -1,4 +1,4 @@
-// Package config предоставляет загрузку конфигурации из .env файла.
+// Package config предоставляет загрузку конфигурации из переменных окружения.
 //
 // Пример использования:
 //
@@ -14,181 +14,92 @@ package config
 
 import (
 	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/caarlos0/env/v11"
 )
 
 // Config полная конфигурация приложения
 type Config struct {
-	Server    ServerConfig
-	Database  DatabaseConfig
-	Redis     RedisConfig
-	JWT       JWTConfig
-	Logging   LoggingConfig
-	RateLimit RateLimitConfig
-	Health    HealthConfig
-	Shutdown  ShutdownConfig
+	Server    ServerConfig    `envPrefix:"SERVER_"`
+	Database  DatabaseConfig  `envPrefix:"DATABASE_"`
+	Redis     RedisConfig     `envPrefix:"REDIS_"`
+	JWT       JWTConfig       `envPrefix:"JWT_"`
+	Logging   LoggingConfig   `envPrefix:"LOG_"`
+	RateLimit RateLimitConfig `envPrefix:"RATE_LIMIT_"`
+	Health    HealthConfig    `envPrefix:"HEALTH_"`
+	Shutdown  ShutdownConfig  `envPrefix:"SHUTDOWN_"`
 }
 
 // ServerConfig конфигурация сервера
 type ServerConfig struct {
-	HTTPPort     int
-	GRPCPort     int
-	Env          string
-	ReadTimeout  int
-	WriteTimeout int
-	IdleTimeout  int
+	HTTPPort     int    `env:"HTTP_PORT" envDefault:"8080"`
+	GRPCPort     int    `env:"GRPC_PORT" envDefault:"9090"`
+	Env          string `env:"ENV" envDefault:"development"`
+	ReadTimeout  int    `env:"READ_TIMEOUT" envDefault:"10"`
+	WriteTimeout int    `env:"WRITE_TIMEOUT" envDefault:"10"`
+	IdleTimeout  int    `env:"IDLE_TIMEOUT" envDefault:"60"`
 }
 
 // DatabaseConfig конфигурация PostgreSQL
 type DatabaseConfig struct {
-	URL               string
-	MaxConnections    int
-	ConnectionTimeout int
+	URL               string `env:"URL,required"`
+	MaxConnections    int    `env:"MAX_CONNECTIONS" envDefault:"25"`
+	ConnectionTimeout int    `env:"CONNECTION_TIMEOUT" envDefault:"10"`
 }
 
 // RedisConfig конфигурация Redis
 type RedisConfig struct {
-	URL               string
-	DB                int
-	ConnectionTimeout int
+	URL               string `env:"URL,required"`
+	DB                int    `env:"DB" envDefault:"0"`
+	ConnectionTimeout int    `env:"CONNECTION_TIMEOUT" envDefault:"5"`
 }
 
 // JWTConfig конфигурация JWT
 type JWTConfig struct {
-	Secret     string
-	AccessTTL  string
-	RefreshTTL string
-	Issuer     string
+	Secret     string `env:"SECRET,required"`
+	AccessTTL  string `env:"ACCESS_TTL" envDefault:"15m"`
+	RefreshTTL string `env:"REFRESH_TTL" envDefault:"336h"`
+	Issuer     string `env:"ISSUER" envDefault:"auth-service"`
 }
 
 // LoggingConfig конфигурация логирования
 type LoggingConfig struct {
-	Level       string
-	Format      string
-	ServiceName string
+	Level       string `env:"LEVEL" envDefault:"info"`
+	Format      string `env:"FORMAT" envDefault:"json"`
+	ServiceName string `env:"SERVICE_NAME" envDefault:"auth-service"`
 }
 
 // RateLimitConfig конфигурация rate limiting
 type RateLimitConfig struct {
-	Register int
-	Login    int
-	Refresh  int
-	Logout   int
+	Register int `env:"REGISTER" envDefault:"5"`
+	Login    int `env:"LOGIN" envDefault:"10"`
+	Refresh  int `env:"REFRESH" envDefault:"30"`
+	Logout   int `env:"LOGOUT" envDefault:"60"`
 }
 
 // HealthConfig конфигурация health check
 type HealthConfig struct {
-	Path string
+	Path string `env:"PATH" envDefault:"/health"`
 }
 
 // ShutdownConfig конфигурация graceful shutdown
 type ShutdownConfig struct {
-	Timeout int
+	Timeout int `env:"TIMEOUT" envDefault:"30"`
 }
 
-// Load загружает конфигурацию из .env файла
+// Load загружает конфигурацию из переменных окружения
 func Load() (*Config, error) {
-	// Пытаемся загрузить .env файл (не критично если не найден)
-	_ = godotenv.Load()
-
-	cfg := &Config{
-		Server: ServerConfig{
-			HTTPPort:     getEnvInt("HTTP_PORT", 8080),
-			GRPCPort:     getEnvInt("GRPC_PORT", 9090),
-			Env:          getEnv("APP_ENV", "development"),
-			ReadTimeout:  getEnvInt("READ_TIMEOUT", 10),
-			WriteTimeout: getEnvInt("WRITE_TIMEOUT", 10),
-			IdleTimeout:  getEnvInt("IDLE_TIMEOUT", 60),
-		},
-		Database: DatabaseConfig{
-			URL:               getEnv("DATABASE_URL", ""),
-			MaxConnections:    getEnvInt("DATABASE_MAX_CONNECTIONS", 25),
-			ConnectionTimeout: getEnvInt("DATABASE_CONNECTION_TIMEOUT", 10),
-		},
-		Redis: RedisConfig{
-			URL:               getEnv("REDIS_URL", ""),
-			DB:                getEnvInt("REDIS_DB", 0),
-			ConnectionTimeout: getEnvInt("REDIS_CONNECTION_TIMEOUT", 5),
-		},
-		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", ""),
-			AccessTTL:  getEnv("JWT_ACCESS_TTL", "15m"),
-			RefreshTTL: getEnv("JWT_REFRESH_TTL", "336h"),
-			Issuer:     getEnv("JWT_ISSUER", "auth-service"),
-		},
-		Logging: LoggingConfig{
-			Level:       getEnv("LOG_LEVEL", "info"),
-			Format:      getEnv("LOG_FORMAT", "json"),
-			ServiceName: getEnv("LOG_SERVICE_NAME", "auth-service"),
-		},
-		RateLimit: RateLimitConfig{
-			Register: getEnvInt("RATE_LIMIT_REGISTER", 5),
-			Login:    getEnvInt("RATE_LIMIT_LOGIN", 10),
-			Refresh:  getEnvInt("RATE_LIMIT_REFRESH", 30),
-			Logout:   getEnvInt("RATE_LIMIT_LOGOUT", 60),
-		},
-		Health: HealthConfig{
-			Path: getEnv("HEALTH_PATH", "/health"),
-		},
-		Shutdown: ShutdownConfig{
-			Timeout: getEnvInt("SHUTDOWN_TIMEOUT", 30),
-		},
+	var cfg Config
+	if err := env.Parse(&cfg); err != nil {
+		return nil, fmt.Errorf("parse env: %w", err)
 	}
 
 	if err := cfg.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %w", err)
+		return nil, fmt.Errorf("validate: %w", err)
 	}
 
-	return cfg, nil
-}
-
-// getEnv получает значение переменной окружения или значение по умолчанию
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-// getEnvInt получает целочисленное значение переменной окружения
-func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
-}
-
-// getEnvBool получает булево значение переменной окружения
-func getEnvBool(key string, defaultValue bool) bool {
-	if value := os.Getenv(key); value != "" {
-		switch strings.ToLower(value) {
-		case "true", "1", "yes":
-			return true
-		case "false", "0", "no":
-			return false
-		}
-	}
-	return defaultValue
-}
-
-// getEnvSlice получает срез строк из переменной окружения
-func getEnvSlice(key, separator string) []string {
-	if value := os.Getenv(key); value != "" {
-		parts := strings.Split(value, separator)
-		result := make([]string, len(parts))
-		for i, part := range parts {
-			result[i] = strings.TrimSpace(part)
-		}
-		return result
-	}
-	return []string{}
+	return &cfg, nil
 }
 
 // Validate валидирует конфигурацию
@@ -220,16 +131,16 @@ func (c *ServerConfig) Validate() error {
 		return fmt.Errorf("grpc_port must be between 1 and 65535")
 	}
 	if c.Env == "" {
-		c.Env = "development"
+		return fmt.Errorf("env is required")
 	}
 	if c.ReadTimeout <= 0 {
-		c.ReadTimeout = 10
+		return fmt.Errorf("read_timeout must be positive")
 	}
 	if c.WriteTimeout <= 0 {
-		c.WriteTimeout = 10
+		return fmt.Errorf("write_timeout must be positive")
 	}
 	if c.IdleTimeout <= 0 {
-		c.IdleTimeout = 60
+		return fmt.Errorf("idle_timeout must be positive")
 	}
 	return nil
 }
@@ -240,10 +151,10 @@ func (c *DatabaseConfig) Validate() error {
 		return fmt.Errorf("url is required")
 	}
 	if c.MaxConnections <= 0 {
-		c.MaxConnections = 25
+		return fmt.Errorf("max_connections must be positive")
 	}
 	if c.ConnectionTimeout <= 0 {
-		c.ConnectionTimeout = 10
+		return fmt.Errorf("connection_timeout must be positive")
 	}
 	return nil
 }
@@ -257,33 +168,27 @@ func (c *RedisConfig) Validate() error {
 		return fmt.Errorf("db must be between 0 and 15")
 	}
 	if c.ConnectionTimeout <= 0 {
-		c.ConnectionTimeout = 5
+		return fmt.Errorf("connection_timeout must be positive")
 	}
 	return nil
 }
 
 // Validate валидирует конфигурацию JWT
 func (c *JWTConfig) Validate() error {
-	// Сначала пробуем получить секрет из переменной окружения
 	if c.Secret == "" {
-		c.Secret = os.Getenv("JWT_SECRET")
+		return fmt.Errorf("secret is required")
 	}
-
-	if c.Secret == "" {
-		return fmt.Errorf("secret is required (set JWT_SECRET env var or config file)")
-	}
-
 	if len(c.Secret) < 32 {
 		return fmt.Errorf("secret must be at least 32 characters long")
 	}
 	if c.AccessTTL == "" {
-		c.AccessTTL = "15m"
+		return fmt.Errorf("access_ttl is required")
 	}
 	if c.RefreshTTL == "" {
-		c.RefreshTTL = "336h"
+		return fmt.Errorf("refresh_ttl is required")
 	}
 	if c.Issuer == "" {
-		c.Issuer = "auth-service"
+		return fmt.Errorf("issuer is required")
 	}
 	return nil
 }
@@ -291,7 +196,7 @@ func (c *JWTConfig) Validate() error {
 // Validate валидирует конфигурацию логирования
 func (c *LoggingConfig) Validate() error {
 	if c.Level == "" {
-		c.Level = "info"
+		return fmt.Errorf("level is required")
 	}
 	validLevels := map[string]bool{
 		"debug": true,
@@ -304,7 +209,7 @@ func (c *LoggingConfig) Validate() error {
 		return fmt.Errorf("level must be debug, info, warn, error, or fatal")
 	}
 	if c.Format == "" {
-		c.Format = "json"
+		return fmt.Errorf("format is required")
 	}
 	validFormats := map[string]bool{
 		"json":    true,
@@ -314,7 +219,7 @@ func (c *LoggingConfig) Validate() error {
 		return fmt.Errorf("format must be json or console")
 	}
 	if c.ServiceName == "" {
-		c.ServiceName = "auth-service"
+		return fmt.Errorf("service_name is required")
 	}
 	return nil
 }
@@ -344,7 +249,7 @@ func (c *ServerConfig) IdleTimeoutDuration() time.Duration {
 	return time.Duration(c.IdleTimeout) * time.Second
 }
 
-// ShutdownTimeoutDuration возвращает таймаут shutdown как time.Duration
+// TimeoutDuration возвращает таймаут shutdown как time.Duration
 func (c *ShutdownConfig) TimeoutDuration() time.Duration {
 	return time.Duration(c.Timeout) * time.Second
 }

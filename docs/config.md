@@ -27,12 +27,12 @@ go run cmd/server/main.go
 ### Server
 
 ```bash
-APP_ENV=development          # development, staging, production
-HTTP_PORT=8080               # REST API порт
-GRPC_PORT=9090               # gRPC порт
-READ_TIMEOUT=10              # Таймаут чтения (сек)
-WRITE_TIMEOUT=10             # Таймаут записи (сек)
-IDLE_TIMEOUT=60              # Таймаут простоя (сек)
+SERVER_HTTP_PORT=8080          # REST API порт
+SERVER_GRPC_PORT=9090          # gRPC порт
+SERVER_ENV=development         # development, staging, production
+SERVER_READ_TIMEOUT=10         # Таймаут чтения (сек)
+SERVER_WRITE_TIMEOUT=10        # Таймаут записи (сек)
+SERVER_IDLE_TIMEOUT=60         # Таймаут простоя (сек)
 ```
 
 ### Database (PostgreSQL)
@@ -92,17 +92,18 @@ SHUTDOWN_TIMEOUT=30
 ### Development
 
 ```bash
-APP_ENV=development
+SERVER_ENV=development
 LOG_LEVEL=debug
 LOG_FORMAT=console
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
 REDIS_URL=redis://localhost:6379
+JWT_SECRET=super-secret-key-minimum-32-characters-long
 ```
 
 ### Production
 
 ```bash
-APP_ENV=production
+SERVER_ENV=production
 LOG_LEVEL=warn
 LOG_FORMAT=json
 DATABASE_URL=postgres://user:pass@db.prod:5432/auth?sslmode=require
