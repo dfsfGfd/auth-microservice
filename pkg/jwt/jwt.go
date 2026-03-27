@@ -22,8 +22,8 @@ const (
 	refreshToken tokenType = "refresh"
 )
 
-// claims представляет claims JWT токена
-type claims struct {
+// Claims представляет claims JWT токена
+type Claims struct {
 	Email string    `json:"email,omitempty"`
 	Type  tokenType `json:"type"`
 	jwt.RegisteredClaims
@@ -106,7 +106,7 @@ func (s *Service) GenerateTokens(accountID, email string) (*TokenPair, error) {
 func (s *Service) generateToken(accountID, email string, tokenType tokenType, ttl time.Duration) (string, error) {
 	now := time.Now()
 
-	claims := claims{
+	claims := Claims{
 		Email: email,
 		Type:  tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -123,8 +123,8 @@ func (s *Service) generateToken(accountID, email string, tokenType tokenType, tt
 }
 
 // ValidateToken валидирует JWT токен и возвращает claims
-func (s *Service) ValidateToken(tokenString string) (*claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -141,7 +141,7 @@ func (s *Service) ValidateToken(tokenString string) (*claims, error) {
 		return nil, ErrInvalidToken
 	}
 
-	c, ok := token.Claims.(*claims)
+	c, ok := token.Claims.(*Claims)
 	if !ok {
 		return nil, ErrInvalidClaims
 	}
@@ -150,7 +150,7 @@ func (s *Service) ValidateToken(tokenString string) (*claims, error) {
 }
 
 // ValidateRefreshToken валидирует refresh токен
-func (s *Service) ValidateRefreshToken(tokenString string) (*claims, error) {
+func (s *Service) ValidateRefreshToken(tokenString string) (*Claims, error) {
 	c, err := s.ValidateToken(tokenString)
 	if err != nil {
 		return nil, err

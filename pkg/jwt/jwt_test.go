@@ -122,6 +122,7 @@ func TestService_ValidateToken(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, c)
 		assert.Equal(t, accountID, c.Subject)
+		assert.Equal(t, email, c.Email)
 	})
 
 	t.Run("успешная валидация refresh токена", func(t *testing.T) {
@@ -135,6 +136,7 @@ func TestService_ValidateToken(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, c)
+		assert.Equal(t, email, c.Email)
 	})
 
 	t.Run("ошибка при невалидном токене", func(t *testing.T) {
