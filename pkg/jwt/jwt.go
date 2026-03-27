@@ -14,21 +14,17 @@ var (
 	ErrInvalidClaims = errors.New("invalid token claims")
 )
 
-// TokenType определяет тип токена
-type TokenType string
+// tokenType определяет тип токена
+type tokenType string
 
 const (
-	// AccessToken тип для access токена
-	AccessToken TokenType = "access"
-	// RefreshToken тип для refresh токена
-	RefreshToken TokenType = "refresh"
+	accessToken  tokenType = "access"
+	refreshToken tokenType = "refresh"
 )
 
-// Claims представляет claims JWT токена
-type Claims struct {
-	AccountID string    `json:"sub"`
-	Email     string    `json:"email,omitempty"`
-	Type      TokenType `json:"type"`
+// claims представляет claims JWT токена
+type claims struct {
+	Type tokenType `json:"type"`
 	jwt.RegisteredClaims
 }
 
@@ -87,12 +83,12 @@ func NewService(config Config) (*Service, error) {
 
 // GenerateTokens генерирует пару access и refresh токенов
 func (s *Service) GenerateTokens(accountID, email string) (*TokenPair, error) {
-	accessToken, err := s.generateToken(accountID, email, AccessToken, s.config.AccessTokenTTL)
+	accessToken, err := s.generateToken(accountID, email, accessToken, s.config.AccessTokenTTL)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := s.generateToken(accountID, email, RefreshToken, s.config.RefreshTokenTTL)
+	refreshToken, err := s.generateToken(accountID, email, refreshToken, s.config.RefreshTokenTTL)
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +102,11 @@ func (s *Service) GenerateTokens(accountID, email string) (*TokenPair, error) {
 }
 
 // generateToken создаёт JWT токен
-func (s *Service) generateToken(accountID, email string, tokenType TokenType, ttl time.Duration) (string, error) {
+func (s *Service) generateToken(accountID, email string, tokenType tokenType, ttl time.Duration) (string, error) {
 	now := time.Now()
 
-	claims := Claims{
-		AccountID: accountID,
-		Email:     email,
-		Type:      tokenType,
+	claims := claims{
+		Type: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.Issuer,
 			Subject:   accountID,
@@ -127,8 +121,8 @@ func (s *Service) generateToken(accountID, email string, tokenType TokenType, tt
 }
 
 // ValidateToken валидирует JWT токен и возвращает claims
-func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+func (s *Service) ValidateToken(tokenString string) (*claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -145,31 +139,26 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 		return nil, ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(*Claims)
+	c, ok := token.Claims.(*claims)
 	if !ok {
 		return nil, ErrInvalidClaims
 	}
 
-	// Проверяем issuer
-	if claims.Issuer != s.config.Issuer {
-		return nil, ErrInvalidClaims
-	}
-
-	return claims, nil
+	return c, nil
 }
 
 // ValidateRefreshToken валидирует refresh токен
-func (s *Service) ValidateRefreshToken(tokenString string) (*Claims, error) {
-	claims, err := s.ValidateToken(tokenString)
+func (s *Service) ValidateRefreshToken(tokenString string) (*claims, error) {
+	c, err := s.ValidateToken(tokenString)
 	if err != nil {
 		return nil, err
 	}
 
-	if claims.Type != RefreshToken {
+	if c.Type != refreshToken {
 		return nil, ErrInvalidClaims
 	}
 
-	return claims, nil
+	return c, nil
 }
 
 // RefreshTTLDuration возвращает время жизни refresh токена

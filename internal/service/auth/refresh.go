@@ -52,7 +52,7 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	}
 
 	// Генерация новой пары токенов
-	tokens, err := s.jwtService.GenerateTokens(accountID, claims.Email)
+	tokens, err := s.jwtService.GenerateTokens(accountID, claims.Subject)
 	if err != nil {
 		s.log.Error("generate_tokens", "err", err)
 		return nil, fmt.Errorf("generate tokens: %w", err)
