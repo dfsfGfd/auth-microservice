@@ -23,6 +23,7 @@ import (
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
+
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
 	goredis "github.com/redis/go-redis/v9"
@@ -43,7 +44,7 @@ type Application struct {
 }
 
 // CleanUp очищает ресурсы приложения
-func (a *Application) CleanUp(ctx context.Context) error {
+func (a *Application) CleanUp() error {
 	// Закрываем подключения
 	if a.DB != nil {
 		a.DB.Close()
@@ -54,7 +55,7 @@ func (a *Application) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// ProvideContext предоставляет контекст для приложения
+// ProvideContext предоставляет контекст для инициализации
 func ProvideContext() context.Context {
 	return context.Background()
 }

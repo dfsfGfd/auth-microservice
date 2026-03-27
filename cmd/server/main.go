@@ -38,7 +38,7 @@ func run() error {
 
 	log := app.Logger
 	defer func() {
-		if err := app.CleanUp(ctx); err != nil {
+		if err := app.CleanUp(); err != nil {
 			log.Error("cleanup_error", "err", err)
 		}
 	}()
