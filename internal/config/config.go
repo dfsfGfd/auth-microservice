@@ -45,10 +45,7 @@ type ServerConfig struct {
 type DatabaseConfig struct {
 	URL               string `env:"DATABASE_URL,required"`
 	MaxConnections    int    `env:"DATABASE_MAX_CONNECTIONS" envDefault:"25"`
-	MinConnections    int    `env:"DATABASE_MIN_CONNECTIONS" envDefault:"0"`
 	ConnectionTimeout int    `env:"DATABASE_CONNECTION_TIMEOUT" envDefault:"10"`
-	MaxConnLifetime   int    `env:"DATABASE_MAX_CONN_LIFETIME" envDefault:"1800"`
-	MaxConnIdleTime   int    `env:"DATABASE_MAX_CONN_IDLE_TIME" envDefault:"300"`
 }
 
 // RedisConfig конфигурация Redis
@@ -160,20 +157,8 @@ func (c *DatabaseConfig) Validate() error {
 	if c.MaxConnections <= 0 {
 		return fmt.Errorf("max_connections must be positive")
 	}
-	if c.MinConnections < 0 {
-		return fmt.Errorf("min_connections must be non-negative")
-	}
-	if c.MinConnections > c.MaxConnections {
-		return fmt.Errorf("min_connections cannot exceed max_connections")
-	}
 	if c.ConnectionTimeout <= 0 {
 		return fmt.Errorf("connection_timeout must be positive")
-	}
-	if c.MaxConnLifetime <= 0 {
-		return fmt.Errorf("max_conn_lifetime must be positive")
-	}
-	if c.MaxConnIdleTime <= 0 {
-		return fmt.Errorf("max_conn_idle_time must be positive")
 	}
 	return nil
 }

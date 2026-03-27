@@ -10,12 +10,9 @@ import (
 
 // Config конфигурация PostgreSQL
 type Config struct {
-	DSN             string
-	MaxConns        int32
-	MinConns        int32
-	ConnTimeout     time.Duration
-	MaxConnLifetime time.Duration
-	MaxConnIdleTime time.Duration
+	DSN         string
+	MaxConns    int32
+	ConnTimeout time.Duration
 }
 
 // NewPool создаёт пул подключений к PostgreSQL
@@ -28,10 +25,7 @@ func NewPool(ctx context.Context, cfg Config) (*pgxpool.Pool, error) {
 	}
 	// применение настроек
 	poolCfg.MaxConns = cfg.MaxConns
-	poolCfg.MinConns = cfg.MinConns
 	poolCfg.ConnConfig.ConnectTimeout = cfg.ConnTimeout
-	poolCfg.MaxConnLifetime = cfg.MaxConnLifetime
-	poolCfg.MaxConnIdleTime = cfg.MaxConnIdleTime
 
 	// создание нового пулла
 	pool, err := pgxpool.NewWithConfig(ctx, poolCfg)

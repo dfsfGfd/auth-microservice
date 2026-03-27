@@ -12,7 +12,6 @@ type Config struct {
 	Password     string
 	DB           int
 	PoolSize     int
-	MinIdleConns int
 	ConnTimeout  time.Duration
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
@@ -25,7 +24,6 @@ func NewClient(ctx context.Context, cfg Config) (*redis.Client, error) {
 		Password:     cfg.Password,
 		DB:           cfg.DB,
 		PoolSize:     cfg.PoolSize,
-		MinIdleConns: cfg.MinIdleConns,
 		DialTimeout:  cfg.ConnTimeout,
 		ReadTimeout:  cfg.ReadTimeout,
 		WriteTimeout: cfg.WriteTimeout,
