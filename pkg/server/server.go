@@ -3,6 +3,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -83,7 +84,12 @@ func (s *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func(conn *grpc.ClientConn) {
+		err := conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
 
 	gwWithRateLimit := middleware.HTTPRateLimitMiddleware(
 		s.rateLimit,
@@ -110,7 +116,7 @@ func (s *Server) Run() error {
 	// Запуск HTTP
 	go func() {
 		s.log.Info("rest_server_start", "port", s.cfg.Server.HTTPPort)
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			s.log.Error("rest_server_error", "err", err)
 		}
 	}()
