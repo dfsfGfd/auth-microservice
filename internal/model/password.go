@@ -33,11 +33,3 @@ func (p PlainPassword) String() string {
 func (p PlainPassword) Value() string {
 	return string(p)
 }
-
-// Equal сравнивает два пароля
-func (p PlainPassword) Equal(other *PlainPassword) bool {
-	if other == nil {
-		return false
-	}
-	return p == *other
-}

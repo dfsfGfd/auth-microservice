@@ -50,14 +50,6 @@ func (e Email) String() string {
 	return e.Value()
 }
 
-// Equal сравнивает два Email
-func (e Email) Equal(other *Email) bool {
-	if other == nil {
-		return false
-	}
-	return e == *other
-}
-
 // NewEmailFromDB создаёт Email из БД без валидации.
 // Используется при загрузке из БД, где данные уже прошли валидацию.
 // НЕ используйте для новых данных — используйте NewEmail().
