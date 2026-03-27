@@ -171,30 +171,6 @@ func TestService_ValidateToken(t *testing.T) {
 	})
 }
 
-func TestService_ValidateAccessToken(t *testing.T) {
-	service := createTestService(t)
-
-	t.Run("успешная валидация access токена", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("account-id", "user@example.com")
-		require.NoError(t, err)
-
-		claims, err := service.ValidateAccessToken(tokens.AccessToken)
-
-		require.NoError(t, err)
-		assert.Equal(t, jwt.AccessToken, claims.Type)
-	})
-
-	t.Run("ошибка при refresh токене", func(t *testing.T) {
-		tokens, err := service.GenerateTokens("account-id", "user@example.com")
-		require.NoError(t, err)
-
-		claims, err := service.ValidateAccessToken(tokens.RefreshToken)
-
-		assert.Error(t, err)
-		assert.Nil(t, claims)
-	})
-}
-
 func TestService_ValidateRefreshToken(t *testing.T) {
 	service := createTestService(t)
 
@@ -217,25 +193,6 @@ func TestService_ValidateRefreshToken(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, claims)
 	})
-}
-
-func TestService_GetConfig(t *testing.T) {
-	config := jwt.Config{
-		SecretKey:       "test-secret-key",
-		AccessTokenTTL:  15 * time.Minute,
-		RefreshTokenTTL: 14 * 24 * time.Hour,
-		Issuer:          "auth-service",
-	}
-
-	service, err := jwt.NewService(config)
-	require.NoError(t, err)
-
-	returnedConfig := service.GetConfig()
-
-	assert.Equal(t, config.SecretKey, returnedConfig.SecretKey)
-	assert.Equal(t, config.AccessTokenTTL, returnedConfig.AccessTokenTTL)
-	assert.Equal(t, config.RefreshTokenTTL, returnedConfig.RefreshTokenTTL)
-	assert.Equal(t, config.Issuer, returnedConfig.Issuer)
 }
 
 func createTestService(t *testing.T) *jwt.Service {

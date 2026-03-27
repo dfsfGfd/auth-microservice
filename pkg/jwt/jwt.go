@@ -175,20 +175,6 @@ func (s *Service) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-// ValidateAccessToken валидирует access токен
-func (s *Service) ValidateAccessToken(tokenString string) (*Claims, error) {
-	claims, err := s.ValidateToken(tokenString)
-	if err != nil {
-		return nil, err
-	}
-
-	if claims.Type != AccessToken {
-		return nil, ErrInvalidClaims
-	}
-
-	return claims, nil
-}
-
 // ValidateRefreshToken валидирует refresh токен
 func (s *Service) ValidateRefreshToken(tokenString string) (*Claims, error) {
 	claims, err := s.ValidateToken(tokenString)
@@ -201,11 +187,6 @@ func (s *Service) ValidateRefreshToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
-}
-
-// GetConfig возвращает конфигурацию сервиса
-func (s *Service) GetConfig() Config {
-	return s.config
 }
 
 // RefreshTTLDuration возвращает время жизни refresh токена
