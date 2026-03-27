@@ -1,20 +1,3 @@
-// Package jwt предоставляет утилиты для работы с JWT токенами.
-//
-// Пример использования:
-//
-//	// Создание сервиса
-//	service := jwt.NewService(jwt.Config{
-//	    SecretKey:      "your-secret-key",
-//	    AccessTokenTTL: 15 * time.Minute,
-//	    RefreshTokenTTL: 14 * 24 * time.Hour,
-//	    Issuer:         "auth-service",
-//	})
-//
-//	// Генерация токенов
-//	tokens, err := service.GenerateTokens(accountID, email)
-
-// // Валидация токена
-// claims, err := service.ValidateToken(tokenString)
 package jwt
 
 import (
