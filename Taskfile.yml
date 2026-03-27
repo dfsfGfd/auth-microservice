@@ -165,6 +165,61 @@ tasks:
         docker compose -f tests/docker-compose.integration.yml down -v --remove-orphans
         echo "Cleanup complete"
 
+  # ==================== Migrations ====================
+
+  migrate:build:
+    desc: "Сборка утилиты миграций"
+    cmds:
+      - |
+        echo "Building migrate utility..."
+        go build -o bin/migrate ./cmd/migrate
+        echo "Build complete: bin/migrate"
+
+  migrate:up:
+    desc: "Применить все миграции (локально)"
+    deps: [ migrate:build ]
+    cmds:
+      - |
+        echo "Running migrations..."
+        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations up
+
+  migrate:down:
+    desc: "Откатить последнюю миграцию (локально)"
+    deps: [ migrate:build ]
+    cmds:
+      - |
+        echo "Rolling back migration..."
+        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations down
+
+  migrate:status:
+    desc: "Показать статус миграций (локально)"
+    deps: [ migrate:build ]
+    cmds:
+      - |
+        echo "Checking migration status..."
+        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations status
+
+  migrate:docker:up:
+    desc: "Применить миграции в Docker контейнере"
+    cmds:
+      - |
+        echo "Running migrations in Docker..."
+        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations up
+
+  migrate:docker:down:
+    desc: "Откатить миграцию в Docker контейнере"
+    cmds:
+      - |
+        echo "Rolling back migration in Docker..."
+        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations down
+
+  migrate:docker:status:
+    desc: "Показать статус миграций в Docker контейнере"
+    cmds:
+      - |
+        echo "Checking migration status in Docker..."
+        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations status
+
   # ==================== Quick Commands ====================
 
   dev:
