@@ -16,7 +16,4 @@ type TokenCache interface {
 
 	// Delete удаляет refresh токен из кэша.
 	Delete(ctx context.Context, token string) error
-
-	// Exists проверяет существование refresh токена.
-	Exists(ctx context.Context, token string) (bool, error)
 }
