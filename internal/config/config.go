@@ -29,7 +29,6 @@ type Config struct {
 	Redis     RedisConfig
 	JWT       JWTConfig
 	Logging   LoggingConfig
-	CORS      CORSConfig
 	RateLimit RateLimitConfig
 	Health    HealthConfig
 	Shutdown  ShutdownConfig
@@ -72,15 +71,6 @@ type LoggingConfig struct {
 	Level       string
 	Format      string
 	ServiceName string
-}
-
-// CORSConfig конфигурация CORS
-type CORSConfig struct {
-	AllowedOrigins   []string
-	AllowedMethods   []string
-	AllowedHeaders   []string
-	AllowCredentials bool
-	MaxAge           int
 }
 
 // RateLimitConfig конфигурация rate limiting
@@ -136,12 +126,6 @@ func Load() (*Config, error) {
 			Format:      getEnv("LOG_FORMAT", "json"),
 			ServiceName: getEnv("LOG_SERVICE_NAME", "auth-service"),
 		},
-		CORS: CORSConfig{
-			AllowedOrigins: getEnvSlice("CORS_ALLOWED_ORIGINS", ","),
-			AllowedMethods: getEnvSlice("CORS_ALLOWED_METHODS", ","),
-			AllowedHeaders: getEnvSlice("CORS_ALLOWED_HEADERS", ","),
-			MaxAge:         getEnvInt("CORS_MAX_AGE", 86400),
-		},
 		RateLimit: RateLimitConfig{
 			Register: getEnvInt("RATE_LIMIT_REGISTER", 5),
 			Login:    getEnvInt("RATE_LIMIT_LOGIN", 10),
@@ -155,9 +139,6 @@ func Load() (*Config, error) {
 			Timeout: getEnvInt("SHUTDOWN_TIMEOUT", 30),
 		},
 	}
-
-	// Парсим CORS allow credentials (default false для безопасности)
-	cfg.CORS.AllowCredentials = getEnvBool("CORS_ALLOW_CREDENTIALS", false)
 
 	if err := cfg.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
@@ -226,9 +207,6 @@ func (c *Config) Validate() error {
 	}
 	if err := c.Logging.Validate(); err != nil {
 		return fmt.Errorf("logging: %w", err)
-	}
-	if err := c.CORS.Validate(); err != nil {
-		return fmt.Errorf("cors: %w", err)
 	}
 	return nil
 }
@@ -338,33 +316,6 @@ func (c *LoggingConfig) Validate() error {
 	if c.ServiceName == "" {
 		c.ServiceName = "auth-service"
 	}
-	return nil
-}
-
-// Validate валидирует конфигурацию CORS
-func (c *CORSConfig) Validate() error {
-	if len(c.AllowedOrigins) == 0 {
-		c.AllowedOrigins = []string{"*"}
-	}
-	if len(c.AllowedMethods) == 0 {
-		c.AllowedMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	}
-	if len(c.AllowedHeaders) == 0 {
-		c.AllowedHeaders = []string{"Authorization", "Content-Type", "X-Request-ID"}
-	}
-	if c.MaxAge <= 0 {
-		c.MaxAge = 86400
-	}
-
-	// Проверка: wildcard с credentials — уязвимость безопасности
-	if c.AllowCredentials {
-		for _, origin := range c.AllowedOrigins {
-			if origin == "*" {
-				return fmt.Errorf("wildcard origin (*) is not allowed with credentials=true")
-			}
-		}
-	}
-
 	return nil
 }
 

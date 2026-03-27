@@ -62,11 +62,6 @@ services:
       LOG_LEVEL: debug
       LOG_FORMAT: console
       LOG_SERVICE_NAME: auth-service-test
-      CORS_ALLOWED_ORIGINS: http://localhost:3000,http://localhost:8080
-      CORS_ALLOWED_METHODS: GET,POST,PUT,DELETE,OPTIONS
-      CORS_ALLOWED_HEADERS: Authorization,Content-Type,X-Request-ID
-      CORS_ALLOW_CREDENTIALS: "true"
-      CORS_MAX_AGE: 86400
       RATE_LIMIT_REGISTER: 100
       RATE_LIMIT_LOGIN: 100
       RATE_LIMIT_REFRESH: 100

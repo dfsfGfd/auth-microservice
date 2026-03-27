@@ -27,8 +27,6 @@ func setTestEnv(t *testing.T) {
 		"LOG_LEVEL":                "debug",
 		"LOG_FORMAT":               "console",
 		"LOG_SERVICE_NAME":         "auth-service",
-		"CORS_ALLOWED_ORIGINS":     "http://localhost:3000",
-		"CORS_ALLOW_CREDENTIALS":   "false",
 		"HEALTH_PATH":              "/health",
 		"SHUTDOWN_TIMEOUT":         "30",
 	}
@@ -147,24 +145,6 @@ func TestConfig_Validate(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "jwt")
 		assert.Contains(t, err.Error(), "at least 32 characters")
-	})
-
-	t.Run("wildcard origin с credentials", func(t *testing.T) {
-		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
-			CORS: config.CORSConfig{
-				AllowedOrigins:   []string{"*"},
-				AllowCredentials: true,
-			},
-		}
-
-		err := cfg.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "wildcard")
 	})
 }
 

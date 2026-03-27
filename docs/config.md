@@ -69,16 +69,6 @@ LOG_FORMAT=console             # json, console
 LOG_SERVICE_NAME=auth-service
 ```
 
-### CORS
-
-```bash
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
-CORS_ALLOWED_HEADERS=Authorization,Content-Type,X-Request-ID
-CORS_ALLOW_CREDENTIALS=true
-CORS_MAX_AGE=86400
-```
-
 ### Rate Limiting
 
 ```bash
@@ -119,7 +109,6 @@ DATABASE_URL=postgres://user:pass@db.prod:5432/auth?sslmode=require
 DATABASE_MAX_CONNECTIONS=100
 REDIS_URL=redis://redis.prod:6379
 JWT_SECRET=<openssl rand -base64 32>
-CORS_ALLOWED_ORIGINS=https://your-domain.com
 ```
 
 ---
@@ -155,7 +144,6 @@ openssl rand -base64 32
 - [ ] `JWT_SECRET` ≥ 32 символа
 - [ ] `APP_ENV=production`
 - [ ] `DATABASE_URL` с `sslmode=require`
-- [ ] CORS для ваших доменов
 - [ ] `.env` не в git
 
 ---

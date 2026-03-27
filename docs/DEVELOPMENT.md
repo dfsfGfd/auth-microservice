@@ -75,7 +75,7 @@ auth-microservice/
 │   │
 │   ├── middleware/       # HTTP/gRPC middleware
 │   │   ├── rate_limiter.go
-│   │   └── cors.go
+│   │   └── logging.go
 │   │
 │   ├── di/               # Dependency Injection (Wire)
 │   ├── config/           # Конфигурация из .env

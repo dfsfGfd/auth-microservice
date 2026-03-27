@@ -1,11 +1,3 @@
-// Package redisdb предоставляет подключение к Redis.
-//
-// Пример использования:
-//
-//	cfg := redisdb.Config{
-//	    Addr: "localhost:6379",
-//	}
-//	client, err := redisdb.NewClient(ctx, cfg)
 package redisdb
 
 import (

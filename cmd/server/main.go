@@ -111,18 +111,8 @@ func run() error {
 	})
 	rootMux.Handle("/", gwWithRateLimit)
 
-	// Применяем CORS middleware
-	corsHandler := middleware.NewCORS(middleware.CORSConfig{
-		AllowedOrigins:   app.Config.CORS.AllowedOrigins,
-		AllowedMethods:   app.Config.CORS.AllowedMethods,
-		AllowedHeaders:   app.Config.CORS.AllowedHeaders,
-		AllowCredentials: app.Config.CORS.AllowCredentials,
-		MaxAge:           app.Config.CORS.MaxAge,
-		Debug:            app.Config.Server.Env == "development",
-	})(rootMux)
-
-	// Обновляем handler HTTP сервера (с CORS)
-	httpServer.Handler = corsHandler
+	// Устанавливаем handler HTTP сервера
+	httpServer.Handler = rootMux
 
 	// Запускаем HTTP сервер (REST)
 	go func() {

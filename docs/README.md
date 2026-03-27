@@ -120,7 +120,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 │   ├── service/         # Service layer (бизнес-логика)
 │   ├── handler/         # Handler layer (gRPC)
 │   ├── cache/           # Redis cache для токенов
-│   ├── middleware/      # HTTP/gRPC middleware (rate limiter, CORS)
+│   ├── middleware/      # HTTP/gRPC middleware (rate limiter, logging)
 │   ├── di/              # Dependency Injection (Wire)
 │   ├── config/          # Конфигурация из .env
 │   └── errors/          # Доменные ошибки
@@ -136,7 +136,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 ### Оптимизации (v1.1)
 
 - ✅ Удален неиспользуемый код (DeleteByID, GetByID, list конвертеры)
-- ✅ Упрощена CORS middleware (убраны дублирующие функции)
+- ✅ Удалена CORS middleware
 - ✅ Исправлен rate limiter для REST API (пути `/api/v1/auth/*`)
 - ✅ Исправлена валидация email (trim перед проверкой длины)
 - ✅ Упрощена валидация PasswordHash (только проверка длины)
@@ -283,7 +283,6 @@ task server:docker:logs
 - [ ] `JWT_SECRET` ≥ 32 символов
 - [ ] `APP_ENV=production`
 - [ ] HTTPS включён
-- [ ] CORS настроен для ваших доменов
 - [ ] Rate limits под нагрузку
 
 ---
