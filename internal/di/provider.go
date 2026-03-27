@@ -23,6 +23,7 @@ import (
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
+	"auth-microservice/pkg/proto/auth/v1"
 
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -39,7 +40,7 @@ type Application struct {
 	AccountRepo repository.AccountRepository
 	TokenCache  *token.RedisCache
 	AuthService *serviceAuth.AuthService
-	AuthHandler *auth.Handler
+	AuthHandler authv1.AuthServiceServer
 	RateLimiter *middleware.RateLimiter
 }
 
