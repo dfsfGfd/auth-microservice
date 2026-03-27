@@ -24,7 +24,8 @@ const (
 
 // claims представляет claims JWT токена
 type claims struct {
-	Type tokenType `json:"type"`
+	Email string    `json:"email,omitempty"`
+	Type  tokenType `json:"type"`
 	jwt.RegisteredClaims
 }
 
@@ -106,7 +107,8 @@ func (s *Service) generateToken(accountID, email string, tokenType tokenType, tt
 	now := time.Now()
 
 	claims := claims{
-		Type: tokenType,
+		Email: email,
+		Type:  tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    s.config.Issuer,
 			Subject:   accountID,
