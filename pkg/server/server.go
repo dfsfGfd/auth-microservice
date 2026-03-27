@@ -84,12 +84,7 @@ func (s *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	defer func(conn *grpc.ClientConn) {
-		err := conn.Close()
-		if err != nil {
-
-		}
-	}(conn)
+	defer conn.Close()
 
 	gwWithRateLimit := middleware.HTTPRateLimitMiddleware(
 		s.rateLimit,
