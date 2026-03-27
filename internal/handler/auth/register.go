@@ -31,6 +31,8 @@ func (h *Handler) registerError(err error) (*authv1.RegisterResponse, error) {
 	switch {
 	case stderrors.Is(err, errors.ErrEmailInvalid):
 		return nil, status.Error(codes.InvalidArgument, "invalid email")
+	case stderrors.Is(err, errors.ErrEmailTooLong):
+		return nil, status.Error(codes.InvalidArgument, "email too long")
 	case stderrors.Is(err, errors.ErrPasswordInvalid):
 		return nil, status.Error(codes.InvalidArgument, "invalid password")
 	case stderrors.Is(err, errors.ErrPasswordTooShort):
