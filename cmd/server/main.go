@@ -77,16 +77,20 @@ func run() error {
 	// Канал для сигналов завершения
 	errCh := make(chan error, 2)
 
+	// Канал готовности gRPC сервера
+	grpcReady := make(chan struct{})
+
 	// Запускаем gRPC сервер
 	go func() {
+		close(grpcReady)  // Сигнал готовности
 		log.Info("grpc_server_start", "port", app.Config.Server.GRPCPort)
 		if err := grpcServer.Serve(grpcListener); err != nil {
 			errCh <- fmt.Errorf("serve gRPC: %w", err)
 		}
 	}()
 
-	// Даем gRPC серверу время запуститься
-	time.Sleep(100 * time.Millisecond)
+	// Ждём готовности gRPC сервера
+	<-grpcReady
 
 	// Настраиваем grpc-gateway (после запуска gRPC)
 	gw, grpcConn, err := createGateway(ctx, app.Config.Server.GRPCPort)
