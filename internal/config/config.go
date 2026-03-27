@@ -21,14 +21,14 @@ import (
 
 // Config полная конфигурация приложения
 type Config struct {
-	Server    ServerConfig    `envPrefix:"SERVER_"`
-	Database  DatabaseConfig  `envPrefix:"DATABASE_"`
-	Redis     RedisConfig     `envPrefix:"REDIS_"`
-	JWT       JWTConfig       `envPrefix:"JWT_"`
-	Logging   LoggingConfig   `envPrefix:"LOG_"`
-	RateLimit RateLimitConfig `envPrefix:"RATE_LIMIT_"`
-	Health    HealthConfig    `envPrefix:"HEALTH_"`
-	Shutdown  ShutdownConfig  `envPrefix:"SHUTDOWN_"`
+	Server    ServerConfig
+	Database  DatabaseConfig
+	Redis     RedisConfig
+	JWT       JWTConfig
+	Logging   LoggingConfig
+	RateLimit RateLimitConfig
+	Health    HealthConfig
+	Shutdown  ShutdownConfig
 }
 
 // ServerConfig конфигурация сервера
@@ -43,49 +43,49 @@ type ServerConfig struct {
 
 // DatabaseConfig конфигурация PostgreSQL
 type DatabaseConfig struct {
-	URL               string `env:"URL,required"`
-	MaxConnections    int    `env:"MAX_CONNECTIONS" envDefault:"25"`
-	ConnectionTimeout int    `env:"CONNECTION_TIMEOUT" envDefault:"10"`
+	URL               string `env:"DATABASE_URL,required"`
+	MaxConnections    int    `env:"DATABASE_MAX_CONNECTIONS" envDefault:"25"`
+	ConnectionTimeout int    `env:"DATABASE_CONNECTION_TIMEOUT" envDefault:"10"`
 }
 
 // RedisConfig конфигурация Redis
 type RedisConfig struct {
-	URL               string `env:"URL,required"`
-	DB                int    `env:"DB" envDefault:"0"`
-	ConnectionTimeout int    `env:"CONNECTION_TIMEOUT" envDefault:"5"`
+	URL               string `env:"REDIS_URL,required"`
+	DB                int    `env:"REDIS_DB" envDefault:"0"`
+	ConnectionTimeout int    `env:"REDIS_CONNECTION_TIMEOUT" envDefault:"5"`
 }
 
 // JWTConfig конфигурация JWT
 type JWTConfig struct {
-	Secret     string `env:"SECRET,required"`
-	AccessTTL  string `env:"ACCESS_TTL" envDefault:"15m"`
-	RefreshTTL string `env:"REFRESH_TTL" envDefault:"336h"`
-	Issuer     string `env:"ISSUER" envDefault:"auth-service"`
+	Secret     string `env:"JWT_SECRET,required"`
+	AccessTTL  string `env:"JWT_ACCESS_TTL" envDefault:"15m"`
+	RefreshTTL string `env:"JWT_REFRESH_TTL" envDefault:"336h"`
+	Issuer     string `env:"JWT_ISSUER" envDefault:"auth-service"`
 }
 
 // LoggingConfig конфигурация логирования
 type LoggingConfig struct {
-	Level       string `env:"LEVEL" envDefault:"info"`
-	Format      string `env:"FORMAT" envDefault:"json"`
-	ServiceName string `env:"SERVICE_NAME" envDefault:"auth-service"`
+	Level       string `env:"LOG_LEVEL" envDefault:"info"`
+	Format      string `env:"LOG_FORMAT" envDefault:"json"`
+	ServiceName string `env:"LOG_SERVICE_NAME" envDefault:"auth-service"`
 }
 
 // RateLimitConfig конфигурация rate limiting
 type RateLimitConfig struct {
-	Register int `env:"REGISTER" envDefault:"5"`
-	Login    int `env:"LOGIN" envDefault:"10"`
-	Refresh  int `env:"REFRESH" envDefault:"30"`
-	Logout   int `env:"LOGOUT" envDefault:"60"`
+	Register int `env:"RATE_LIMIT_REGISTER" envDefault:"5"`
+	Login    int `env:"RATE_LIMIT_LOGIN" envDefault:"10"`
+	Refresh  int `env:"RATE_LIMIT_REFRESH" envDefault:"30"`
+	Logout   int `env:"RATE_LIMIT_LOGOUT" envDefault:"60"`
 }
 
 // HealthConfig конфигурация health check
 type HealthConfig struct {
-	Path string `env:"PATH" envDefault:"/health"`
+	Path string `env:"HEALTH_PATH" envDefault:"/health"`
 }
 
 // ShutdownConfig конфигурация graceful shutdown
 type ShutdownConfig struct {
-	Timeout int `env:"TIMEOUT" envDefault:"30"`
+	Timeout int `env:"SHUTDOWN_TIMEOUT" envDefault:"30"`
 }
 
 // Load загружает конфигурацию из переменных окружения
