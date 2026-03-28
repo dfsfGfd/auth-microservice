@@ -57,7 +57,7 @@ REDIS_CONNECTION_TIMEOUT=5
 # Обязательно для production! openssl rand -base64 32
 JWT_SECRET=your-secret-key-minimum-32-characters-long
 JWT_ACCESS_TTL=15m
-JWT_REFRESH_TTL=336h           # 14 дней
+JWT_REFRESH_TTL=720h           # 30 дней
 JWT_ISSUER=auth-service
 ```
 

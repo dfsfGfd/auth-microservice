@@ -145,7 +145,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 | Токен | TTL | Хранение |
 |-------|-----|----------|
 | **Access** | 15 мин | Client (Authorization header) |
-| **Refresh** | 14 дней | Redis (`refresh:{token}`) |
+| **Refresh** | 30 дней | Redis (`refresh:{token}`) |
 
 ---
 
