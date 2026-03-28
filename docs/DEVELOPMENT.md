@@ -48,8 +48,7 @@ HTTP/gRPC → Handler → Service → Repository → PostgreSQL
 ```
 auth-microservice/
 ├── cmd/
-│   ├── server/           # Точка входа приложения
-│   └── migrate/          # Утилита миграций БД
+│   └── server/           # Точка входа приложения
 │
 ├── internal/             # Приватный код (не экспортируется)
 │   ├── model/            # Domain layer
@@ -282,6 +281,13 @@ task lint
 task proto:gen
 task wire:gen
 
+# Миграции
+task migrate:install   # Установить golang-migrate CLI (один раз)
+task migrate:up        # Применить все миграции
+task migrate:down      # Откатить последнюю миграцию
+task migrate:status    # Показать статус миграций
+task migrate:force     # Принудительно установить версию
+
 # Запуск сервера
 task server:build    # Сборка
 task server:run      # Запуск (локально)
@@ -365,7 +371,49 @@ docker compose up -d --build
 
 ### Миграции
 
-Миграции применяются **автоматически** при первом запуске:
+Для управления миграциями используется **golang-migrate CLI**.
+
+**Установка (локально):**
+
+```bash
+task migrate:install
+```
+
+**Команды:**
+
+```bash
+# Применить все миграции
+task migrate:up
+
+# Откатить последнюю миграцию
+task migrate:down
+
+# Показать статус миграций
+task migrate:status
+
+# Принудительно установить версию
+task migrate:force VERSION=3
+```
+
+**Напрямую через CLI:**
+
+```bash
+# Установить golang-migrate
+go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+
+# Применить миграции
+./bin/migrate -path migrations -database "postgres://user:pass@localhost:5432/auth?sslmode=disable" up
+
+# Откатить
+./bin/migrate -path migrations -database "postgres://..." down
+
+# Статус
+./bin/migrate -path migrations -database "postgres://..." status
+```
+
+**В Docker:**
+
+Миграции применяются **автоматически** при старте сервера. golang-migrate отслеживает применённые миграции в таблице `schema_migrations`, поэтому повторный запуск не применяет их заново.
 
 ```yaml
 # deploy/docker-compose.yml
@@ -374,6 +422,8 @@ volumes:
 ```
 
 **Важно:** Миграция проходит **один раз** при первом запуске. При повторном запуске (после остановки) миграция **не применяется**, данные сохраняются в volume.
+
+📖 **Полное руководство:** [migrations/README.md](../migrations/README.md)
 
 ### Логи
 

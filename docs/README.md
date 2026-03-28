@@ -112,25 +112,24 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 ```
 .
 ├── cmd/
-│   ├── server/          # Точка входа сервиса
-│   └── migrate/         # Утилита миграций
+│   └── server/            # Точка входа сервиса
 ├── internal/
-│   ├── model/           # Domain layer (агрегаты, VO)
-│   ├── repository/      # Repository layer (PostgreSQL)
-│   ├── service/         # Service layer (бизнес-логика)
-│   ├── handler/         # Handler layer (gRPC)
-│   ├── cache/           # Redis cache для токенов
-│   ├── middleware/      # HTTP/gRPC middleware (rate limiter, logging)
-│   ├── di/              # Dependency Injection (Wire)
-│   ├── config/          # Конфигурация из .env
-│   └── errors/          # Доменные ошибки
-├── pkg/                 # Общие пакеты (jwt, bcrypt, logger, db)
-├── proto/               # Proto контракты (Buf)
-├── api/                 # Swagger/OpenAPI спецификация
-├── migrations/          # SQL миграции (golang-migrate)
-├── deploy/              # Docker файлы
-├── tests/               # Интеграционные тесты
-└── docs/                # Документация
+│   ├── model/             # Domain layer (агрегаты, VO)
+│   ├── repository/        # Repository layer (PostgreSQL)
+│   ├── service/           # Service layer (бизнес-логика)
+│   ├── handler/           # Handler layer (gRPC)
+│   ├── cache/             # Redis cache для токенов
+│   ├── middleware/        # HTTP/gRPC middleware (rate limiter, logging)
+│   ├── di/                # Dependency Injection (Wire)
+│   ├── config/            # Конфигурация из .env
+│   └── errors/            # Доменные ошибки
+├── pkg/                   # Общие пакеты (jwt, bcrypt, logger, db)
+├── proto/                 # Proto контракты (Buf)
+├── api/                   # Swagger/OpenAPI спецификация
+├── migrations/            # SQL миграции (golang-migrate)
+├── deploy/                # Docker файлы
+├── tests/                 # Интеграционные тесты
+└── docs/                  # Документация
 ```
 
 ### Оптимизации (v1.1)
@@ -180,6 +179,10 @@ go test ./... -v
 | `task tidy` | Очистка зависимостей |
 | `task proto:gen` | Генерация Proto (gRPC + REST + Swagger) |
 | `task wire:gen` | Генерация DI кода |
+| `task migrate:install` | Установить golang-migrate CLI |
+| `task migrate:up` | Применить все миграции |
+| `task migrate:down` | Откатить последнюю миграцию |
+| `task migrate:status` | Показать статус миграций |
 
 ### Запуск сервера
 
