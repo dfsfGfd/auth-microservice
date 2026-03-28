@@ -24,7 +24,10 @@ migrations/
 ### Через Taskfile (рекомендуется)
 
 ```bash
-# Применить все миграции в Docker
+# Установить CLI (требуется один раз)
+task migrate:install
+
+# Применить все миграции
 task migrate:up
 
 # Откатить последнюю миграцию
@@ -32,26 +35,28 @@ task migrate:down
 
 # Показать статус миграций
 task migrate:status
+
+# Принудительно установить версию (если нужно)
+task migrate:force VERSION=3
 ```
 
-### Локально (требуется PostgreSQL)
+### Напрямую через CLI
 
 ```bash
+# Установить golang-migrate
+go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+
 # Применить
-go run cmd/migrate/main.go -dsn "postgres://user:pass@localhost:5432/auth?sslmode=disable" -path migrations up
+migrate -path migrations -database "postgres://user:pass@localhost:5432/auth?sslmode=disable" up
 
 # Откатить
-go run cmd/migrate/main.go -dsn "postgres://..." -path migrations down
+migrate -path migrations -database "postgres://..." down
 
 # Статус
-go run cmd/migrate/main.go -dsn "postgres://..." -path migrations status
-```
+migrate -path migrations -database "postgres://..." status
 
-### Сборка утилиты
-
-```bash
-go build -o bin/migrate ./cmd/migrate
-./bin/migrate -dsn "postgres://..." -path migrations up
+# Force (установить версию)
+migrate -path migrations -database "postgres://..." force 3
 ```
 
 ---
@@ -82,7 +87,7 @@ task migrate:up
 | Колонка | Тип | Описание |
 |---------|-----|----------|
 | `id` | UUID PRIMARY KEY | Уникальный идентификатор |
-| `email` | VARCHAR(254) NOT NULL | Email пользователя |
+| `email` | VARCHAR(254) NOT NULL | Email пользователя (уникальный) |
 | `password` | VARCHAR(72) NOT NULL | Хеш пароля (bcrypt) |
 | `created_at` | TIMESTAMPTZ | Время создания |
 | `updated_at` | TIMESTAMPTZ | Время обновления |
@@ -90,12 +95,9 @@ task migrate:up
 **Индексы:**
 - `idx_accounts_email` — уникальный индекс для быстрого поиска по email
 
-**Триггер:**
-- `update_accounts_updated_at` — автоматически обновляет `updated_at` при изменении записи
-
 ---
 
 ## 📚 Ссылки
 
-- [golang-migrate](https://github.com/golang-migrate/migrate)
+- [golang-migrate CLI](https://github.com/golang-migrate/migrate/tree/master/cmd/migrate)
 - [Основная документация](../docs/README.md)

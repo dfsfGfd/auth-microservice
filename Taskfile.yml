@@ -167,58 +167,46 @@ tasks:
 
   # ==================== Migrations ====================
 
-  migrate:build:
-    desc: "Сборка утилиты миграций"
+  migrate:install:
+    desc: "Установить golang-migrate CLI"
     cmds:
-      - |
-        echo "Building migrate utility..."
-        go build -o bin/migrate ./cmd/migrate
-        echo "Build complete: bin/migrate"
+      - go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+    env:
+      GOBIN: '{{.BIN_DIR}}'
+    status:
+      - test -f "{{.BIN_DIR}}/migrate"
 
   migrate:up:
     desc: "Применить все миграции (локально)"
-    deps: [ migrate:build ]
+    deps: [ migrate:install ]
     cmds:
       - |
         echo "Running migrations..."
-        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations up
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" up
 
   migrate:down:
     desc: "Откатить последнюю миграцию (локально)"
-    deps: [ migrate:build ]
+    deps: [ migrate:install ]
     cmds:
       - |
         echo "Rolling back migration..."
-        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations down
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" down
 
   migrate:status:
     desc: "Показать статус миграций (локально)"
-    deps: [ migrate:build ]
+    deps: [ migrate:install ]
     cmds:
       - |
         echo "Checking migration status..."
-        ./bin/migrate -dsn "postgres://auth_user:auth_password@localhost:5432/auth?sslmode=disable" -path migrations status
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" status
 
-  migrate:docker:up:
-    desc: "Применить миграции в Docker контейнере"
+  migrate:force:
+    desc: "Установить версию миграции (force)"
+    deps: [ migrate:install ]
     cmds:
       - |
-        echo "Running migrations in Docker..."
-        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations up
-
-  migrate:docker:down:
-    desc: "Откатить миграцию в Docker контейнере"
-    cmds:
-      - |
-        echo "Rolling back migration in Docker..."
-        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations down
-
-  migrate:docker:status:
-    desc: "Показать статус миграций в Docker контейнере"
-    cmds:
-      - |
-        echo "Checking migration status in Docker..."
-        docker compose -f deploy/docker-compose.yml exec -T auth-service ./migrate -dsn "$DATABASE_URL" -path migrations status
+        echo "Forcing migration version..."
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" force {{.VERSION}}
 
   # ==================== Quick Commands ====================
 
