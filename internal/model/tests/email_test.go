@@ -81,35 +81,6 @@ func TestNewEmail(t *testing.T) {
 	})
 }
 
-func TestEmail_Equal(t *testing.T) {
-	t.Run("equal emails", func(t *testing.T) {
-		email1, err := model.NewEmail("user@example.com")
-		require.NoError(t, err)
-
-		email2, err := model.NewEmail("user@example.com")
-		require.NoError(t, err)
-
-		assert.True(t, email1.Equal(email2))
-	})
-
-	t.Run("different emails", func(t *testing.T) {
-		email1, err := model.NewEmail("user@example.com")
-		require.NoError(t, err)
-
-		email2, err := model.NewEmail("other@example.com")
-		require.NoError(t, err)
-
-		assert.False(t, email1.Equal(email2))
-	})
-
-	t.Run("nil comparison", func(t *testing.T) {
-		email, err := model.NewEmail("user@example.com")
-		require.NoError(t, err)
-
-		assert.False(t, email.Equal(nil))
-	})
-}
-
 func TestEmail_Value(t *testing.T) {
 	email, err := model.NewEmail("user@example.com")
 	require.NoError(t, err)
@@ -154,15 +125,5 @@ func TestNewEmailFromDB(t *testing.T) {
 		email := model.NewEmailFromDB("test@example.com")
 
 		assert.Equal(t, "test@example.com", email.Value())
-	})
-
-	t.Run("Equal method works correctly", func(t *testing.T) {
-		email1 := model.NewEmailFromDB("user@example.com")
-		email2 := model.NewEmailFromDB("user@example.com")
-		email3 := model.NewEmailFromDB("other@example.com")
-
-		assert.True(t, email1.Equal(email2))
-		assert.False(t, email1.Equal(email3))
-		assert.False(t, email1.Equal(nil))
 	})
 }

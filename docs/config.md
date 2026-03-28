@@ -27,12 +27,12 @@ go run cmd/server/main.go
 ### Server
 
 ```bash
-APP_ENV=development          # development, staging, production
-HTTP_PORT=8080               # REST API порт
-GRPC_PORT=9090               # gRPC порт
-READ_TIMEOUT=10              # Таймаут чтения (сек)
-WRITE_TIMEOUT=10             # Таймаут записи (сек)
-IDLE_TIMEOUT=60              # Таймаут простоя (сек)
+SERVER_HTTP_PORT=8080          # REST API порт
+SERVER_GRPC_PORT=9090          # gRPC порт
+SERVER_ENV=development         # development, staging, production
+SERVER_READ_TIMEOUT=10         # Таймаут чтения (сек)
+SERVER_WRITE_TIMEOUT=10        # Таймаут записи (сек)
+SERVER_IDLE_TIMEOUT=60         # Таймаут простоя (сек)
 ```
 
 ### Database (PostgreSQL)
@@ -57,7 +57,7 @@ REDIS_CONNECTION_TIMEOUT=5
 # Обязательно для production! openssl rand -base64 32
 JWT_SECRET=your-secret-key-minimum-32-characters-long
 JWT_ACCESS_TTL=15m
-JWT_REFRESH_TTL=336h           # 14 дней
+JWT_REFRESH_TTL=720h           # 30 дней
 JWT_ISSUER=auth-service
 ```
 
@@ -67,16 +67,6 @@ JWT_ISSUER=auth-service
 LOG_LEVEL=debug                # debug, info, warn, error, fatal
 LOG_FORMAT=console             # json, console
 LOG_SERVICE_NAME=auth-service
-```
-
-### CORS
-
-```bash
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS
-CORS_ALLOWED_HEADERS=Authorization,Content-Type,X-Request-ID
-CORS_ALLOW_CREDENTIALS=true
-CORS_MAX_AGE=86400
 ```
 
 ### Rate Limiting
@@ -102,24 +92,24 @@ SHUTDOWN_TIMEOUT=30
 ### Development
 
 ```bash
-APP_ENV=development
+SERVER_ENV=development
 LOG_LEVEL=debug
 LOG_FORMAT=console
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/auth?sslmode=disable
 REDIS_URL=redis://localhost:6379
+JWT_SECRET=super-secret-key-minimum-32-characters-long
 ```
 
 ### Production
 
 ```bash
-APP_ENV=production
+SERVER_ENV=production
 LOG_LEVEL=warn
 LOG_FORMAT=json
 DATABASE_URL=postgres://user:pass@db.prod:5432/auth?sslmode=require
 DATABASE_MAX_CONNECTIONS=100
 REDIS_URL=redis://redis.prod:6379
 JWT_SECRET=<openssl rand -base64 32>
-CORS_ALLOWED_ORIGINS=https://your-domain.com
 ```
 
 ---
@@ -155,7 +145,6 @@ openssl rand -base64 32
 - [ ] `JWT_SECRET` ≥ 32 символа
 - [ ] `APP_ENV=production`
 - [ ] `DATABASE_URL` с `sslmode=require`
-- [ ] CORS для ваших доменов
 - [ ] `.env` не в git
 
 ---

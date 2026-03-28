@@ -165,6 +165,49 @@ tasks:
         docker compose -f tests/docker-compose.integration.yml down -v --remove-orphans
         echo "Cleanup complete"
 
+  # ==================== Migrations ====================
+
+  migrate:install:
+    desc: "Установить golang-migrate CLI"
+    cmds:
+      - go install -tags postgres github.com/golang-migrate/migrate/v4/cmd/migrate@v4.19.1
+    env:
+      GOBIN: '{{.BIN_DIR}}'
+    status:
+      - test -f "{{.BIN_DIR}}/migrate"
+
+  migrate:up:
+    desc: "Применить все миграции (локально)"
+    deps: [ migrate:install ]
+    cmds:
+      - |
+        echo "Running migrations..."
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" up
+
+  migrate:down:
+    desc: "Откатить последнюю миграцию (локально)"
+    deps: [ migrate:install ]
+    cmds:
+      - |
+        echo "Rolling back migration..."
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" down
+
+  migrate:status:
+    desc: "Показать статус миграций (локально)"
+    deps: [ migrate:install ]
+    cmds:
+      - |
+        echo "Checking migration status..."
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" status
+
+  migrate:force:
+    desc: "Установить версию миграции (force)"
+    deps: [ migrate:install ]
+    cmds:
+      - |
+        echo "Forcing migration version..."
+        {{.BIN_DIR}}/migrate -path migrations -database "{{.DATABASE_URL}}" force {{.VERSION}}
+
   # ==================== Quick Commands ====================
 
   dev:

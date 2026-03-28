@@ -102,24 +102,28 @@ Username: `dfsfGfd`
 
 ## 🔄 История изменений
 
+### v1.3 Remove CORS
+
+**Удалено:**
+- CORS middleware (больше не нужен)
+- CORS конфигурация из config
+- Зависимость `github.com/rs/cors`
+
 ### v1.2 Config (последний коммит)
 
 **Конфигурация:**
 - Загрузка конфига только из .env файла (YAML удален)
 - `config.Load()` - единая точка входа
 - Упрощен DI provider
-- CORS AllowCredentials default = false
 
 ### v1.1 Refactor
 
 **Исправленные баги:**
-- Rate limiter для REST API теперь работает с正确的 путями `/api/v1/auth/*`
-- AllowCredentials теперь берется из конфига, а не хардкодится
+- Rate limiter для REST API теперь работает с правильными путями `/api/v1/auth/*`
 - Email валидация: trim теперь выполняется перед проверкой длины
 
 **Оптимизации:**
 - Удален неиспользуемый код: `DeleteByID`, `GetByID` в репозитории
 - Удалены неиспользуемые list конвертеры
-- Удалены дублирующие CORS функции
 - Упрощена PasswordHash валидация (убран хардкод bcrypt префиксов)
 - Упрощен `RefreshTTLDuration()` (убрана лишняя обертка ошибки)

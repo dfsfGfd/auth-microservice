@@ -5,7 +5,6 @@ import (
 
 	"auth-microservice/internal/model"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewPasswordHash(t *testing.T) {
@@ -50,34 +49,5 @@ func TestNewPasswordHash(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.err)
 			})
 		}
-	})
-}
-
-func TestPasswordHash_Equal(t *testing.T) {
-	t.Run("equal hashes", func(t *testing.T) {
-		hash1, err := model.NewPasswordHash("$2a$12$abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx")
-		require.NoError(t, err)
-
-		hash2, err := model.NewPasswordHash("$2a$12$abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx")
-		require.NoError(t, err)
-
-		assert.True(t, hash1.Equal(hash2))
-	})
-
-	t.Run("different hashes", func(t *testing.T) {
-		hash1, err := model.NewPasswordHash("$2a$12$abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx")
-		require.NoError(t, err)
-
-		hash2, err := model.NewPasswordHash("$2a$12$xyz123abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuv")
-		require.NoError(t, err)
-
-		assert.False(t, hash1.Equal(hash2))
-	})
-
-	t.Run("nil comparison", func(t *testing.T) {
-		hash, err := model.NewPasswordHash("$2a$12$abcdefghijklmnopqrstuvwxabcdefghijklmnopqrstuvwx")
-		require.NoError(t, err)
-
-		assert.False(t, hash.Equal(nil))
 	})
 }

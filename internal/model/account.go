@@ -3,7 +3,6 @@ package model
 import (
 	"time"
 
-	errs "auth-microservice/internal/errors"
 	"github.com/google/uuid"
 )
 
@@ -25,13 +24,6 @@ type Account struct {
 // Принимает готовые валидированные Value Objects.
 // Хеширование пароля выполняется в сервисном слое.
 func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
-	if email == nil {
-		return nil, errs.ErrEmailInvalid
-	}
-	if passwordHash == nil {
-		return nil, errs.ErrPasswordInvalid
-	}
-
 	now := time.Now()
 	return &Account{
 		id:           uuid.New(),
@@ -80,24 +72,4 @@ func (a *Account) SetCreatedAt(t time.Time) {
 // SetUpdatedAt устанавливает время обновления (для конвертеров из БД).
 func (a *Account) SetUpdatedAt(t time.Time) {
 	a.updatedAt = t
-}
-
-// UpdateEmail обновляет email.
-func (a *Account) UpdateEmail(email *Email) error {
-	if email == nil {
-		return errs.ErrEmailInvalid
-	}
-	a.email = email
-	a.updatedAt = time.Now()
-	return nil
-}
-
-// UpdatePasswordHash обновляет хеш пароля.
-func (a *Account) UpdatePasswordHash(passwordHash *PasswordHash) error {
-	if passwordHash == nil {
-		return errs.ErrPasswordInvalid
-	}
-	a.passwordHash = passwordHash
-	a.updatedAt = time.Now()
-	return nil
 }

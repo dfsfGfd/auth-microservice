@@ -112,31 +112,30 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 ```
 .
 ├── cmd/
-│   ├── server/          # Точка входа сервиса
-│   └── migrate/         # Утилита миграций
+│   └── server/            # Точка входа сервиса
 ├── internal/
-│   ├── model/           # Domain layer (агрегаты, VO)
-│   ├── repository/      # Repository layer (PostgreSQL)
-│   ├── service/         # Service layer (бизнес-логика)
-│   ├── handler/         # Handler layer (gRPC)
-│   ├── cache/           # Redis cache для токенов
-│   ├── middleware/      # HTTP/gRPC middleware (rate limiter, CORS)
-│   ├── di/              # Dependency Injection (Wire)
-│   ├── config/          # Конфигурация из .env
-│   └── errors/          # Доменные ошибки
-├── pkg/                 # Общие пакеты (jwt, bcrypt, logger, db)
-├── proto/               # Proto контракты (Buf)
-├── api/                 # Swagger/OpenAPI спецификация
-├── migrations/          # SQL миграции (golang-migrate)
-├── deploy/              # Docker файлы
-├── tests/               # Интеграционные тесты
-└── docs/                # Документация
+│   ├── model/             # Domain layer (агрегаты, VO)
+│   ├── repository/        # Repository layer (PostgreSQL)
+│   ├── service/           # Service layer (бизнес-логика)
+│   ├── handler/           # Handler layer (gRPC)
+│   ├── cache/             # Redis cache для токенов
+│   ├── middleware/        # HTTP/gRPC middleware (rate limiter, logging)
+│   ├── di/                # Dependency Injection (Wire)
+│   ├── config/            # Конфигурация из .env
+│   └── errors/            # Доменные ошибки
+├── pkg/                   # Общие пакеты (jwt, bcrypt, logger, db)
+├── proto/                 # Proto контракты (Buf)
+├── api/                   # Swagger/OpenAPI спецификация
+├── migrations/            # SQL миграции (golang-migrate)
+├── deploy/                # Docker файлы
+├── tests/                 # Интеграционные тесты
+└── docs/                  # Документация
 ```
 
 ### Оптимизации (v1.1)
 
 - ✅ Удален неиспользуемый код (DeleteByID, GetByID, list конвертеры)
-- ✅ Упрощена CORS middleware (убраны дублирующие функции)
+- ✅ Удалена CORS middleware
 - ✅ Исправлен rate limiter для REST API (пути `/api/v1/auth/*`)
 - ✅ Исправлена валидация email (trim перед проверкой длины)
 - ✅ Упрощена валидация PasswordHash (только проверка длины)
@@ -146,7 +145,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 | Токен | TTL | Хранение |
 |-------|-----|----------|
 | **Access** | 15 мин | Client (Authorization header) |
-| **Refresh** | 14 дней | Redis (`refresh:{token}`) |
+| **Refresh** | 30 дней | Redis (`refresh:{token}`) |
 
 ---
 
@@ -180,6 +179,10 @@ go test ./... -v
 | `task tidy` | Очистка зависимостей |
 | `task proto:gen` | Генерация Proto (gRPC + REST + Swagger) |
 | `task wire:gen` | Генерация DI кода |
+| `task migrate:install` | Установить golang-migrate CLI |
+| `task migrate:up` | Применить все миграции |
+| `task migrate:down` | Откатить последнюю миграцию |
+| `task migrate:status` | Показать статус миграций |
 
 ### Запуск сервера
 
@@ -283,7 +286,6 @@ task server:docker:logs
 - [ ] `JWT_SECRET` ≥ 32 символов
 - [ ] `APP_ENV=production`
 - [ ] HTTPS включён
-- [ ] CORS настроен для ваших доменов
 - [ ] Rate limits под нагрузку
 
 ---

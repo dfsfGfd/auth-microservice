@@ -33,11 +33,3 @@ func (p PasswordHash) Value() string {
 func (p PasswordHash) String() string {
 	return "[REDACTED]"
 }
-
-// Equal сравнивает два хеша
-func (p PasswordHash) Equal(other *PasswordHash) bool {
-	if other == nil {
-		return false
-	}
-	return p == *other
-}

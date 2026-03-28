@@ -104,35 +104,6 @@ func TestNewPlainPassword(t *testing.T) {
 	})
 }
 
-func TestPlainPassword_Equal(t *testing.T) {
-	t.Run("equal passwords", func(t *testing.T) {
-		password1, err := model.NewPlainPassword("Password1")
-		require.NoError(t, err)
-
-		password2, err := model.NewPlainPassword("Password1")
-		require.NoError(t, err)
-
-		assert.True(t, password1.Equal(password2))
-	})
-
-	t.Run("different passwords", func(t *testing.T) {
-		password1, err := model.NewPlainPassword("Password1")
-		require.NoError(t, err)
-
-		password2, err := model.NewPlainPassword("Secure123")
-		require.NoError(t, err)
-
-		assert.False(t, password1.Equal(password2))
-	})
-
-	t.Run("nil comparison", func(t *testing.T) {
-		password, err := model.NewPlainPassword("Password1")
-		require.NoError(t, err)
-
-		assert.False(t, password.Equal(nil))
-	})
-}
-
 func TestPlainPassword_Value(t *testing.T) {
 	password, err := model.NewPlainPassword("SuperSecret123")
 	require.NoError(t, err)

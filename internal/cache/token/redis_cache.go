@@ -63,13 +63,3 @@ func (c *RedisCache) Delete(ctx context.Context, token string) error {
 	}
 	return nil
 }
-
-// Exists проверяет существование refresh токена.
-func (c *RedisCache) Exists(ctx context.Context, token string) (bool, error) {
-	key := c.key(token)
-	result, err := c.client.Exists(ctx, key).Result()
-	if err != nil {
-		return false, fmt.Errorf("redis exists: %w", err)
-	}
-	return result > 0, nil
-}

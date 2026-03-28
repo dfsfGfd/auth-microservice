@@ -3,9 +3,7 @@ package errors
 import "errors"
 
 var (
-	// Ошибки аутентификации
-	ErrUnauthorized         = errors.New("unauthorized")
-	ErrForbidden            = errors.New("forbidden")
+	// Ошибки токенов
 	ErrTokenInvalid         = errors.New("invalid token")
 	ErrTokenExpired         = errors.New("token expired")
 	ErrRefreshTokenNotFound = errors.New("refresh token not found")

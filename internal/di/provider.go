@@ -23,6 +23,8 @@ import (
 	"auth-microservice/pkg/db/redisdb"
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
+	"auth-microservice/pkg/proto/auth/v1"
+
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
 	goredis "github.com/redis/go-redis/v9"
@@ -38,12 +40,12 @@ type Application struct {
 	AccountRepo repository.AccountRepository
 	TokenCache  *token.RedisCache
 	AuthService *serviceAuth.AuthService
-	AuthHandler *auth.Handler
+	AuthHandler authv1.AuthServiceServer
 	RateLimiter *middleware.RateLimiter
 }
 
 // CleanUp очищает ресурсы приложения
-func (a *Application) CleanUp(ctx context.Context) error {
+func (a *Application) CleanUp() error {
 	// Закрываем подключения
 	if a.DB != nil {
 		a.DB.Close()
@@ -54,7 +56,7 @@ func (a *Application) CleanUp(ctx context.Context) error {
 	return nil
 }
 
-// ProvideContext предоставляет контекст для приложения
+// ProvideContext предоставляет контекст для инициализации
 func ProvideContext() context.Context {
 	return context.Background()
 }
@@ -122,11 +124,12 @@ func ProvideRedisConfig(cfg *config.Config) redisdb.Config {
 
 	return redisdb.Config{
 		Addr:         addr,
+		Password:     cfg.Redis.Password,
 		DB:           cfg.Redis.DB,
-		PoolSize:     10,
+		PoolSize:     cfg.Redis.PoolSize,
 		ConnTimeout:  time.Duration(cfg.Redis.ConnectionTimeout) * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
+		ReadTimeout:  time.Duration(cfg.Redis.ReadTimeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Redis.WriteTimeout) * time.Second,
 	}
 }
 

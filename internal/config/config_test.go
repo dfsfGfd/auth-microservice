@@ -13,24 +13,31 @@ func setTestEnv(t *testing.T) {
 	t.Helper()
 
 	envs := map[string]string{
-		"HTTP_PORT":                "8080",
-		"GRPC_PORT":                "9090",
-		"APP_ENV":                  "development",
-		"DATABASE_URL":             "postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
-		"DATABASE_MAX_CONNECTIONS": "25",
-		"REDIS_URL":                "redis://localhost:6379",
-		"REDIS_DB":                 "0",
-		"JWT_SECRET":               "super-secret-key-minimum-32-characters-long",
-		"JWT_ACCESS_TTL":           "15m",
-		"JWT_REFRESH_TTL":          "336h",
-		"JWT_ISSUER":               "auth-service",
-		"LOG_LEVEL":                "debug",
-		"LOG_FORMAT":               "console",
-		"LOG_SERVICE_NAME":         "auth-service",
-		"CORS_ALLOWED_ORIGINS":     "http://localhost:3000",
-		"CORS_ALLOW_CREDENTIALS":   "false",
-		"HEALTH_PATH":              "/health",
-		"SHUTDOWN_TIMEOUT":         "30",
+		"HTTP_PORT":                     "8080",
+		"GRPC_PORT":                     "9090",
+		"ENV":                           "development",
+		"READ_TIMEOUT":                  "10",
+		"WRITE_TIMEOUT":                 "10",
+		"IDLE_TIMEOUT":                  "60",
+		"DATABASE_URL":                  "postgres://postgres:postgres@localhost:5432/auth?sslmode=disable",
+		"DATABASE_MAX_CONNECTIONS":      "25",
+		"DATABASE_CONNECTION_TIMEOUT":   "10",
+		"REDIS_URL":                     "redis://localhost:6379",
+		"REDIS_DB":                      "0",
+		"REDIS_CONNECTION_TIMEOUT":      "5",
+		"JWT_SECRET":                    "super-secret-key-minimum-32-characters-long",
+		"JWT_ACCESS_TTL":                "15m",
+		"JWT_REFRESH_TTL":               "720h",
+		"JWT_ISSUER":                    "auth-service",
+		"LOG_LEVEL":                     "debug",
+		"LOG_FORMAT":                    "console",
+		"LOG_SERVICE_NAME":              "auth-service",
+		"RATE_LIMIT_REGISTER":           "5",
+		"RATE_LIMIT_LOGIN":              "10",
+		"RATE_LIMIT_REFRESH":            "30",
+		"RATE_LIMIT_LOGOUT":             "60",
+		"HEALTH_PATH":                   "/health",
+		"SHUTDOWN_TIMEOUT":              "30",
 	}
 
 	for k, v := range envs {
@@ -62,7 +69,7 @@ func TestLoad(t *testing.T) {
 	// JWT
 	assert.Equal(t, "super-secret-key-minimum-32-characters-long", cfg.JWT.Secret)
 	assert.Equal(t, "15m", cfg.JWT.AccessTTL)
-	assert.Equal(t, "336h", cfg.JWT.RefreshTTL)
+	assert.Equal(t, "720h", cfg.JWT.RefreshTTL)
 	assert.Equal(t, "auth-service", cfg.JWT.Issuer)
 
 	// Logging
@@ -93,11 +100,14 @@ func TestLoad_Defaults(t *testing.T) {
 func TestConfig_Validate(t *testing.T) {
 	t.Run("валидная конфигурация", func(t *testing.T) {
 		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
+			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
+			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
+			RateLimit: config.RateLimitConfig{Register: 5, Login: 10, Refresh: 30, Logout: 60},
+			Health:   config.HealthConfig{Path: "/health"},
+			Shutdown: config.ShutdownConfig{Timeout: 30},
 		}
 
 		err := cfg.Validate()
@@ -106,11 +116,11 @@ func TestConfig_Validate(t *testing.T) {
 
 	t.Run("отсутствует database url", func(t *testing.T) {
 		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
+			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
 			Database: config.DatabaseConfig{},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
+			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
 
 		err := cfg.Validate()
@@ -121,11 +131,11 @@ func TestConfig_Validate(t *testing.T) {
 
 	t.Run("отсутствует redis url", func(t *testing.T) {
 		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
+			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
 			Redis:    config.RedisConfig{},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
+			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
 
 		err := cfg.Validate()
@@ -136,11 +146,11 @@ func TestConfig_Validate(t *testing.T) {
 
 	t.Run("короткий jwt secret", func(t *testing.T) {
 		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
-			JWT:      config.JWTConfig{Secret: "short"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
+			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
+			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
+			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
+			JWT:      config.JWTConfig{Secret: "short", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
+			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
 
 		err := cfg.Validate()
@@ -148,55 +158,35 @@ func TestConfig_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "jwt")
 		assert.Contains(t, err.Error(), "at least 32 characters")
 	})
-
-	t.Run("wildcard origin с credentials", func(t *testing.T) {
-		cfg := &config.Config{
-			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090},
-			Database: config.DatabaseConfig{URL: "postgres://localhost/auth"},
-			Redis:    config.RedisConfig{URL: "redis://localhost:6379"},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"},
-			Logging:  config.LoggingConfig{Level: "info", Format: "json"},
-			CORS: config.CORSConfig{
-				AllowedOrigins:   []string{"*"},
-				AllowCredentials: true,
-			},
-		}
-
-		err := cfg.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "wildcard")
-	})
 }
 
 func TestServerConfig_Validate(t *testing.T) {
 	t.Run("невалидный http_port", func(t *testing.T) {
-		cfg := config.ServerConfig{HTTPPort: 0, GRPCPort: 9090}
+		cfg := config.ServerConfig{HTTPPort: 0, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "http_port")
 	})
 
 	t.Run("невалидный grpc_port", func(t *testing.T) {
-		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 70000}
+		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 70000, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "grpc_port")
 	})
 
-	t.Run("env по умолчанию", func(t *testing.T) {
-		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: ""}
+	t.Run("отсутствует env", func(t *testing.T) {
+		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60}
 		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "development", cfg.Env)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "env is required")
 	})
 
-	t.Run("таймауты по умолчанию", func(t *testing.T) {
-		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090}
+	t.Run("невалидный read_timeout", func(t *testing.T) {
+		cfg := config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 0, WriteTimeout: 10, IdleTimeout: 60}
 		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, 10, cfg.ReadTimeout)
-		assert.Equal(t, 10, cfg.WriteTimeout)
-		assert.Equal(t, 60, cfg.IdleTimeout)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "read_timeout must be positive")
 	})
 }
 
@@ -208,11 +198,11 @@ func TestDatabaseConfig_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "url is required")
 	})
 
-	t.Run("max_connections по умолчанию", func(t *testing.T) {
-		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth"}
+	t.Run("невалидный max_connections", func(t *testing.T) {
+		cfg := config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 0, ConnectionTimeout: 10}
 		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, 25, cfg.MaxConnections)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "max_connections must be positive")
 	})
 }
 
@@ -225,10 +215,17 @@ func TestRedisConfig_Validate(t *testing.T) {
 	})
 
 	t.Run("невалидный db", func(t *testing.T) {
-		cfg := config.RedisConfig{URL: "redis://localhost", DB: 20}
+		cfg := config.RedisConfig{URL: "redis://localhost", DB: 20, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db must be between 0 and 15")
+	})
+
+	t.Run("невалидный pool_size", func(t *testing.T) {
+		cfg := config.RedisConfig{URL: "redis://localhost", DB: 0, PoolSize: 0, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3}
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "pool_size must be positive")
 	})
 }
 
@@ -241,56 +238,52 @@ func TestJWTConfig_Validate(t *testing.T) {
 	})
 
 	t.Run("короткий secret", func(t *testing.T) {
-		cfg := config.JWTConfig{Secret: "short"}
+		cfg := config.JWTConfig{Secret: "short", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "at least 32 characters")
 	})
 
-	t.Run("значения по умолчанию", func(t *testing.T) {
-		cfg := config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long"}
+	t.Run("отсутствует access_ttl", func(t *testing.T) {
+		cfg := config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "", RefreshTTL: "336h", Issuer: "auth-service"}
+		err := cfg.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "access_ttl is required")
+	})
+
+	t.Run("валидный jwt config", func(t *testing.T) {
+		cfg := config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"}
 		err := cfg.Validate()
 		assert.NoError(t, err)
-		assert.Equal(t, "15m", cfg.AccessTTL)
-		assert.Equal(t, "336h", cfg.RefreshTTL)
-		assert.Equal(t, "auth-service", cfg.Issuer)
 	})
 }
 
 func TestLoggingConfig_Validate(t *testing.T) {
-	t.Run("level по умолчанию", func(t *testing.T) {
+	t.Run("отсутствует level", func(t *testing.T) {
 		cfg := config.LoggingConfig{}
 		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "info", cfg.Level)
-	})
-
-	t.Run("format по умолчанию", func(t *testing.T) {
-		cfg := config.LoggingConfig{}
-		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "json", cfg.Format)
-	})
-
-	t.Run("service_name по умолчанию", func(t *testing.T) {
-		cfg := config.LoggingConfig{}
-		err := cfg.Validate()
-		assert.NoError(t, err)
-		assert.Equal(t, "auth-service", cfg.ServiceName)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "level is required")
 	})
 
 	t.Run("невалидный level", func(t *testing.T) {
-		cfg := config.LoggingConfig{Level: "invalid"}
+		cfg := config.LoggingConfig{Level: "invalid", Format: "json", ServiceName: "auth-service"}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "level must be")
 	})
 
 	t.Run("невалидный format", func(t *testing.T) {
-		cfg := config.LoggingConfig{Level: "info", Format: "xml"}
+		cfg := config.LoggingConfig{Level: "info", Format: "xml", ServiceName: "auth-service"}
 		err := cfg.Validate()
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "format must be")
+	})
+
+	t.Run("валидный logging config", func(t *testing.T) {
+		cfg := config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"}
+		err := cfg.Validate()
+		assert.NoError(t, err)
 	})
 }
 
@@ -303,10 +296,10 @@ func TestJWTConfig_Duration(t *testing.T) {
 	})
 
 	t.Run("RefreshTTLDuration", func(t *testing.T) {
-		cfg := config.JWTConfig{RefreshTTL: "336h"}
+		cfg := config.JWTConfig{RefreshTTL: "720h"}
 		duration, err := cfg.RefreshTTLDuration()
 		require.NoError(t, err)
-		assert.Equal(t, 336*time.Hour, duration)
+		assert.Equal(t, 720*time.Hour, duration)
 	})
 }
 

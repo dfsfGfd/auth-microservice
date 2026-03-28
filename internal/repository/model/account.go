@@ -34,8 +34,3 @@ type Account struct {
 	// UpdatedAt время последнего обновления (NOT NULL, DEFAULT NOW())
 	UpdatedAt time.Time `db:"updated_at"`
 }
-
-// TableName возвращает имя таблицы для модели.
-func (Account) TableName() string {
-	return "accounts"
-}

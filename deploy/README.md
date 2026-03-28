@@ -32,7 +32,6 @@ docker compose up -d --build
 |------|----------|
 | `docker-compose.yml` | Development окружение |
 | `Dockerfile` | Multi-stage сборка |
-| `docker-entrypoint.sh` | Миграции + запуск сервера (JSON логи) |
 | `.env` | Переменные окружения |
 | `.dockerignore` | Исключения для Docker |
 
@@ -74,17 +73,12 @@ docker compose up -d --build --force-recreate
 - Runtime stage: alpine:3.23
 - Размер: ~20MB
 - Non-root пользователь: appuser (1000)
-
-**docker-entrypoint.sh:**
-1. JSON лог: migrations_start
-2. Применение миграций
-3. JSON лог: migrations_complete
-4. JSON лог: server_start
-5. Запуск сервера
+- CMD: /app/server
 
 **Миграции:**
-- Применяются автоматически при первом запуске
-- При повторном запуске пропускаются (данные сохраняются в volume)
+- Применяются автоматически при старте сервера (встроены в сервер)
+- golang-migrate отслеживает применённые миграции в таблице `schema_migrations`
+- При повторном запуске миграции не применяются (данные сохраняются в volume)
 
 ---
 
@@ -94,9 +88,7 @@ docker compose up -d --build --force-recreate
 
 **Пример:**
 ```json
-{"ts":"2026-03-21T15:00:00Z","lvl":"info","msg":"migrations_start","srv":"auth-service"}
-{"ts":"2026-03-21T15:00:01Z","lvl":"info","msg":"migrations_complete","srv":"auth-service"}
-{"ts":"2026-03-21T15:00:01Z","lvl":"info","msg":"server_start","srv":"auth-service"}
+{"ts":"2026-03-21T15:00:00Z","lvl":"info","msg":"server_start","srv":"auth-service"}
 ```
 
 ---
@@ -115,9 +107,6 @@ docker compose exec auth-service sh
 
 # Перезапуск
 docker compose restart auth-service
-
-# Проверка миграций
-docker compose exec auth-service /app/migrate -dsn "$DATABASE_URL" status
 ```
 
 ---
