@@ -63,7 +63,7 @@ type RedisConfig struct {
 type JWTConfig struct {
 	Secret     string `env:"JWT_SECRET,required"`
 	AccessTTL  string `env:"JWT_ACCESS_TTL" envDefault:"15m"`
-	RefreshTTL string `env:"JWT_REFRESH_TTL" envDefault:"336h"`
+	RefreshTTL string `env:"JWT_REFRESH_TTL" envDefault:"720h"`
 	Issuer     string `env:"JWT_ISSUER" envDefault:"auth-service"`
 }
 

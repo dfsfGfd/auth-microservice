@@ -27,7 +27,7 @@ func setTestEnv(t *testing.T) {
 		"REDIS_CONNECTION_TIMEOUT":      "5",
 		"JWT_SECRET":                    "super-secret-key-minimum-32-characters-long",
 		"JWT_ACCESS_TTL":                "15m",
-		"JWT_REFRESH_TTL":               "336h",
+		"JWT_REFRESH_TTL":               "720h",
 		"JWT_ISSUER":                    "auth-service",
 		"LOG_LEVEL":                     "debug",
 		"LOG_FORMAT":                    "console",
@@ -69,7 +69,7 @@ func TestLoad(t *testing.T) {
 	// JWT
 	assert.Equal(t, "super-secret-key-minimum-32-characters-long", cfg.JWT.Secret)
 	assert.Equal(t, "15m", cfg.JWT.AccessTTL)
-	assert.Equal(t, "336h", cfg.JWT.RefreshTTL)
+	assert.Equal(t, "720h", cfg.JWT.RefreshTTL)
 	assert.Equal(t, "auth-service", cfg.JWT.Issuer)
 
 	// Logging
@@ -103,7 +103,7 @@ func TestConfig_Validate(t *testing.T) {
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
 			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
 			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 			RateLimit: config.RateLimitConfig{Register: 5, Login: 10, Refresh: 30, Logout: 60},
 			Health:   config.HealthConfig{Path: "/health"},
@@ -119,7 +119,7 @@ func TestConfig_Validate(t *testing.T) {
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
 			Database: config.DatabaseConfig{},
 			Redis:    config.RedisConfig{URL: "redis://localhost:6379", DB: 0, PoolSize: 10, ConnectionTimeout: 5, ReadTimeout: 3, WriteTimeout: 3},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
 
@@ -134,7 +134,7 @@ func TestConfig_Validate(t *testing.T) {
 			Server:   config.ServerConfig{HTTPPort: 8080, GRPCPort: 9090, Env: "development", ReadTimeout: 10, WriteTimeout: 10, IdleTimeout: 60},
 			Database: config.DatabaseConfig{URL: "postgres://localhost/auth", MaxConnections: 25, ConnectionTimeout: 10},
 			Redis:    config.RedisConfig{},
-			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "336h", Issuer: "auth-service"},
+			JWT:      config.JWTConfig{Secret: "super-secret-key-minimum-32-characters-long", AccessTTL: "15m", RefreshTTL: "720h", Issuer: "auth-service"},
 			Logging:  config.LoggingConfig{Level: "info", Format: "json", ServiceName: "auth-service"},
 		}
 
@@ -296,10 +296,10 @@ func TestJWTConfig_Duration(t *testing.T) {
 	})
 
 	t.Run("RefreshTTLDuration", func(t *testing.T) {
-		cfg := config.JWTConfig{RefreshTTL: "336h"}
+		cfg := config.JWTConfig{RefreshTTL: "720h"}
 		duration, err := cfg.RefreshTTLDuration()
 		require.NoError(t, err)
-		assert.Equal(t, 336*time.Hour, duration)
+		assert.Equal(t, 720*time.Hour, duration)
 	})
 }
 
