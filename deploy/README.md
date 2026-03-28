@@ -32,7 +32,6 @@ docker compose up -d --build
 |------|----------|
 | `docker-compose.yml` | Development окружение |
 | `Dockerfile` | Multi-stage сборка |
-| `docker-entrypoint.sh` | Запуск сервера |
 | `.env` | Переменные окружения |
 | `.dockerignore` | Исключения для Docker |
 
@@ -74,13 +73,10 @@ docker compose up -d --build --force-recreate
 - Runtime stage: alpine:3.23
 - Размер: ~20MB
 - Non-root пользователь: appuser (1000)
-
-**docker-entrypoint.sh:**
-- Запускает сервер
-- Миграции применяются автоматически при старте сервера
+- CMD: /app/server
 
 **Миграции:**
-- Применяются автоматически при первом запуске
+- Применяются автоматически при старте сервера (встроены в сервер)
 - golang-migrate отслеживает применённые миграции в таблице `schema_migrations`
 - При повторном запуске миграции не применяются (данные сохраняются в volume)
 
