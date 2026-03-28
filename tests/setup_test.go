@@ -4,6 +4,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -111,30 +112,17 @@ func waitForServices(ctx context.Context) error {
 	}
 }
 
-// checkServices проверяет доступность сервисов
+// checkServices проверяет доступность сервисов через HTTP health endpoint
 func checkServices(ctx context.Context) error {
-	// Проверяем HTTP health endpoint
-	cmd := exec.CommandContext(ctx, "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
-		fmt.Sprintf("http://%s/health", httpAddress))
-
-	output, err := cmd.Output()
+	resp, err := http.Get(fmt.Sprintf("http://%s/health", httpAddress))
 	if err != nil {
 		return fmt.Errorf("health check failed: %w", err)
 	}
+	defer resp.Body.Close()
 
-	if string(output) != "200" {
-		return fmt.Errorf("health check returned %s", string(output))
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("health check returned %d", resp.StatusCode)
 	}
 
 	return nil
-}
-
-// getGRPCAddress возвращает адрес gRPC сервера
-func getGRPCAddress() string {
-	return grpcAddress
-}
-
-// getHTTPAddress возвращает адрес HTTP сервера
-func getHTTPAddress() string {
-	return httpAddress
 }

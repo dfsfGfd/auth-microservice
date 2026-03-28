@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  # PostgreSQL для интеграционных тестов (версия как в production)
+  # PostgreSQL для интеграционных тестов
   postgres-test:
     image: postgres:18-alpine
     container_name: auth-postgres-test
@@ -19,17 +19,15 @@ services:
       start_period: 10s
     volumes:
       - ../migrations:/docker-entrypoint-initdb.d:ro
-      - postgres_test_data:/var/lib/postgresql/data
     networks:
       - auth-test-network
 
-  # Redis для интеграционных тестов (версия как в production)
+  # Redis для интеграционных тестов
   redis-test:
     image: redis:7.4-alpine
     container_name: auth-redis-test
     ports:
       - "6380:6379"
-    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -43,31 +41,13 @@ services:
   auth-test:
     build:
       context: ..
-      dockerfile: tests/Dockerfile.test
+      dockerfile: deploy/Dockerfile
     container_name: auth-service-test
+    env_file:
+      - .env.test
     environment:
-      APP_ENV: test
-      HTTP_PORT: 8080
-      GRPC_PORT: 9090
       DATABASE_URL: postgres://auth_test_user:auth_test_password@postgres-test:5432/auth_test?sslmode=disable
-      DATABASE_MAX_CONNECTIONS: 10
-      DATABASE_CONNECTION_TIMEOUT: 10
       REDIS_URL: redis://redis-test:6379
-      REDIS_DB: 0
-      REDIS_CONNECTION_TIMEOUT: 5
-      JWT_SECRET: test-super-secret-key-minimum-32-chars-long
-      JWT_ACCESS_TTL: 15m
-      JWT_REFRESH_TTL: 336h
-      JWT_ISSUER: auth-service-test
-      LOG_LEVEL: debug
-      LOG_FORMAT: console
-      LOG_SERVICE_NAME: auth-service-test
-      RATE_LIMIT_REGISTER: 100
-      RATE_LIMIT_LOGIN: 100
-      RATE_LIMIT_REFRESH: 100
-      RATE_LIMIT_LOGOUT: 100
-      HEALTH_PATH: /health
-      SHUTDOWN_TIMEOUT: 30
     ports:
       - "8081:8080"
       - "9091:9090"
@@ -79,9 +59,6 @@ services:
     networks:
       - auth-test-network
     restart: "no"
-
-volumes:
-  postgres_test_data:
 
 networks:
   auth-test-network:

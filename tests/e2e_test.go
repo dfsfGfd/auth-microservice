@@ -21,6 +21,16 @@ type E2ETestSuite struct {
 	grpcConn   *grpc.ClientConn
 }
 
+// registerTestUser регистрирует тестового пользователя
+func (s *E2ETestSuite) registerTestUser(email, password string) {
+	resp, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
+		Email:    email,
+		Password: password,
+	})
+	s.Require().NoError(err)
+	s.Require().NotNil(resp)
+}
+
 // SetupSuite выполняется один раз перед всеми тестами
 func (s *E2ETestSuite) SetupSuite() {
 	s.ctx = context.Background()
@@ -28,7 +38,7 @@ func (s *E2ETestSuite) SetupSuite() {
 	// Создаём gRPC соединение с тестовым сервисом
 	var err error
 	s.grpcConn, err = grpc.NewClient(
-		getGRPCAddress(),
+		grpcAddress,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithTimeout(10*time.Second),
 	)
@@ -150,12 +160,7 @@ func (s *E2ETestSuite) TestLogin() {
 	// Сначала регистрируем уникального пользователя
 	email := "login.e2e@example.com"
 	password := "SecurePass123!"
-
-	_, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
-		Email:    email,
-		Password: password,
-	})
-	s.Require().NoError(err)
+	s.registerTestUser(email, password)
 
 	tests := []struct {
 		name        string
@@ -224,12 +229,7 @@ func (s *E2ETestSuite) TestRefresh() {
 	// Регистрируем и логинимся
 	email := "refresh.e2e@example.com"
 	password := "SecurePass123!"
-
-	_, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
-		Email:    email,
-		Password: password,
-	})
-	s.Require().NoError(err)
+	s.registerTestUser(email, password)
 
 	loginResp, err := s.grpcClient.Login(s.ctx, &authv1.LoginRequest{
 		Email:    email,
@@ -291,12 +291,7 @@ func (s *E2ETestSuite) TestLogout() {
 	// Регистрируем и логинимся
 	email := "logout.e2e@example.com"
 	password := "SecurePass123!"
-
-	_, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
-		Email:    email,
-		Password: password,
-	})
-	s.Require().NoError(err)
+	s.registerTestUser(email, password)
 
 	loginResp, err := s.grpcClient.Login(s.ctx, &authv1.LoginRequest{
 		Email:    email,
@@ -345,14 +340,7 @@ func (s *E2ETestSuite) TestLogout() {
 func (s *E2ETestSuite) TestDuplicateRegistration() {
 	email := "duplicate.e2e@example.com"
 	password := "SecurePass123!"
-
-	// Первая регистрация успешна
-	resp1, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
-		Email:    email,
-		Password: password,
-	})
-	s.Require().NoError(err)
-	s.Require().NotNil(resp1)
+	s.registerTestUser(email, password)
 
 	// Вторая регистрация с тем же email должна вернуть ошибку
 	resp2, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
@@ -368,17 +356,7 @@ func (s *E2ETestSuite) TestDuplicateRegistration() {
 func (s *E2ETestSuite) TestFullAuthFlow() {
 	email := "fullflow.e2e@example.com"
 	password := "SecurePass123!"
-
-	// 1. Регистрация
-	s.Run("step 1: register", func() {
-		resp, err := s.grpcClient.Register(s.ctx, &authv1.RegisterRequest{
-			Email:    email,
-			Password: password,
-		})
-		s.Require().NoError(err)
-		s.Require().NotNil(resp)
-		s.NotEmpty(resp.Data.GetAccountId())
-	})
+	s.registerTestUser(email, password)
 
 	// 2. Login
 	var accessToken, refreshToken string
@@ -424,11 +402,6 @@ func (s *E2ETestSuite) TestFullAuthFlow() {
 		s.Require().Error(err)
 		s.Nil(resp)
 	})
-}
-
-// TestHealthCheck тестирует health check endpoint через HTTP
-func (s *E2ETestSuite) TestHealthCheck() {
-	s.T().Skip("Health check tested in setup_test.go")
 }
 
 // TestIntegration запуск e2e тестов
