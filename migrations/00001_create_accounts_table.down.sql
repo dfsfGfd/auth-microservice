@@ -1,8 +1,5 @@
 -- +migrate down
 -- Откат миграции: удаление таблицы accounts
 
-DROP TRIGGER IF EXISTS update_accounts_updated_at ON accounts;
-DROP FUNCTION IF EXISTS update_updated_at_column();
-DROP INDEX IF EXISTS idx_accounts_created_at;
 DROP INDEX IF EXISTS idx_accounts_email;
 DROP TABLE IF EXISTS accounts;
