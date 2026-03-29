@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"auth-microservice/internal/model"
-	"auth-microservice/internal/model/converter"
+	"auth-microservice/internal/repository/converter"
 )
 
 // Save сохраняет аккаунт (создаёт или обновляет).
