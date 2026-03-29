@@ -7,7 +7,7 @@ import (
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/internal/model"
-	"auth-microservice/internal/repository/converter"
+	"auth-microservice/internal/model/converter"
 	dbmodel "auth-microservice/internal/repository/model"
 	"github.com/jackc/pgx/v5"
 )
