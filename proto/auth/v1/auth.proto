@@ -63,6 +63,12 @@ message RegisterData {
   string account_id = 1;
   string email = 2;
   google.protobuf.Timestamp created_at = 3;
+  
+  // Tokens (auto-login after registration)
+  string access_token = 4;
+  string refresh_token = 5;
+  int32 expires_in = 6;
+  string token_type = 7;
 }
 
 message RegisterResponse {

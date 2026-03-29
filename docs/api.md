@@ -50,10 +50,16 @@ Content-Type: application/json
   "data": {
     "account_id": "296494707175849985",
     "email": "user@example.com",
-    "created_at": "2024-01-15T10:30:00Z"
+    "created_at": "2024-01-15T10:30:00Z",
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg...",
+    "expires_in": 900,
+    "token_type": "Bearer"
   }
 }
 ```
+
+> **Примечание:** После регистрации пользователь автоматически получает пару токенов (автовход) и может сразу делать авторизованные запросы.
 
 **Ошибки:**
 
