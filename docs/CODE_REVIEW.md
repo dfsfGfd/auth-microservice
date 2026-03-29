@@ -86,7 +86,7 @@ func (a *Application) CleanUp() error {
 
 **Проблема:**
 ```go
-func (a *Account) SetID(id uuid.UUID) { a.id = id }
+func (a *Account) SetID(id int64) { a.id = id }
 func (a *Account) SetCreatedAt(t time.Time) { a.createdAt = t }
 func (a *Account) SetUpdatedAt(t time.Time) { a.updatedAt = t }
 ```
@@ -100,7 +100,7 @@ func (a *Account) SetUpdatedAt(t time.Time) { a.updatedAt = t }
 ```go
 // Добавить новый конструктор:
 func NewAccountFromDB(
-    id uuid.UUID,
+    id int64,
     email *Email,
     passwordHash *PasswordHash,
     createdAt, updatedAt time.Time,
@@ -132,13 +132,12 @@ func NewAccountFromDB(
 func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
     email := model.NewEmailFromDB(db.Email)
     passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
-    
-    account, err := model.NewAccount(email, passwordHash)  // ← Создаёт новый ID!
+
+    account, err := model.NewAccount(id, email, passwordHash)  // ← Создаёт с ID
     if err != nil {
         return nil, err
     }
-    
-    account.SetID(db.ID)              // ← Перезаписываем ID
+
     account.SetCreatedAt(db.CreatedAt) // ← Перезаписываем время
     account.SetUpdatedAt(db.UpdatedAt) // ← Перезаписываем время
     return account, nil
@@ -146,16 +145,15 @@ func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
 ```
 
 **Почему проблема:**
-- ❌ `NewAccount` создаёт новый UUID, потом перезаписываем
 - ❌ `NewAccount` создаёт createdAt=now, потом перезаписываем
-- ❌ Лишние аллокации (4 вызова вместо 1)
+- ❌ Лишние аллокации (3 вызова вместо 1)
 
 **Решение:**
 ```go
 func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
     email := model.NewEmailFromDB(db.Email)
     passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
-    // Один конструктор вместо 4 вызовов
+    // Один конструктор вместо 3 вызовов
     return model.NewAccountFromDB(db.ID, email, passwordHash, db.CreatedAt, db.UpdatedAt), nil
 }
 ```

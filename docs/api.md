@@ -48,7 +48,7 @@ Content-Type: application/json
   "status_code": 200,
   "message": "Account registered successfully",
   "data": {
-    "account_id": "550e8400-e29b-41d4-a716-446655440000",
+    "account_id": "296494707175849985",
     "email": "user@example.com",
     "created_at": "2024-01-15T10:30:00Z"
   }
@@ -242,7 +242,7 @@ Content-Type: application/json
 | Claim | Описание |
 |-------|----------|
 | `iss` | Issuer (auth-service) |
-| `sub` | Account ID (UUID) |
+| `sub` | Account ID (Snowflake ID строкой) |
 | `email` | Email аккаунта |
 | `iat` | Время выпуска |
 | `exp` | Время истечения |
