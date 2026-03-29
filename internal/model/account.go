@@ -1,13 +1,14 @@
 package model
 
 import (
+	"errors"
 	"time"
 )
 
 // Account — агрегат аккаунта.
 //
 // Инварианты:
-//   - ID всегда присутствует
+//   - ID всегда присутствует и > 0
 //   - Email, PasswordHash не могут быть nil после создания
 //   - UpdatedAt >= CreatedAt
 type Account struct {
@@ -19,12 +20,16 @@ type Account struct {
 }
 
 // NewAccount создаёт новый аккаунт.
-// Принимает готовые валидированные Value Objects.
+// Принимает готовые валидированные Value Objects и ID.
 // Хеширование пароля выполняется в сервисном слое.
-func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
+func NewAccount(id int64, email *Email, passwordHash *PasswordHash) (*Account, error) {
+	if id <= 0 {
+		return nil, errors.New("account ID must be positive")
+	}
+
 	now := time.Now()
 	return &Account{
-		id:           0, // ID устанавливается через SetID после сохранения в БД
+		id:           id,
 		email:        email,
 		passwordHash: passwordHash,
 		createdAt:    now,

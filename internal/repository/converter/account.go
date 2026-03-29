@@ -33,14 +33,13 @@ func AccountToDomain(db *dbmodel.Account) (*model.Account, error) {
 
 	passwordHash := model.NewPasswordHashFromString(db.PasswordHash)
 
-	// Создаём агрегат с установленным ID
-	account, err := model.NewAccount(email, passwordHash)
+	// Создаём агрегат с ID из БД
+	account, err := model.NewAccount(db.ID, email, passwordHash)
 	if err != nil {
 		return nil, err
 	}
 
-	// Устанавливаем ID и временные метки из БД
-	account.SetID(db.ID)
+	// Устанавливаем временные метки из БД
 	account.SetCreatedAt(db.CreatedAt)
 	account.SetUpdatedAt(db.UpdatedAt)
 
