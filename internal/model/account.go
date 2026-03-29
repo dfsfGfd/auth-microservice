@@ -62,17 +62,14 @@ func (a *Account) UpdatedAt() time.Time {
 	return a.updatedAt
 }
 
-// SetID устанавливает идентификатор аккаунта (для конвертеров из БД).
-func (a *Account) SetID(id int64) {
-	a.id = id
-}
-
-// SetCreatedAt устанавливает время создания (для конвертеров из БД).
-func (a *Account) SetCreatedAt(t time.Time) {
-	a.createdAt = t
-}
-
-// SetUpdatedAt устанавливает время обновления (для конвертеров из БД).
-func (a *Account) SetUpdatedAt(t time.Time) {
-	a.updatedAt = t
+// NewAccountFromDB создаёт Account из данных БД (internal API для repository).
+// Не валидирует ID — предполагается, что данные из БД корректны.
+func NewAccountFromDB(id int64, email *Email, passwordHash *PasswordHash, createdAt, updatedAt time.Time) *Account {
+	return &Account{
+		id:           id,
+		email:        email,
+		passwordHash: passwordHash,
+		createdAt:    createdAt,
+		updatedAt:    updatedAt,
+	}
 }
