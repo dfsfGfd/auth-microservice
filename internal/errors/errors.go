@@ -12,6 +12,7 @@ var (
 	ErrAccountNotFound    = errors.New("account not found")
 	ErrAccountExists      = errors.New("account already exists")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrAccountInvalidID   = errors.New("invalid account ID")
 
 	// Ошибки пароля
 	ErrPasswordInvalid  = errors.New("invalid password")

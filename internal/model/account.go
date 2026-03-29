@@ -1,7 +1,7 @@
 package model
 
 import (
-	"errors"
+	"auth-microservice/internal/errors"
 	"time"
 )
 
@@ -24,7 +24,7 @@ type Account struct {
 // Хеширование пароля выполняется в сервисном слое.
 func NewAccount(id int64, email *Email, passwordHash *PasswordHash) (*Account, error) {
 	if id <= 0 {
-		return nil, errors.New("account ID must be positive")
+		return nil, errors.ErrAccountInvalidID
 	}
 
 	now := time.Now()
