@@ -11,7 +11,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	structpb "google.golang.org/protobuf/types/known/structpb"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	_ "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -138,15 +138,13 @@ func (x *RegisterRequest) GetPassword() string {
 }
 
 type RegisterData struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	AccountId string                 `protobuf:"bytes,1,opt,name=account_id,json=accountId,proto3" json:"account_id,omitempty"`
-	Email     string                 `protobuf:"bytes,2,opt,name=email,proto3" json:"email,omitempty"`
-	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
 	// Tokens (auto-login after registration)
-	AccessToken   string `protobuf:"bytes,4,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	RefreshToken  string `protobuf:"bytes,5,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	ExpiresIn     int32  `protobuf:"varint,6,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
-	TokenType     string `protobuf:"bytes,7,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
+	// Account data (id, email, created_at) available in JWT claims
+	AccessToken   string `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	RefreshToken  string `protobuf:"bytes,2,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
+	ExpiresIn     int32  `protobuf:"varint,3,opt,name=expires_in,json=expiresIn,proto3" json:"expires_in,omitempty"`
+	TokenType     string `protobuf:"bytes,4,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,27 +177,6 @@ func (x *RegisterData) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RegisterData.ProtoReflect.Descriptor instead.
 func (*RegisterData) Descriptor() ([]byte, []int) {
 	return file_auth_v1_auth_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *RegisterData) GetAccountId() string {
-	if x != nil {
-		return x.AccountId
-	}
-	return ""
-}
-
-func (x *RegisterData) GetEmail() string {
-	if x != nil {
-		return x.Email
-	}
-	return ""
-}
-
-func (x *RegisterData) GetCreatedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.CreatedAt
-	}
-	return nil
 }
 
 func (x *RegisterData) GetAccessToken() string {
@@ -734,19 +711,14 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x04data\x18\x03 \x01(\v2\x16.google.protobuf.ValueR\x04data\"C\n" +
 	"\x0fRegisterRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x84\x02\n" +
-	"\fRegisterData\x12\x1d\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x94\x01\n" +
+	"\fRegisterData\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12#\n" +
+	"\rrefresh_token\x18\x02 \x01(\tR\frefreshToken\x12\x1d\n" +
 	"\n" +
-	"account_id\x18\x01 \x01(\tR\taccountId\x12\x14\n" +
-	"\x05email\x18\x02 \x01(\tR\x05email\x129\n" +
+	"expires_in\x18\x03 \x01(\x05R\texpiresIn\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12!\n" +
-	"\faccess_token\x18\x04 \x01(\tR\vaccessToken\x12#\n" +
-	"\rrefresh_token\x18\x05 \x01(\tR\frefreshToken\x12\x1d\n" +
-	"\n" +
-	"expires_in\x18\x06 \x01(\x05R\texpiresIn\x12\x1d\n" +
-	"\n" +
-	"token_type\x18\a \x01(\tR\ttokenType\"x\n" +
+	"token_type\x18\x04 \x01(\tR\ttokenType\"x\n" +
 	"\x10RegisterResponse\x12\x1f\n" +
 	"\vstatus_code\x18\x01 \x01(\x05R\n" +
 	"statusCode\x12\x18\n" +
@@ -804,41 +776,39 @@ func file_auth_v1_auth_proto_rawDescGZIP() []byte {
 
 var file_auth_v1_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_auth_v1_auth_proto_goTypes = []any{
-	(*ResponseEnvelope)(nil),      // 0: auth.v1.ResponseEnvelope
-	(*RegisterRequest)(nil),       // 1: auth.v1.RegisterRequest
-	(*RegisterData)(nil),          // 2: auth.v1.RegisterData
-	(*RegisterResponse)(nil),      // 3: auth.v1.RegisterResponse
-	(*LoginRequest)(nil),          // 4: auth.v1.LoginRequest
-	(*TokenData)(nil),             // 5: auth.v1.TokenData
-	(*LoginResponse)(nil),         // 6: auth.v1.LoginResponse
-	(*LogoutRequest)(nil),         // 7: auth.v1.LogoutRequest
-	(*LogoutData)(nil),            // 8: auth.v1.LogoutData
-	(*LogoutResponse)(nil),        // 9: auth.v1.LogoutResponse
-	(*RefreshRequest)(nil),        // 10: auth.v1.RefreshRequest
-	(*RefreshResponse)(nil),       // 11: auth.v1.RefreshResponse
-	(*structpb.Value)(nil),        // 12: google.protobuf.Value
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*ResponseEnvelope)(nil), // 0: auth.v1.ResponseEnvelope
+	(*RegisterRequest)(nil),  // 1: auth.v1.RegisterRequest
+	(*RegisterData)(nil),     // 2: auth.v1.RegisterData
+	(*RegisterResponse)(nil), // 3: auth.v1.RegisterResponse
+	(*LoginRequest)(nil),     // 4: auth.v1.LoginRequest
+	(*TokenData)(nil),        // 5: auth.v1.TokenData
+	(*LoginResponse)(nil),    // 6: auth.v1.LoginResponse
+	(*LogoutRequest)(nil),    // 7: auth.v1.LogoutRequest
+	(*LogoutData)(nil),       // 8: auth.v1.LogoutData
+	(*LogoutResponse)(nil),   // 9: auth.v1.LogoutResponse
+	(*RefreshRequest)(nil),   // 10: auth.v1.RefreshRequest
+	(*RefreshResponse)(nil),  // 11: auth.v1.RefreshResponse
+	(*structpb.Value)(nil),   // 12: google.protobuf.Value
 }
 var file_auth_v1_auth_proto_depIdxs = []int32{
 	12, // 0: auth.v1.ResponseEnvelope.data:type_name -> google.protobuf.Value
-	13, // 1: auth.v1.RegisterData.created_at:type_name -> google.protobuf.Timestamp
-	2,  // 2: auth.v1.RegisterResponse.data:type_name -> auth.v1.RegisterData
-	5,  // 3: auth.v1.LoginResponse.data:type_name -> auth.v1.TokenData
-	8,  // 4: auth.v1.LogoutResponse.data:type_name -> auth.v1.LogoutData
-	5,  // 5: auth.v1.RefreshResponse.data:type_name -> auth.v1.TokenData
-	1,  // 6: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
-	4,  // 7: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
-	7,  // 8: auth.v1.AuthService.Logout:input_type -> auth.v1.LogoutRequest
-	10, // 9: auth.v1.AuthService.Refresh:input_type -> auth.v1.RefreshRequest
-	3,  // 10: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
-	6,  // 11: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
-	9,  // 12: auth.v1.AuthService.Logout:output_type -> auth.v1.LogoutResponse
-	11, // 13: auth.v1.AuthService.Refresh:output_type -> auth.v1.RefreshResponse
-	10, // [10:14] is the sub-list for method output_type
-	6,  // [6:10] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	2,  // 1: auth.v1.RegisterResponse.data:type_name -> auth.v1.RegisterData
+	5,  // 2: auth.v1.LoginResponse.data:type_name -> auth.v1.TokenData
+	8,  // 3: auth.v1.LogoutResponse.data:type_name -> auth.v1.LogoutData
+	5,  // 4: auth.v1.RefreshResponse.data:type_name -> auth.v1.TokenData
+	1,  // 5: auth.v1.AuthService.Register:input_type -> auth.v1.RegisterRequest
+	4,  // 6: auth.v1.AuthService.Login:input_type -> auth.v1.LoginRequest
+	7,  // 7: auth.v1.AuthService.Logout:input_type -> auth.v1.LogoutRequest
+	10, // 8: auth.v1.AuthService.Refresh:input_type -> auth.v1.RefreshRequest
+	3,  // 9: auth.v1.AuthService.Register:output_type -> auth.v1.RegisterResponse
+	6,  // 10: auth.v1.AuthService.Login:output_type -> auth.v1.LoginResponse
+	9,  // 11: auth.v1.AuthService.Logout:output_type -> auth.v1.LogoutResponse
+	11, // 12: auth.v1.AuthService.Refresh:output_type -> auth.v1.RefreshResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_auth_v1_auth_proto_init() }

@@ -3,19 +3,17 @@ package auth
 import (
 	"context"
 	stderrors "errors"
-	"strconv"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/pkg/proto/auth/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 // Register регистрирует нового пользователя и возвращает токены (автовход).
 func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
-	// Вызов сервиса — теперь возвращает и аккаунт, и токены
-	account, tokens, err := h.authService.Register(ctx, req.Email, req.Password)
+	// Вызов сервиса — возвращает только токены
+	tokens, err := h.authService.Register(ctx, req.Email, req.Password)
 	if err != nil {
 		return h.registerError(err)
 	}
@@ -25,9 +23,6 @@ func (h *Handler) Register(ctx context.Context, req *authv1.RegisterRequest) (*a
 		StatusCode: 200,
 		Message:    "Account registered successfully",
 		Data: &authv1.RegisterData{
-			AccountId:    strconv.FormatInt(account.ID(), 10),
-			Email:        account.Email().String(),
-			CreatedAt:    timestamppb.New(account.CreatedAt()),
 			AccessToken:  tokens.AccessToken,
 			RefreshToken: tokens.RefreshToken,
 			ExpiresIn:    int32(tokens.ExpiresIn),

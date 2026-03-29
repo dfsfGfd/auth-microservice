@@ -48,9 +48,6 @@ Content-Type: application/json
   "status_code": 200,
   "message": "Account registered successfully",
   "data": {
-    "account_id": "296494707175849985",
-    "email": "user@example.com",
-    "created_at": "2024-01-15T10:30:00Z",
     "access_token": "eyJhbGciOiJIUzI1NiIs...",
     "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg...",
     "expires_in": 900,
@@ -59,7 +56,7 @@ Content-Type: application/json
 }
 ```
 
-> **Примечание:** После регистрации пользователь автоматически получает пару токенов (автовход) и может сразу делать авторизованные запросы.
+> **Примечание:** После регистрации пользователь автоматически получает пару токенов (автовход). Данные аккаунта (id, email, created_at) доступны в JWT claims access токена.
 
 **Ошибки:**
 
