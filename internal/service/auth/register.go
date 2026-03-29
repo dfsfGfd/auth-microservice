@@ -54,12 +54,20 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*mo
 		return nil, fmt.Errorf("create account: %w", err)
 	}
 
+	// Генерация Snowflake ID
+	id, err := s.idGen.Next()
+	if err != nil {
+		s.log.Error("generate_id", "err", err)
+		return nil, fmt.Errorf("generate snowflake id: %w", err)
+	}
+	account.SetID(id)
+
 	// Сохранение аккаунта
 	if err := s.accountRepo.Save(ctx, account); err != nil {
 		s.log.Error("save_account", "err", err)
 		return nil, fmt.Errorf("save account: %w", err)
 	}
 
-	s.log.Info("register", "user_id", account.ID().String())
+	s.log.Info("register", "user_id", id)
 	return account, nil
 }

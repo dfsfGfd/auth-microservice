@@ -2,8 +2,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Account — агрегат аккаунта.
@@ -13,7 +11,7 @@ import (
 //   - Email, PasswordHash не могут быть nil после создания
 //   - UpdatedAt >= CreatedAt
 type Account struct {
-	id           uuid.UUID
+	id           int64
 	email        *Email
 	passwordHash *PasswordHash
 	createdAt    time.Time
@@ -26,7 +24,7 @@ type Account struct {
 func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
 	now := time.Now()
 	return &Account{
-		id:           uuid.New(),
+		id:           0, // ID устанавливается через SetID после сохранения в БД
 		email:        email,
 		passwordHash: passwordHash,
 		createdAt:    now,
@@ -35,7 +33,7 @@ func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
 }
 
 // ID возвращает идентификатор аккаунта.
-func (a *Account) ID() uuid.UUID {
+func (a *Account) ID() int64 {
 	return a.id
 }
 
@@ -60,7 +58,7 @@ func (a *Account) UpdatedAt() time.Time {
 }
 
 // SetID устанавливает идентификатор аккаунта (для конвертеров из БД).
-func (a *Account) SetID(id uuid.UUID) {
+func (a *Account) SetID(id int64) {
 	a.id = id
 }
 
