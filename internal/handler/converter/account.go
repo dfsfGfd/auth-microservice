@@ -5,6 +5,7 @@ import (
 	"auth-microservice/internal/model"
 	"auth-microservice/pkg/proto/auth/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"strconv"
 )
 
 // AccountToProto конвертирует domain Account в proto RegisterData.
@@ -14,7 +15,7 @@ func AccountToProto(account *model.Account) *authv1.RegisterData {
 	}
 
 	return &authv1.RegisterData{
-		AccountId: account.ID().String(),
+		AccountId: strconv.FormatInt(account.ID(), 10),
 		Email:     account.Email().String(),
 		CreatedAt: timestamppb.New(account.CreatedAt()),
 	}

@@ -4,10 +4,10 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"strconv"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/pkg/jwt"
-	"github.com/google/uuid"
 )
 
 // Refresh обновляет пару токенов.
@@ -27,14 +27,14 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	}
 
 	// Проверка токена в кэше
-	accountID, err := s.tokenCache.Get(ctx, refreshToken)
+	accountIDStr, err := s.tokenCache.Get(ctx, refreshToken)
 	if err != nil {
 		s.log.Warn("refresh_failed", "reason", "token_not_in_cache", "err", err)
 		return nil, errors.ErrRefreshTokenNotFound
 	}
 
-	// Парсинг UUID
-	id, err := uuid.Parse(accountID)
+	// Парсинг ID
+	id, err := strconv.ParseInt(accountIDStr, 10, 64)
 	if err != nil {
 		s.log.Error("parse_account_id", "err", err)
 		return nil, fmt.Errorf("parse account id: %w", err)
@@ -52,14 +52,14 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 	}
 
 	// Генерация новой пары токенов
-	tokens, err := s.jwtService.GenerateTokens(accountID, claims.Email)
+	tokens, err := s.jwtService.GenerateTokens(accountIDStr, claims.Email)
 	if err != nil {
 		s.log.Error("generate_tokens", "err", err)
 		return nil, fmt.Errorf("generate tokens: %w", err)
 	}
 
 	// Обновление токена в кэше (сброс TTL)
-	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountID, s.jwtService.RefreshTTLDuration()); err != nil {
+	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountIDStr, s.jwtService.RefreshTTLDuration()); err != nil {
 		s.log.Error("cache_refresh_token", "err", err)
 		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}
@@ -69,6 +69,6 @@ func (s *AuthService) Refresh(ctx context.Context, refreshToken string) (*jwt.To
 		s.log.Warn("delete_old_token", "err", err)
 	}
 
-	s.log.Info("refresh_token", "user_id", accountID)
+	s.log.Info("refresh_token", "user_id", id)
 	return tokens, nil
 }

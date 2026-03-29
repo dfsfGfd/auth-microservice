@@ -141,7 +141,7 @@ internal/repository/auth/
 
 ```go
 // ✅ Правильно
-func (r *Repository) GetByID(ctx context.Context, id uuid.UUID) (*Account, error)
+func (r *Repository) GetByID(ctx context.Context, id int64) (*Account, error)
 func (r *Repository) save(ctx context.Context, account *Account) error
 
 // ❌ Неправильно
@@ -243,7 +243,7 @@ reqLog.Info("refresh_token", "user_id", userID)
   "lvl": "info",
   "msg": "login",
   "srv": "auth-service",
-  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "user_id": "296494707175849985",
   "status": 200,
   "dur_ms": 45
 }

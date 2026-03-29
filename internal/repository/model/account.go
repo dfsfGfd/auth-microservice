@@ -3,8 +3,6 @@ package model
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Account модель аккаунта для хранения в БД.
@@ -12,7 +10,7 @@ import (
 // Соответствует таблице accounts:
 //
 //	CREATE TABLE accounts (
-//	    id              UUID PRIMARY KEY,
+//	    id              BIGINT PRIMARY KEY,
 //	    email           VARCHAR(254) NOT NULL UNIQUE,
 //	    password        VARCHAR(72) NOT NULL,
 //	    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -20,7 +18,7 @@ import (
 //	);
 type Account struct {
 	// ID идентификатор аккаунта (PRIMARY KEY)
-	ID uuid.UUID `db:"id"`
+	ID int64 `db:"id"`
 
 	// Email адрес электронной почты (UNIQUE, NOT NULL)
 	Email string `db:"email"`

@@ -1,19 +1,18 @@
 package model
 
 import (
+	"auth-microservice/internal/errors"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Account — агрегат аккаунта.
 //
 // Инварианты:
-//   - ID всегда присутствует
+//   - ID всегда присутствует и > 0
 //   - Email, PasswordHash не могут быть nil после создания
 //   - UpdatedAt >= CreatedAt
 type Account struct {
-	id           uuid.UUID
+	id           int64
 	email        *Email
 	passwordHash *PasswordHash
 	createdAt    time.Time
@@ -21,12 +20,16 @@ type Account struct {
 }
 
 // NewAccount создаёт новый аккаунт.
-// Принимает готовые валидированные Value Objects.
+// Принимает готовые валидированные Value Objects и ID.
 // Хеширование пароля выполняется в сервисном слое.
-func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
+func NewAccount(id int64, email *Email, passwordHash *PasswordHash) (*Account, error) {
+	if id <= 0 {
+		return nil, errors.ErrAccountInvalidID
+	}
+
 	now := time.Now()
 	return &Account{
-		id:           uuid.New(),
+		id:           id,
 		email:        email,
 		passwordHash: passwordHash,
 		createdAt:    now,
@@ -35,7 +38,7 @@ func NewAccount(email *Email, passwordHash *PasswordHash) (*Account, error) {
 }
 
 // ID возвращает идентификатор аккаунта.
-func (a *Account) ID() uuid.UUID {
+func (a *Account) ID() int64 {
 	return a.id
 }
 
@@ -59,17 +62,14 @@ func (a *Account) UpdatedAt() time.Time {
 	return a.updatedAt
 }
 
-// SetID устанавливает идентификатор аккаунта (для конвертеров из БД).
-func (a *Account) SetID(id uuid.UUID) {
-	a.id = id
-}
-
-// SetCreatedAt устанавливает время создания (для конвертеров из БД).
-func (a *Account) SetCreatedAt(t time.Time) {
-	a.createdAt = t
-}
-
-// SetUpdatedAt устанавливает время обновления (для конвертеров из БД).
-func (a *Account) SetUpdatedAt(t time.Time) {
-	a.updatedAt = t
+// NewAccountFromDB создаёт Account из данных БД (internal API для repository).
+// Не валидирует ID — предполагается, что данные из БД корректны.
+func NewAccountFromDB(id int64, email *Email, passwordHash *PasswordHash, createdAt, updatedAt time.Time) *Account {
+	return &Account{
+		id:           id,
+		email:        email,
+		passwordHash: passwordHash,
+		createdAt:    createdAt,
+		updatedAt:    updatedAt,
+	}
 }

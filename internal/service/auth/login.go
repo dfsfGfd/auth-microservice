@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"auth-microservice/internal/errors"
 	"auth-microservice/internal/model"
@@ -35,18 +36,19 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*jwt.T
 	}
 
 	// Генерация JWT токенов
-	tokens, err := s.jwtService.GenerateTokens(account.ID().String(), account.Email().Value())
+	accountID := strconv.FormatInt(account.ID(), 10)
+	tokens, err := s.jwtService.GenerateTokens(accountID, account.Email().Value())
 	if err != nil {
 		s.log.Error("generate_tokens", "err", err)
 		return nil, fmt.Errorf("generate tokens: %w", err)
 	}
 
 	// Сохранение refresh токена в кэш
-	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, account.ID().String(), s.jwtService.RefreshTTLDuration()); err != nil {
+	if err := s.tokenCache.Set(ctx, tokens.RefreshToken, accountID, s.jwtService.RefreshTTLDuration()); err != nil {
 		s.log.Error("cache_refresh_token", "err", err)
 		return nil, fmt.Errorf("cache refresh token: %w", err)
 	}
 
-	s.log.Info("login", "user_id", account.ID().String())
+	s.log.Info("login", "user_id", account.ID())
 	return tokens, nil
 }

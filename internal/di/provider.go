@@ -24,6 +24,7 @@ import (
 	"auth-microservice/pkg/jwt"
 	"auth-microservice/pkg/logger"
 	"auth-microservice/pkg/proto/auth/v1"
+	"auth-microservice/pkg/snowflake"
 
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -92,6 +93,9 @@ var ProviderSet = wire.NewSet(
 	// Rate Limiter
 	ProvideRateLimitConfigs,
 	middleware.NewRateLimiter,
+
+	// Snowflake генератор
+	ProvideSnowflakeGenerator,
 
 	// AuthService
 	serviceAuth.NewAuthService,
@@ -201,6 +205,12 @@ func ProvideRateLimitConfigs(cfg *config.Config) map[string]middleware.RateLimit
 			Prefix: "ratelimit:logout:",
 		},
 	}
+}
+
+// ProvideSnowflakeGenerator создаёт генератор Snowflake ID
+func ProvideSnowflakeGenerator() (*snowflake.Generator, error) {
+	// nodeID = 0 для одного инстанса
+	return snowflake.NewGenerator(0)
 }
 
 // NewApplication создаёт приложение из зависимостей

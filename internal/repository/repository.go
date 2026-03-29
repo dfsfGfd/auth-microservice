@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"auth-microservice/internal/model"
-	"github.com/google/uuid"
 )
 
 // AccountRepository интерфейс для работы с аккаунтами в PostgreSQL.
@@ -17,7 +16,7 @@ type AccountRepository interface {
 	GetByEmail(ctx context.Context, email string) (*model.Account, error)
 
 	// ExistsByID проверяет существование аккаунта по ID.
-	ExistsByID(ctx context.Context, id uuid.UUID) (bool, error)
+	ExistsByID(ctx context.Context, id int64) (bool, error)
 
 	// ExistsByEmail проверяет существование аккаунта по email.
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
