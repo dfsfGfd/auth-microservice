@@ -10,8 +10,14 @@ import (
 	"auth-microservice/pkg/jwt"
 )
 
-// Register регистрирует нового пользователя и возвращает пару токенов (автовход).
-func (s *AuthService) Register(ctx context.Context, email, password string) (*jwt.TokenPair, error) {
+// RegisterResult содержит аккаунт и пару токенов.
+type RegisterResult struct {
+	Account *model.Account
+	Tokens  *jwt.TokenPair
+}
+
+// Register регистрирует нового пользователя и возвращает аккаунт + токены (автовход).
+func (s *AuthService) Register(ctx context.Context, email, password string) (*RegisterResult, error) {
 	// Валидация email
 	emailVO, err := model.NewEmail(email)
 	if err != nil {
@@ -76,7 +82,10 @@ func (s *AuthService) Register(ctx context.Context, email, password string) (*jw
 	}
 
 	s.log.Info("register_with_auto_login", "user_id", id)
-	return tokens, nil
+	return &RegisterResult{
+		Account: account,
+		Tokens:  tokens,
+	}, nil
 }
 
 // generateTokens создаёт пару access + refresh токенов и сохраняет refresh в Redis.

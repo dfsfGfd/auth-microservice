@@ -261,9 +261,20 @@
     "v1RegisterData": {
       "type": "object",
       "properties": {
+        "accountId": {
+          "type": "string",
+          "title": "Account data"
+        },
+        "email": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
         "accessToken": {
           "type": "string",
-          "title": "Tokens (auto-login after registration)\nAccount data (id, email, created_at) available in JWT claims"
+          "title": "Tokens (auto-login after registration)"
         },
         "refreshToken": {
           "type": "string"

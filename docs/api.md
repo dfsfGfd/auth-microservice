@@ -19,11 +19,13 @@
 
 ```json
 {
-  "status_code": 200,
+  "statusCode": 200,
   "message": "Success",
   "data": { ... }
 }
 ```
+
+> **Примечание:** API использует camelCase для полей JSON (стандарт grpc-gateway).
 
 ---
 
@@ -45,18 +47,21 @@ Content-Type: application/json
 **Response (200):**
 ```json
 {
-  "status_code": 200,
+  "statusCode": 200,
   "message": "Account registered successfully",
   "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "dGhpc2lzYXJlZnJlc2h0b2tlbg...",
-    "expires_in": 900,
-    "token_type": "Bearer"
+    "accountId": "297027794536235009",
+    "email": "user@example.com",
+    "createdAt": "2026-03-30T15:22:24.727947015Z",
+    "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+    "refreshToken": "dGhpc2lzYXJlZnJlc2h0b2tlbg...",
+    "expiresIn": 900,
+    "tokenType": "Bearer"
   }
 }
 ```
 
-> **Примечание:** После регистрации пользователь автоматически получает пару токенов (автовход). Данные аккаунта (id, email, created_at) доступны в JWT claims access токена.
+> **Примечание:** После регистрации пользователь автоматически получает пару токенов (автовход). Данные аккаунта также возвращаются в теле ответа.
 
 **Ошибки:**
 
