@@ -36,8 +36,10 @@ const response = await fetch(`${API_BASE}/register`, {
   })
 })
 
-const data = await response.json()
-console.log(data.data.accountId) // "296502646347399169"
+const { data } = await response.json()
+// Сохраняем токены
+localStorage.setItem('accessToken', data.access_token)
+localStorage.setItem('refreshToken', data.refresh_token)
 ```
 
 ### 3. Вход и сохранение токена
@@ -96,12 +98,15 @@ const response = await fetch(`${API_BASE}/refresh`, {
   statusCode: 200,
   message: "Account registered successfully",
   data: {
-    accountId: string,    // Snowflake ID (строка)
-    email: string,
-    createdAt: string     // ISO 8601
+    accessToken: string,    // JWT токен
+    refreshToken: string,   // JWT токен
+    expiresIn: number,      // 900 (секунд)
+    tokenType: "Bearer"
   }
 }
 ```
+
+> **Примечание:** После регистрации пользователь автоматически входит в систему (автовход). Данные аккаунта (id, email) доступны в JWT claims access токена.
 
 **Ошибки:**
 ```typescript
@@ -242,10 +247,14 @@ export function useAuth() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     })
-    
-    const data = await res.json()
+
+    const { data } = await res.json()
     if (!res.ok) throw new Error(data.message)
-    return data.data
+    
+    // Сохраняем токены (автовход после регистрации)
+    setTokens(data)
+    localStorage.setItem('tokens', JSON.stringify(data))
+    return data
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
@@ -609,9 +618,10 @@ export interface RegisterResponse {
   statusCode: number
   message: string
   data: {
-    accountId: string
-    email: string
-    createdAt: string  // ISO 8601
+    accessToken: string
+    refreshToken: string
+    expiresIn: number
+    tokenType: 'Bearer'
   }
 }
 

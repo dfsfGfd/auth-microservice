@@ -90,8 +90,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
   -d '{"refresh_token":"<token>"}'
 ```
 
-📖 **Полная документация API:** [docs/api.md](docs/api.md)  
-📦 **Postman коллекция:** [docs/POSTMAN_COLLECTION.md](docs/POSTMAN_COLLECTION.md)
+📖 **Полная документация API:** [docs/api.md](docs/api.md)
 
 ---
 

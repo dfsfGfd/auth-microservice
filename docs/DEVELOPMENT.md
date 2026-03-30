@@ -471,18 +471,12 @@ APP_ENV=development
 ```go
 // internal/di/provider.go
 func loadConfig() (*config.Config, error) {
-    // 1. Сначала .env (приоритет)
-    cfg, err := config.LoadFromEnv()
-    if err == nil {
-        return cfg, nil
-    }
-    
-    // 2. Потом config.yaml
-    cfg, err = config.Load("config.yaml")
+    // Загрузка из .env
+    cfg, err := config.Load()
     if err != nil {
         return nil, fmt.Errorf("failed to load config: %w", err)
     }
-    
+
     return cfg, nil
 }
 ```
