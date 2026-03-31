@@ -38,8 +38,8 @@ type Application struct {
 	JWTService  *jwt.Service
 	DB          *pgxpool.Pool
 	Redis       *goredis.Client
-	AccountRepo repository.AccountRepository
-	TokenCache  *token.RedisCache
+	AccountRepo *repositoryAuth.AccountRepository
+	TokenCache  token.TokenCache
 	AuthService *serviceAuth.AuthService
 	AuthHandler authv1.AuthServiceServer
 	RateLimiter *middleware.RateLimiter
@@ -76,10 +76,12 @@ var ProviderSet = wire.NewSet(
 
 	// Репозитории
 	repositoryAuth.NewAccountRepository,
+	wire.Bind(new(repository.AccountRepository), new(*repositoryAuth.AccountRepository)),
 
 	// Кэш токенов
 	ProvideTokenCachePrefix,
 	token.NewRedisCache,
+	wire.Bind(new(token.TokenCache), new(*token.RedisCache)),
 
 	// Логгер
 	NewLogger,
@@ -220,8 +222,8 @@ func NewApplication(
 	jwtSvc *jwt.Service,
 	db *pgxpool.Pool,
 	redisClient *goredis.Client,
-	accountRepo repository.AccountRepository,
-	tokenCache *token.RedisCache,
+	accountRepo *repositoryAuth.AccountRepository,
+	tokenCache token.TokenCache,
 	rateLimiter *middleware.RateLimiter,
 	authService *serviceAuth.AuthService,
 	authHandler *auth.Handler,

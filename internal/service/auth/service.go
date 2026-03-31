@@ -13,7 +13,7 @@ import (
 // AuthService реализация service.AuthService.
 type AuthService struct {
 	accountRepo repository.AccountRepository
-	tokenCache  *token.RedisCache
+	tokenCache  token.TokenCache
 	jwtService  *jwt.Service
 	hasher      *bcrypt.Service
 	log         *logger.Logger
@@ -23,7 +23,7 @@ type AuthService struct {
 // NewAuthService создаёт новый AuthService.
 func NewAuthService(
 	accountRepo repository.AccountRepository,
-	tokenCache *token.RedisCache,
+	tokenCache token.TokenCache,
 	jwtService *jwt.Service,
 	hasher *bcrypt.Service,
 	log *logger.Logger,

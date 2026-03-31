@@ -2,7 +2,6 @@
 package auth
 
 import (
-	"auth-microservice/internal/repository"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -12,7 +11,7 @@ type AccountRepository struct {
 }
 
 // NewAccountRepository создаёт новый AccountRepository.
-func NewAccountRepository(pool *pgxpool.Pool) repository.AccountRepository {
+func NewAccountRepository(pool *pgxpool.Pool) *AccountRepository {
 	return &AccountRepository{
 		pool: pool,
 	}
